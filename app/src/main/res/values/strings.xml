@@ -1,5 +1,19 @@
 <resources>
-    <string name="pcapdroid_app_name" translatable="false">PCAPdroid</string>
+    <string name="pcapdroid_app_name" translatable="false">ADBye</string>
+    <string name="adbye_protection_tab" translatable="false">Protection</string>
+    <string name="adbye_protect_adblock_title">Ad blocking</string>
+    <string name="adbye_protect_adblock_subtitle">Blocks unwanted ads like banners, videos, and popups</string>
+    <string name="adbye_protect_tracking_title">Tracking protection</string>
+    <string name="adbye_protect_tracking_subtitle">Protects your online activity and personal data from web trackers</string>
+    <string name="adbye_protect_annoyance_title">Annoyance blocking</string>
+    <string name="adbye_protect_annoyance_subtitle">Blocks elements such as cookie notices or in-page pop-ups</string>
+    <string name="adbye_protect_dns_title">DNS protection</string>
+    <string name="adbye_protect_dns_subtitle">Protects you from ads, trackers, and threats at the DNS level</string>
+    <string name="adbye_protect_firewall_title">Firewall</string>
+    <string name="adbye_protect_firewall_subtitle">Allows to control app access to the Internet</string>
+    <string name="adbye_protect_security_title">Browsing security</string>
+    <string name="adbye_protect_security_subtitle">Blocks requests to malicious and phishing websites</string>
+    <string name="adbye_shield_description" translatable="false">ADBye shield</string>
     <string name="default_collector_host" translatable="false">127.0.0.1</string>
     <string name="default_collector_port" translatable="false">1234</string>
     <string name="ip_and_port" translatable="false">%1$s:%2$d</string>

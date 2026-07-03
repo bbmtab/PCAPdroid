@@ -1,0 +1,36 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="200"
+    android:viewportHeight="230">
+
+    <!-- Shield body with pink -> mid -> blue gradient (matches icon_bluprint.md) -->
+    <path
+        android:pathData="M100 15 L20 45 L20 110 C20 170 100 215 100 215 C100 215 180 170 180 110 L180 45 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="20"
+                android:startY="15"
+                android:endX="180"
+                android:endY="215"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#FF9A9E"/>
+                <item android:offset="0.5" android:color="#FECFEF"/>
+                <item android:offset="1.0" android:color="#8EC5FC"/>
+           </gradient>
+       </aapt:attr>
+   </path>
+
+    <!-- Glass reflection on the left half -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.25"
+        android:pathData="M100 25 L30 51 L30 110 C30 162 90 200 100 203 L100 25 Z"/>
+
+    <!-- White checkmark in the center -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.95"
+        android:pathData="M85 145 L50 110 L65 95 L85 115 L135 65 L150 80 Z"/>
+</vector>

@@ -107,6 +107,21 @@ public class Prefs {
     public static final String PREF_PORT_MAPPING_ENABLED = "port_mapping_enabled";
     public static final String PREF_PORT_MAPPING_EXEMPTIONS = "port_mapping_exemptions";
     public static final String PREF_BLOCK_NEW_APPS = "block_new_apps";
+
+    // ADBye Protection tab — see firewall_blocking_tab.md
+    public static final String PREF_PROTECT_ADBLOCK    = "pref_protect_adblock";
+    public static final String PREF_PROTECT_TRACKING   = "pref_protect_tracking";
+    public static final String PREF_PROTECT_ANNOYANCE  = "pref_protect_annoyance";
+    public static final String PREF_PROTECT_DNS        = "pref_protect_dns";
+    public static final String PREF_PROTECT_FIREWALL   = "pref_protect_firewall";
+    public static final String PREF_PROTECT_SECURITY   = "pref_protect_security";
+
+    public static boolean isProtectAdblock(SharedPreferences p)  { return p.getBoolean(PREF_PROTECT_ADBLOCK, true);  }
+    public static boolean isProtectTracking(SharedPreferences p) { return p.getBoolean(PREF_PROTECT_TRACKING, true); }
+    public static boolean isProtectAnnoyance(SharedPreferences p){ return p.getBoolean(PREF_PROTECT_ANNOYANCE, true);}
+    public static boolean isProtectDns(SharedPreferences p)      { return p.getBoolean(PREF_PROTECT_DNS, true);      }
+    public static boolean isProtectFirewall(SharedPreferences p) { return p.getBoolean(PREF_PROTECT_FIREWALL, true); }
+    public static boolean isProtectSecurity(SharedPreferences p) { return p.getBoolean(PREF_PROTECT_SECURITY, true); }
     public static final String PREF_PAYLOAD_NOTICE_ACK = "payload_notice";
     public static final String PREF_REMOTE_COLLECTOR_ACK = "remote_collector_notice";
     public static final String PREF_MITMPROXY_OPTS = "mitmproxy_opts";

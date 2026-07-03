@@ -37,6 +37,7 @@ import com.emanuelef.remote_capture.R;
 import com.emanuelef.remote_capture.Utils;
 import com.emanuelef.remote_capture.fragments.EditListFragment;
 import com.emanuelef.remote_capture.fragments.FirewallStatus;
+import com.emanuelef.remote_capture.fragments.ProtectionFragment;
 import com.emanuelef.remote_capture.model.ListInfo;
 import com.emanuelef.remote_capture.model.Prefs;
 import com.google.android.material.tabs.TabLayout;
@@ -52,7 +53,9 @@ public class FirewallActivity extends BaseActivity {
     private static final int POS_STATUS = 0;
     private static final int POS_BLOCKLIST = 1;
     private static final int POS_WHITELIST = 2;
-    private static final int TOTAL_COUNT = 3;
+    private static final int POS_PROTECTION = 3;
+    private static final int BASE_TOTAL_COUNT = 3;
+    private static final int TOTAL_COUNT = 4;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,11 +85,18 @@ public class FirewallActivity extends BaseActivity {
                     return EditListFragment.newInstance(ListInfo.Type.BLOCKLIST);
                 case POS_WHITELIST:
                     return EditListFragment.newInstance(ListInfo.Type.FIREWALL_WHITELIST);
+                case POS_PROTECTION:
+                    ProtectionFragment pf = new ProtectionFragment();
+                    pf.setCallback(this::onProtectionChanged);
+                    return pf;
             }
         }
 
         @Override
-        public int getItemCount() {  return mHasWhitelist ? TOTAL_COUNT : (TOTAL_COUNT - 1);  }
+        public int getItemCount() {
+            // Protection tab is always present; whitelist only when whitelist mode is on.
+            return mHasWhitelist ? TOTAL_COUNT : (TOTAL_COUNT - 1);
+        }
 
         public int getPageTitle(final int position) {
             switch (position) {
@@ -97,8 +107,19 @@ public class FirewallActivity extends BaseActivity {
                     return R.string.blocklist;
                 case POS_WHITELIST:
                     return R.string.whitelist;
+                case POS_PROTECTION:
+                    return R.string.adbye_protection_tab;
             }
         }
+    }
+
+    /**
+     * Toggled by {@link ProtectionFragment.Callback}; for now we just log.
+     * Engine hooks (FilterListManager.mergeEnabledLists / CaptureService reloads) are
+     * wired in the next phase — see plan.md Phase 1 → Phase 4 handoff.
+     */
+    private void onProtectionChanged(String prefKey, boolean enabled) {
+        Log.d(TAG, "Protection changed: " + prefKey + "=" + enabled);
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -148,6 +169,8 @@ public class FirewallActivity extends BaseActivity {
                     focusOverride = findViewById(R.id.firewall_status);
                 else if ((pos == POS_BLOCKLIST) || (pos == POS_WHITELIST))
                     focusOverride = findViewById(R.id.listview);
+                else if (pos == POS_PROTECTION)
+                    focusOverride = findViewById(R.id.protection_list);
 
                 if (focusOverride != null) {
                     focusOverride.requestFocus();
