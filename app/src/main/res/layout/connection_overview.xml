@@ -35,7 +35,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="0.75"
                 android:textIsSelectable="true"
-                tools:text="com.emanuelef.remote_capture (14503)" />
+                tools:text="com.adbye.filter (14503)" />
         </TableRow>
 
         <TableRow

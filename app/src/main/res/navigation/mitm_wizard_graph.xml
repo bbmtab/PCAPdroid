@@ -7,7 +7,7 @@
 
     <fragment
         android:id="@+id/intro"
-        android:name="com.emanuelef.remote_capture.fragments.mitmwizard.Intro"
+        android:name="com.adbye.filter.fragments.mitmwizard.Intro"
         tools:layout="@layout/fragment_mitm_wizard" >
         <action
             android:id="@+id/navto_install_addon"
@@ -20,7 +20,7 @@
 
     <fragment
         android:id="@+id/installMitmApp"
-        android:name="com.emanuelef.remote_capture.fragments.mitmwizard.InstallAddon"
+        android:name="com.adbye.filter.fragments.mitmwizard.InstallAddon"
         tools:layout="@layout/fragment_mitm_wizard" >
         <action
             android:id="@+id/navto_install_cert"
@@ -33,7 +33,7 @@
 
     <fragment
         android:id="@+id/InstallCertificate"
-        android:name="com.emanuelef.remote_capture.fragments.mitmwizard.InstallCertificate"
+        android:name="com.adbye.filter.fragments.mitmwizard.InstallCertificate"
         tools:layout="@layout/fragment_mitm_wizard">
         <action
             android:id="@+id/navto_done"
@@ -46,6 +46,6 @@
 
     <fragment
         android:id="@+id/Done"
-        android:name="com.emanuelef.remote_capture.fragments.mitmwizard.Done"
+        android:name="com.adbye.filter.fragments.mitmwizard.Done"
         tools:layout="@layout/fragment_mitm_wizard" />
 </navigation>

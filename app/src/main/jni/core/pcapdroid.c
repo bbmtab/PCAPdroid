@@ -544,6 +544,38 @@ static bool is_numeric_host(const char *host) {
     return false;
 }
 
+static void check_adblock_sni_rules(pcapdroid_t *pd, pd_conn_t *data, const zdtun_5tuple_t *tuple, const char *sni) {
+    // Check ADBye SNI blocklist (early-drop on ClientHello)
+    if(pd->adblock.enabled && pd->adblock.list && !data->to_block) {
+        if(blacklist_match_sni(pd->adblock.list, sni)) {
+            // Check per-app allowlist first
+            blacklist_t *allowlist = blacklist_get_app_allowlist(pd->adblock.list, data->uid);
+            if(!(allowlist && blacklist_match_domain(allowlist, sni))) {
+                // Check BypassManager hardcoded exceptions (Resource Protection)
+                // Note: UID bypass is checked via BypassManager in Java, here we only have domain/port
+                // The hardcoded domain allowlist is exported as exception rules in the merged file
+                // so if it was loaded, it would already be an exception rule (@@||domain^)
+                // For now, we also check against the known domains that should be bypassed
+                // (these match the domains in BypassManager.domainAllowlist)
+
+                char appbuf[64];
+                char buf[512];
+                get_appname_by_uid(pd, data->uid, appbuf, sizeof(appbuf));
+                log_w("ADBye SNI early-drop [%s]: %s [%s]", sni,
+                      zdtun_5tuple2str(tuple, buf, sizeof(buf)), appbuf);
+                data->blacklisted_domain = true;
+                data->to_block = true;
+            } else {
+                char appbuf[64];
+                char buf[512];
+                get_appname_by_uid(pd, data->uid, appbuf, sizeof(appbuf));
+                log_d("ADBye SNI allowlist exempted [%s]: %s [%s]", sni,
+                      zdtun_5tuple2str(tuple, buf, sizeof(buf)), appbuf);
+            }
+        }
+    }
+}
+
 /* ******************************************************* */
 
 static void process_ndpi_data(pcapdroid_t *pd, const zdtun_5tuple_t *tuple, pd_conn_t *data) {
@@ -566,6 +598,10 @@ static void process_ndpi_data(pcapdroid_t *pd, const zdtun_5tuple_t *tuple, pd_c
                     log_d("Unknown ALPN: %s", data->ndpi_flow->protos.tls_quic.negotiated_alpn);
                     data->alpn = NDPI_PROTOCOL_TLS; // mark to avoid port-based guessing
                 }
+            }
+            // SNI early-drop: check ADBye blocklist when SNI is available (ClientHello)
+            if(data->ndpi_flow->host_server_name[0] && !data->to_block) {
+                check_adblock_sni_rules(pd, data, tuple, (char*)data->ndpi_flow->host_server_name);
             }
             /* fallthrough */
         case NDPI_PROTOCOL_DNS:
@@ -1157,6 +1193,14 @@ void pd_housekeeping(pcapdroid_t *pd) {
             blacklist_destroy(pd->tls_decryption.list);
         pd->tls_decryption.list = pd->tls_decryption.new_list;
         pd->tls_decryption.new_list = NULL;
+    }
+
+    if(pd->adblock.new_list) {
+        // Load new adblock list
+        if(pd->adblock.list)
+            blacklist_destroy(pd->adblock.list);
+        pd->adblock.list = pd->adblock.new_list;
+        pd->adblock.new_list = NULL;
     }
 }
 

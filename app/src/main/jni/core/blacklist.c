@@ -45,6 +45,7 @@ struct blacklist {
     ndpi_ptree_t *ptree;
     country_entry_t* countries;
     app_allowlist_t *app_allowlists;
+    struct HashTable *sni_domains;
     blacklists_stats_t stats;
 };
 
@@ -68,7 +69,32 @@ blacklist_t* blacklist_init() {
         return NULL;
     }
 
+    bl->sni_domains = AllocateHashTable(0 /* keys are null terminated */, 1 /* copy keys */);
+    if (!bl->sni_domains) {
+        FreeHashTable(bl->domains);
+        ndpi_ptree_destroy(bl->ptree);
+        bl_free(bl);
+        return NULL;
+    }
+
     return bl;
+}
+
+/* ******************************************************* */
+
+int blacklist_add_sni(blacklist_t *bl, const char *domain) {
+    if(strncmp(domain, "www.", 4) == 0)
+        domain += 4;
+
+    if(blacklist_match_sni(bl, domain))
+        return -EADDRINUSE; // duplicate domain
+
+    HTItem* entry = HashInsert(bl->sni_domains, PTR_KEY(bl->sni_domains, domain));
+    if (!entry)
+        return -ENOMEM;
+
+    bl->stats.num_domains++;
+    return 0;
 }
 
 /* ******************************************************* */
@@ -248,6 +274,20 @@ int blacklist_load_file(blacklist_t *bl, const char *path, blacklist_type btype,
                 num_dup++;
             else
                 num_fail++;
+        } else if (btype == SNI_BLACKLIST) {
+            if(is_ip_addr) {
+                log_w("IP/net \"%s\" found instead of domain in %s", buffer, path);
+                num_fail++;
+                continue;
+            }
+
+            int rv = blacklist_add_sni(bl, item);
+            if(rv == 0)
+                num_ok++;
+            else if(rv == -EADDRINUSE)
+                num_dup++;
+            else
+                num_fail++;
         } else {
             log_e("Loading unsupported blacklist of type %d", btype);
             break;
@@ -274,6 +314,7 @@ int blacklist_load_file(blacklist_t *bl, const char *path, blacklist_type btype,
 
 void blacklist_destroy(blacklist_t *bl) {
     FreeHashTable(bl->domains);
+    FreeHashTable(bl->sni_domains);
 
     int_entry_t *entry_i, *tmp_i;
     HASH_ITER(hh, bl->uids, entry_i, tmp_i) {
@@ -349,6 +390,32 @@ static char* get_second_level_domain(const char *domain) {
         return (char*)domain;
 
     return dot + 1;
+}
+
+/* ******************************************************* */
+
+bool blacklist_match_sni(const blacklist_t *bl, const char *domain) {
+    // Keep in sync with MatchList.matchesHost - supports suffix matching
+    HashTable* ht = bl->sni_domains;
+    HTItem *entry = NULL;
+
+    if(strncmp(domain, "www.", 4) == 0)
+        domain += 4;
+
+    // exact domain match
+    entry = HashFind(ht, PTR_KEY(ht, domain));
+    if(entry != NULL)
+        return true;
+
+    // 2nd-level domain match
+    char *domain2 = get_second_level_domain(domain);
+    if(domain2 != domain) {
+        entry = HashFind(ht, PTR_KEY(ht, domain2));
+        if(entry != NULL)
+            return true;
+    }
+
+    return false;
 }
 
 /* ******************************************************* */

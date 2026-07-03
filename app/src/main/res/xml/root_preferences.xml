@@ -65,7 +65,7 @@
             app:title="@string/geolocation"
             app:summary="@string/geolocation_summary"
             app:iconSpaceReserved="false"
-            app:fragment="com.emanuelef.remote_capture.fragments.GeoipSettings" />
+            app:fragment="com.adbye.filter.fragments.GeoipSettings" />
 
         <SwitchPreference
             app:key="tls_decryption"
@@ -115,7 +115,7 @@
             app:title="@string/socks5_proxy"
             app:summary="@string/socks5_summary"
             app:iconSpaceReserved="false"
-            app:fragment="com.emanuelef.remote_capture.fragments.prefs.Socks5Settings" />
+            app:fragment="com.adbye.filter.fragments.prefs.Socks5Settings" />
     </PreferenceCategory>
 
     <PreferenceCategory app:title="@string/capture_prefs" app:iconSpaceReserved="false" >
@@ -166,7 +166,7 @@
             app:title="@string/dns_servers"
             app:summary="@string/dns_servers_summary"
             app:iconSpaceReserved="false"
-            app:fragment="com.emanuelef.remote_capture.fragments.prefs.DnsSettings" />
+            app:fragment="com.adbye.filter.fragments.prefs.DnsSettings" />
 
         <SwitchPreference
             app:key="start_at_boot"

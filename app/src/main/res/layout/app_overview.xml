@@ -70,7 +70,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="0.65"
                 android:textIsSelectable="true"
-                tools:text="com.emanuelef.remote_capture" />
+                tools:text="com.adbye.filter" />
         </TableRow>
 
         <TableRow

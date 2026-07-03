@@ -309,6 +309,12 @@ typedef struct pcapdroid {
 
     struct {
         bool enabled;
+        blacklist_t *list;   // SNI blocklist (ADBye filter lists)
+        blacklist_t *new_list;
+    } adblock;
+
+    struct {
+        bool enabled;
         blacklist_t *list;
         blacklist_t *new_list;
     } tls_decryption;

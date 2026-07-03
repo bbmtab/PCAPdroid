@@ -61,7 +61,7 @@
             tools:text="@string/start_capture_first">
         </TextView>
 
-        <com.emanuelef.remote_capture.views.EmptyRecyclerView
+        <com.adbye.filter.views.EmptyRecyclerView
             android:id="@+id/connections_view"
             android:layout_width="match_parent"
             android:layout_height="0dp"

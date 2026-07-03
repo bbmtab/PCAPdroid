@@ -7,7 +7,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <com.emanuelef.remote_capture.views.EmptyRecyclerView
+    <com.adbye.filter.views.EmptyRecyclerView
         android:id="@+id/payload"
         android:layout_width="match_parent"
         android:layout_height="0dp"

@@ -48,8 +48,20 @@ typedef enum {
     DOMAIN_BLACKLIST,
     IP_BLACKLIST,
     UID_BLACKLIST,
-    COUNTRY_BLACKLIST
+    COUNTRY_BLACKLIST,
+    SNI_BLACKLIST
 } blacklist_type;
+
+typedef struct {
+    struct HashTable *sni_domains;
+    int_entry_t *uids;
+} sni_blacklist_t;
+
+sni_blacklist_t* sni_blacklist_init();
+void sni_blacklist_destroy(sni_blacklist_t *sni_bl);
+int sni_blacklist_add_domain(sni_blacklist_t *sni_bl, const char *domain);
+bool sni_blacklist_match_domain(const sni_blacklist_t *sni_bl, const char *domain);
+void sni_blacklist_get_stats(const sni_blacklist_t *sni_bl, blacklist_stats_t *stats);
 
 typedef struct {
     char *fname;
@@ -81,6 +93,7 @@ int blacklist_load_list_descriptor(blacklist_t *bl, JNIEnv *env, jobject ld);
 bool blacklist_match_ip(blacklist_t *bl, const zdtun_ip_t *ip, int ipver);
 bool blacklist_match_ipstr(blacklist_t *bl, const char *ip);
 bool blacklist_match_domain(blacklist_t *bl, const char *domain);
+bool blacklist_match_sni(const blacklist_t *bl, const char *domain);
 bool blacklist_match_uid(blacklist_t *bl, int uid);
 bool blacklist_match_country(blacklist_t *bl, const char country_code[3]);
 void blacklist_get_stats(const blacklist_t *bl, blacklists_stats_t *stats);

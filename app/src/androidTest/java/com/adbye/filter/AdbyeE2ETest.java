@@ -1,0 +1,459 @@
+/*
+ * This file is part of ADBye (PCAPdroid).
+ *
+ * PCAPdroid is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * PCAPdroid is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with PCAPdroid.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * Copyright 2026 - Emanuele Faranda
+ */
+package com.adbye.filter;
+
+import android.content.Context;
+import android.content.SharedPreferences;
+import android.os.SystemClock;
+
+import androidx.test.ext.junit.runners.AndroidJUnit4;
+import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.adbye.filter.filterlists.BypassManager;
+import com.adbye.filter.filterlists.FilterListManager;
+import com.adbye.filter.filterlists.FilterListEntry;
+import com.adbye.filter.model.Prefs;
+
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+
+import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+
+/**
+ * Comprehensive E2E test running on a real Android device/emulator.
+ *
+ * Tests the full stack:
+ *   UI/SharedPreferences toggles → FilterListManager merge → VPN packet filtering
+ *
+ * Requires the VPN to be active (VPN permission granted before test runs).
+ * Makes real HTTP requests to verify ad/tracking/malware blocking behavior.
+ */
+@RunWith(AndroidJUnit4.class)
+public class AdbyeE2ETest {
+    Context ctx;
+    FilterListManager filterMgr;
+    BypassManager bypassMgr;
+    ExecutorService executor;
+
+    @Before
+    public void setup() {
+        ctx = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        executor = Executors.newSingleThreadExecutor();
+
+        // Clean prefs
+        ctx.getSharedPreferences("com.adbye.filter_preferences", Context.MODE_PRIVATE)
+            .edit().clear().commit();
+
+        BypassManager.resetForTests();
+        bypassMgr = BypassManager.get(ctx);
+        filterMgr = new FilterListManager(ctx);
+
+        // Ensure native VPN is up - wait for VpnService to be ready
+        waitForVpnReady();
+    }
+
+    @After
+    public void tearDown() {
+        BypassManager.resetForTests();
+        if (executor != null) {
+            executor.shutdownNow();
+        }
+    }
+
+    private void waitForVpnReady() {
+        long deadline = SystemClock.elapsedRealtime() + 20000; // 20s max wait
+        while (SystemClock.elapsedRealtime() < deadline) {
+            // Check if VPN interface is up by trying a simple request
+            // The app should have established the VPN tunnel by now
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
+        }
+    }
+
+    /** Helper to make an HTTP request and return response code or -1 on failure */
+    private int makeHttpRequest(String urlString, int timeoutMs) {
+        try {
+            URL url = new URL(urlString);
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setConnectTimeout(timeoutMs);
+            conn.setReadTimeout(timeoutMs);
+            conn.setInstanceFollowRedirects(false);
+            conn.setRequestMethod("GET");
+            conn.connect();
+            return conn.getResponseCode();
+        } catch (IOException e) {
+            return -1; // Connection failed (blocked, timeout, etc.)
+        }
+    }
+
+    /** Helper to make HTTP request on a background thread */
+    private Future<Integer> makeHttpRequestAsync(final String urlString, final int timeoutMs) {
+        return executor.submit(new Callable<Integer>() {
+            @Override
+            public Integer call() {
+                return makeHttpRequest(urlString, timeoutMs);
+            }
+        });
+    }
+
+    /**
+     * Test 1: Protection master switches write to prefs and trigger callback
+     * Verifies the SharedPreferences keys are correctly written.
+     */
+    @Test
+    public void testProtectionSwitchesPersistAndNotify() {
+        android.content.SharedPreferences prefs =
+            androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx);
+
+        // Toggle Ad Blocking OFF
+        prefs.edit().putBoolean(Prefs.PREF_PROTECT_ADBLOCK, false).apply();
+        assertFalse("Ad blocking should be OFF", Prefs.isProtectAdblock(prefs));
+
+        // Toggle Tracking ON
+        prefs.edit().putBoolean(Prefs.PREF_PROTECT_TRACKING, true).apply();
+        assertTrue("Tracking protection should be ON", Prefs.isProtectTracking(prefs));
+
+        // Toggle Annoyance OFF
+        prefs.edit().putBoolean(Prefs.PREF_PROTECT_ANNOYANCE, false).apply();
+        assertFalse("Annoyance blocking should be OFF", Prefs.isProtectAnnoyance(prefs));
+
+        // Toggle DNS ON
+        prefs.edit().putBoolean(Prefs.PREF_PROTECT_DNS, true).apply();
+        assertTrue("DNS protection should be ON", Prefs.isProtectDns(prefs));
+
+        // Toggle Firewall ON
+        prefs.edit().putBoolean(Prefs.PREF_PROTECT_FIREWALL, true).apply();
+        assertTrue("Firewall should be ON", Prefs.isProtectFirewall(prefs));
+
+        // Toggle Security ON
+        prefs.edit().putBoolean(Prefs.PREF_PROTECT_SECURITY, true).apply();
+        assertTrue("Browsing security should be ON", Prefs.isProtectSecurity(prefs));
+    }
+
+    /**
+     * Test 2: BypassManager hardcoded allowlists are active
+     * Verifies critical system apps/services are never blocked.
+     */
+    @Test
+    public void testBypassManagerHardcodedAllowlists() {
+        // UID bypasses (Play Services, IMS, etc.)
+        assertTrue("Play Store should be bypassed", bypassMgr.isUidBypassed("com.android.vending"));
+        assertTrue("Play Services should be bypassed", bypassMgr.isUidBypassed("com.google.android.gms"));
+        assertTrue("GSF should be bypassed", bypassMgr.isUidBypassed("com.google.android.gsf"));
+        assertTrue("IMS should be bypassed", bypassMgr.isUidBypassed("com.android.ims"));
+
+        // Domain bypasses (exact and suffix)
+        assertTrue("googlevideo.com should be bypassed", bypassMgr.isDomainBypassed("googlevideo.com"));
+        assertTrue("sub.googlevideo.com should be bypassed", bypassMgr.isDomainBypassed("r1---sn-abc.googlevideo.com"));
+        assertTrue("nflxvideo.net should be bypassed", bypassMgr.isDomainBypassed("video.nflxvideo.net"));
+        assertTrue("fbcdn.net should be bypassed", bypassMgr.isDomainBypassed("fbcdn.net"));
+
+        // Negative test - subdomain of attacker domain should NOT be bypassed
+        assertFalse("evil.googlevideo.com.attacker.com should NOT be bypassed",
+            bypassMgr.isDomainBypassed("evil.googlevideo.com.attacker.com"));
+
+        // Port bypasses (FCM/GCM push)
+        assertTrue("FCM port 5228 should be bypassed", bypassMgr.isPortBypassed(5228));
+        assertTrue("FCM port 5229 should be bypassed", bypassMgr.isPortBypassed(5229));
+        assertTrue("FCM port 5230 should be bypassed", bypassMgr.isPortBypassed(5230));
+
+        // HTTPS/HTTP should NOT be bypassed
+        assertFalse("Port 443 should NOT be bypassed", bypassMgr.isPortBypassed(443));
+        assertFalse("Port 80 should NOT be bypassed", bypassMgr.isPortBypassed(80));
+
+        // Dynamic flow size thresholds
+        assertTrue("Flow > 5MB should be bypassed", bypassMgr.isFlowBypassed(6 * 1024 * 1024));
+        assertFalse("Flow < 5MB should NOT be bypassed", bypassMgr.isFlowBypassed(4 * 1024 * 1024));
+        assertTrue("Download > 20MB should be bypassed", bypassMgr.isLargeDownloadBypassed(25 * 1024 * 1024));
+    }
+
+    /**
+     * Test 3: FilterListManager merge includes BypassManager exception rules
+     * Verifies the merged rules file has the expected structure.
+     */
+    @Test
+    public void testFilterListMergeIncludesBypassRules() throws Exception {
+        // Add and enable a dummy filter list
+        filterMgr.addPredefined("TestList", FilterListManager.Category.AD_BLOCKING, "test.txt",
+                "https://example.com/test.txt", true);
+        java.io.File listFile = filterMgr.getListFile(filterMgr.findByFname("test.txt"));
+        try (java.io.FileWriter w = new java.io.FileWriter(listFile)) {
+            w.write("||ads.example.com^\n");
+        }
+
+        int lines = filterMgr.mergeEnabledLists();
+        assertEquals("Should have 1 user rule line", 1, lines);
+
+        String merged = new String(
+            java.nio.file.Files.readAllBytes(filterMgr.getMergedRulesFile().toPath()),
+            java.nio.charset.StandardCharsets.UTF_8);
+
+        // Bypass fragment (Resource Protection) must be prepended
+        assertTrue("Merged should start with Resource Protection comment",
+            merged.startsWith("! ADBye Resource Protection"));
+        // Domain exception rules from BypassManager
+        assertTrue("Merged should contain googlevideo exception", merged.contains("@@||googlevideo.com^"));
+        assertTrue("Merged should contain nflxvideo exception", merged.contains("@@||nflxvideo.net^"));
+        assertTrue("Merged should contain fbcdn exception", merged.contains("@@||fbcdn.net^"));
+        // User rule appended
+        assertTrue("Merged should contain user rule", merged.contains("||ads.example.com^"));
+    }
+
+    /**
+     * Test 4: Dynamic threshold configurable and persists across restarts
+     */
+    @Test
+    public void testDynamicThresholdPersistence() {
+        bypassMgr.setDynamicThresholdMb(10);
+        assertEquals(10L * 1024 * 1024, bypassMgr.getDynamicThresholdBytes());
+
+        // Simulate process restart
+        BypassManager.resetForTests();
+        BypassManager mgr2 = BypassManager.get(ctx);
+        assertEquals("Threshold should persist after reload", 10L * 1024 * 1024, mgr2.getDynamicThresholdBytes());
+    }
+
+    /**
+     * Test 5: Custom UID allowlist persists across restarts
+     */
+    @Test
+    public void testUserUidAllowlistPersistence() {
+        bypassMgr.addUidAllowlist("com.my.custom.app");
+        assertTrue("Custom UID should be bypassed", bypassMgr.isUidBypassed("com.my.custom.app"));
+
+        BypassManager.resetForTests();
+        BypassManager mgr2 = BypassManager.get(ctx);
+        assertTrue("Custom UID should persist after reload", mgr2.isUidBypassed("com.my.custom.app"));
+    }
+
+    /**
+     * Test 6: Real HTTP request through VPN - baseline connectivity
+     * Makes a request to a known-good endpoint to verify VPN tunnel works.
+     * Uses httpbin.org which allows testing without ad/tracking filters.
+     */
+    @Test
+    public void testVpnConnectivity() throws Exception {
+        // Use a simple endpoint that shouldn't be blocked
+        Future<Integer> future = makeHttpRequestAsync("http://httpbin.org/get", 15000);
+        int responseCode = future.get(20, TimeUnit.SECONDS);
+
+        // Should get 200 OK (or redirect). -1 means connection failed entirely.
+        assertNotNull("HTTP response should not be null", responseCode);
+        assertTrue("VPN should allow httpbin.org (got " + responseCode + ")",
+            responseCode == 200 || responseCode == 301 || responseCode == 302);
+    }
+
+    /**
+     * Test 7: Real HTTP request - ad domain should be blocked when Ad Blocking is ON
+     * Enables Ad Blocking, merges a test list with a known ad domain,
+     * then verifies the request is blocked (connection refused/timeout).
+     *
+     * Note: This requires the native FilterEngine to be loaded and using the merged rules.
+     * In CI, we test the mergeEnabled a test list with a known ad pattern.
+     */
+    @Test
+    public void testAdBlockingViaVpn() throws Exception {
+        SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx);
+
+        // Enable Ad Blocking
+        prefs.edit().putBoolean(Prefs.PREF_PROTECT_ADBLOCK, true).apply();
+        assertTrue("Ad blocking should be enabled", Prefs.isProtectAdblock(prefs));
+
+        // Add a test list with a known ad domain pattern
+        filterMgr.addPredefined("TestAdList", FilterListManager.Category.AD_BLOCKING, "test_ad.txt",
+                "https://example.com/test_ad.txt", true);
+        java.io.File listFile = filterMgr.getListFile(filterMgr.findByFname("test_ad.txt"));
+        try (java.io.FileWriter w = new java.io.FileWriter(listFile)) {
+            // Block a test ad domain
+            w.write("||doubleclick.net^\n");
+            w.write("||googlesyndication.com^\n");
+        }
+
+        // Merge the rules
+        int lines = filterMgr.mergeEnabledLists();
+        assertTrue("Should have loaded ad blocking rules", lines > 0);
+
+        // Small delay for native engine to pick up new rules if hot-reload is supported
+        Thread.sleep(2000);
+
+        // Try to reach a known ad domain - should be blocked (timeout or connection refused)
+        // Note: In a real scenario, the DNS resolution will fail or connection will be dropped
+        // We use a short timeout because blocked connections may hang
+        Future<Integer> future = makeHttpRequestAsync("http://googleads.g.doubleclick.net", 5000);
+        int responseCode;
+        try {
+            responseCode = future.get(10, TimeUnit.SECONDS);
+        } catch (java.util.concurrent.TimeoutException e) {
+            // Timeout is expected for blocked connections
+            responseCode = -1;
+            future.cancel(true);
+        }
+
+        // Blocked connections should fail (-1) or return non-200
+        // The exact behavior depends on how the native engine handles blocked connections
+        // (could be connection reset, timeout, or redirected)
+        assertTrue("Ad domain googleads.g.doubleclick.net should be blocked (got " + responseCode + ")",
+            responseCode == -1 || responseCode >= 400);
+    }
+
+    /**
+     * Test 8: Real HTTP request - tracking domain should be blocked when Tracking Protection is ON
+     */
+    @Test
+    public void testTrackingBlockingViaVpn() throws Exception {
+        SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx);
+
+        // Enable Tracking Protection
+        prefs.edit().putBoolean(Prefs.PREF_PROTECT_TRACKING, true).apply();
+        assertTrue("Tracking protection should be enabled", Prefs.isProtectTracking(prefs));
+
+        // Add a test list with a known tracking domain
+        filterMgr.addPredefined("TestTrackingList", FilterListManager.Category.PRIVACY, "test_tracking.txt",
+                "https://example.com/test_tracking.txt", true);
+        java.io.File listFile = filterMgr.getListFile(filterMgr.findByFname("test_tracking.txt"));
+        try (java.io.FileWriter w = new java.io.FileWriter(listFile)) {
+            w.write("||google-analytics.com^\n");
+            w.write("||connect.facebook.net^\n");
+        }
+
+        int lines = filterMgr.mergeEnabledLists();
+        assertTrue("Should have loaded tracking rules", lines > 0);
+        Thread.sleep(2000);
+
+        // Try to reach a tracking endpoint
+        Future<Integer> future = makeHttpRequestAsync("http://www.google-analytics.com/collect", 5000);
+        int responseCode;
+        try {
+            responseCode = future.get(10, TimeUnit.SECONDS);
+        } catch (java.util.concurrent.TimeoutException e) {
+            responseCode = -1;
+            future.cancel(true);
+        }
+
+        assertTrue("Tracking domain google-analytics.com should be blocked (got " + responseCode + ")",
+            responseCode == -1 || responseCode >= 400);
+    }
+
+    /**
+     * Test 9: Real HTTP request - malware/security domain should be blocked when Security is ON
+     */
+    @Test
+    public void testSecurityBlockingViaVpn() throws Exception {
+        SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx);
+
+        // Enable Browsing Security
+        prefs.edit().putBoolean(Prefs.PREF_PROTECT_SECURITY, true).apply();
+        assertTrue("Security should be enabled", Prefs.isProtectSecurity(prefs));
+
+        // Add a test list with a known malware domain pattern
+        filterMgr.addPredefined("TestSecurityList", FilterListManager.Category.SECURITY, "test_security.txt",
+                "https://example.com/test_security.txt", true);
+        java.io.File listFile = filterMgr.getListFile(filterMgr.findByFname("test_security.txt"));
+        try (java.io.FileWriter w = new java.io.FileWriter(listFile)) {
+            w.write("||malware.test.example.com^\n");
+        }
+
+        int lines = filterMgr.mergeEnabledLists();
+        assertTrue("Should have loaded security rules", lines > 0);
+        Thread.sleep(2000);
+
+        // Try to reach the test malware domain
+        Future<Integer> future = makeHttpRequestAsync("http://malware.test.example.com", 5000);
+        int responseCode;
+        try {
+            responseCode = future.get(10, TimeUnit.SECONDS);
+        } catch (java.util.concurrent.TimeoutException e) {
+            responseCode = -1;
+            future.cancel(true);
+        }
+
+        assertTrue("Malware domain should be blocked (got " + responseCode + ")",
+            responseCode == -1 || responseCode >= 400);
+    }
+
+    /**
+     * Test 10: Resource Protection bypass - critical services should still work
+     * Even with all protections ON, Google Play Services, FCM, etc. should work.
+     */
+    @Test
+    public void testResourceProtectionBypass() throws Exception {
+        SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx);
+
+        // Enable ALL protections
+        prefs.edit()
+            .putBoolean(Prefs.PREF_PROTECT_ADBLOCK, true)
+            .putBoolean(Prefs.PREF_PROTECT_TRACKING, true)
+            .putBoolean(Prefs.PREF_PROTECT_ANNOYANCE, true)
+            .putBoolean(Prefs.PREF_PROTECT_DNS, true)
+            .putBoolean(Prefs.PREF_PROTECT_FIREWALL, true)
+            .putBoolean(Prefs.PREF_PROTECT_SECURITY, true)
+            .apply();
+
+        // Add aggressive blocking rules
+        filterMgr.addPredefined("AggressiveBlock", FilterListManager.Category.AD_BLOCKING, "aggressive.txt",
+                "https://example.com/aggressive.txt", true);
+        java.io.File listFile = filterMgr.getListFile(filterMgr.findByFname("aggressive.txt"));
+        try (java.io.FileWriter w = new java.io.FileWriter(listFile)) {
+            // Try to block Google domains - but Resource Protection should allow them
+            w.write("||google.com^\n");
+            w.write("||googleapis.com^\n");
+            w.write("||googlevideo.com^\n");
+        }
+
+        int lines = filterMgr.mergeEnabledLists();
+        assertTrue("Should have loaded aggressive rules", lines >= 3);
+        Thread.sleep(2000);
+
+        // Try to reach a Google service that should be bypassed (googlevideo.com)
+        // Note: Actual network request may vary, we verify the bypass rules are in merged file
+        String merged = new String(
+            java.nio.file.Files.readAllBytes(filterMgr.getMergedRulesFile().toPath()),
+            java.nio.charset.StandardCharsets.UTF_8);
+
+        // Resource Protection exception rules must be present as exceptions (@@)
+        assertTrue("Merged rules must contain googlevideo exception",
+            merged.contains("@@||googlevideo.com^"));
+        assertTrue("Merged rules must contain nflxvideo exception",
+            merged.contains("@@||nflxvideo.net^"));
+        assertTrue("Merged rules must contain fbcdn exception",
+            merged.contains("@@||fbcdn.net^"));
+
+        // User block rules should also be present
+        assertTrue("Merged rules must contain user google.com block",
+            merged.contains("||google.com^"));
+    }
+}

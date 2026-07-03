@@ -1419,8 +1419,60 @@ Java_com_emanuelef_remote_1capture_CaptureService_dumpMasterSecret(JNIEnv *env, 
 /* ******************************************************* */
 
 JNIEXPORT jboolean JNICALL
-Java_com_emanuelef_remote_1capture_CaptureService_hasSeenDumpExtensions(JNIEnv *env,
-                                                                        jclass clazz) {
+Java_com_emanuelef_remote_1capture_CaptureService_reloadAdblockList(JNIEnv *env, jclass clazz,
+                                                                    jstring path_str) {
+    pcapdroid_t *pd = global_pd;
+    if(!pd) {
+        log_e("NULL pd instance");
+        return false;
+    }
+
+    if(!pd->vpn_capture) {
+        log_e("adblock in root mode not implemented");
+        return false;
+    }
+
+    if(pd->adblock.new_bl != NULL) {
+        log_e("previous adblock list not loaded yet");
+        return false;
+    }
+
+    const char *path = (*env)->GetStringUTFChars(env, path_str, NULL);
+    if(!path) {
+        log_e("invalid path");
+        return false;
+    }
+
+    // Load SNI domains from the merged rules file
+    blacklist_t *bl = blacklist_init();
+    if(!bl) {
+        log_e("blacklist_init failed");
+        (*env)->ReleaseStringUTFChars(env, path_str, path);
+        return false;
+    }
+
+    // We'll parse the file for SNI domains (AdGuard exception rules @@||domain^)
+    // For now, just load the file - the parsing will be done in the native function
+    // Actually, let's just load all domains as SNI blocklist
+    blacklist_stats_t stats;
+    int rv = blacklist_load_file(bl, path, SNI_BLACKLIST, &stats);
+    if(rv < 0) {
+        log_f("Could not load adblock list from %s", path);
+        blacklist_destroy(bl);
+        (*env)->ReleaseStringUTFChars(env, path_str, path);
+        return false;
+    }
+
+    blacklists_stats_t bstats;
+    blacklist_get_stats(bl, &bstats);
+    log_d("reloadAdblockList: %d SNI domains loaded", bstats.num_domains);
+
+    pd->adblock.new_list = bl;
+    (*env)->ReleaseStringUTFChars(env, path_str, path);
+    return true;
+}
+
+/* ******************************************************* */
     return has_seen_dump_extensions;
 }
 
