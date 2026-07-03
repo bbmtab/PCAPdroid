@@ -41,7 +41,7 @@ public class ProtectionFragment extends Fragment {
         void onProtectionChanged(@NonNull String prefKey, boolean enabled);
     }
 
-    private static class Row {
+    public static class Row {
         final String prefKey;
         final boolean defaultOn;
         final int titleRes;
@@ -138,6 +138,12 @@ public class ProtectionFragment extends Fragment {
                 sw = v.findViewById(R.id.row_switch);
             }
         }
+    }
+
+/** For testing - returns the rows list */
+    @SuppressWarnings("unused")
+    public List<Row> getRows() {
+        return mRows;
     }
 }
 

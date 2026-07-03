@@ -20,6 +20,7 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
+import org.robolectric.util.FragmentController;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -53,7 +54,8 @@ public class ProtectionFragmentTest {
         callback = new RecordingCallback();
         fragment.setCallback(callback);
 
-        // Run onCreate to populate mRows with defaults
+        // Use FragmentController to properly initialize the fragment
+        org.robolectric.util.FragmentController.setupFragment(fragment);
         fragment.onCreate(null);
     }
 
@@ -101,8 +103,8 @@ public class ProtectionFragmentTest {
         // Re-create fragment to re-hydrate
         fragment = new ProtectionFragment();
         fragment.setCallback(callback);
+        FragmentController.setupFragment(fragment);
         fragment.onCreate(null);
-        fragment.onViewCreated(createMockView(), null);
 
         assertFalse(getRow(0).enabled); // ADBLOCK
         assertTrue(getRow(1).enabled);  // TRACKING
@@ -114,8 +116,6 @@ public class ProtectionFragmentTest {
 
     @Test
     public void testToggleWritesToSharedPreferences() {
-        fragment.onViewCreated(createMockView(), null);
-
         // Toggle first row (ADBLOCK) off
         clickSwitch(0);
 
@@ -130,8 +130,6 @@ public class ProtectionFragmentTest {
 
     @Test
     public void testCallbackFiresOnToggle() {
-        fragment.onViewCreated(createMockView(), null);
-
         // Toggle row 0 (ADBLOCK)
         clickSwitch(0);
         assertEquals(1, callback.prefKeys.size());
@@ -147,8 +145,6 @@ public class ProtectionFragmentTest {
 
     @Test
     public void testCallbackNotFiredWhenSameValue() {
-        fragment.onViewCreated(createMockView(), null);
-
         // All defaults are true; toggle off then off again (shouldn't fire twice for same state)
         clickSwitch(0); // true -> false
         int countAfterFirst = callback.prefKeys.size();
@@ -160,8 +156,6 @@ public class ProtectionFragmentTest {
 
     @Test
     public void testRowClickTogglesSwitch() {
-        fragment.onViewCreated(createMockView(), null);
-
         // Click the item view (should toggle the switch)
         clickItem(0);
         assertFalse(prefs.getBoolean(Prefs.PREF_PROTECT_ADBLOCK, true));
@@ -170,8 +164,6 @@ public class ProtectionFragmentTest {
 
     @Test
     public void testSwitchCheckedStateReflectsEnabled() {
-        fragment.onViewCreated(createMockView(), null);
-
         // Initial state: all enabled
         for (int i = 0; i < 6; i++) {
             assertTrue("Switch " + i + " should be checked initially", isSwitchChecked(i));
@@ -185,8 +177,6 @@ public class ProtectionFragmentTest {
 
     @Test
     public void testTitlesAndSubtitlesFromStringRes() {
-        fragment.onViewCreated(createMockView(), null);
-
         // Check that title/subtitle are set from resources and not empty
         for (int i = 0; i < 6; i++) {
             String title = getTitleText(i);
@@ -209,8 +199,8 @@ public class ProtectionFragmentTest {
 
         fragment = new ProtectionFragment();
         fragment.setCallback(callback);
+        FragmentController.setupFragment(fragment);
         fragment.onCreate(null);
-        fragment.onViewCreated(createMockView(), null);
 
         assertFalse(getRow(0).enabled);  // ADBLOCK explicitly false
         assertTrue(getRow(1).enabled);   // TRACKING explicitly true
@@ -222,38 +212,16 @@ public class ProtectionFragmentTest {
 
     // --- Helpers -----------------------------------------------------------
 
-    private View createMockView() {
-        // Inflate the fragment layout and return it
-        return androidx.appcompat.app.AppCompatDelegate.createView(
-            RuntimeEnvironment.getApplication(),
-            R.layout.fragment_protection,
-            null
-        );
+    private View getView() {
+        return fragment.getView();
     }
 
     private int getRowCount() {
-        // We test mRows directly via reflection since it's package-private
-        try {
-            java.lang.reflect.Field f = ProtectionFragment.class.getDeclaredField("mRows");
-            f.setAccessible(true);
-            @SuppressWarnings("unchecked")
-            java.util.List<ProtectionFragment.Row> rows = (java.util.List<ProtectionFragment.Row>) f.get(fragment);
-            return rows.size();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return fragment.getRows().size();
     }
 
     private ProtectionFragment.Row getRow(int i) {
-        try {
-            java.lang.reflect.Field f = ProtectionFragment.class.getDeclaredField("mRows");
-            f.setAccessible(true);
-            @SuppressWarnings("unchecked")
-            java.util.List<ProtectionFragment.Row> rows = (java.util.List<ProtectionFragment.Row>) f.get(fragment);
-            return rows.get(i);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return fragment.getRows().get(i);
     }
 
     private void clickSwitch(int position) {
