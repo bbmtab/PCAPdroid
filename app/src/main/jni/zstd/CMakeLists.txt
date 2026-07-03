@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.18.1)
-project(zstd_jni C)
+project(zstd_jni LANGUAGES C)
 
 if(NOT DEFINED ROOTDIR)
     set(ROOTDIR ${CMAKE_CURRENT_SOURCE_DIR}/../../../../..)
@@ -27,7 +27,9 @@ add_library(zstd_dec SHARED
 # Build decoder only
 target_compile_definitions(zstd_dec PRIVATE
         ZSTD_DISABLE_COMPRESS=1
-        ZSTD_DISABLE_ASM=1)
+        ZSTD_DISABLE_ASM=1
+        ZSTD_NO_STDATOMIC=1
+        PCAPDROID_NO_MEMTRACK=1)
 
 target_include_directories(zstd_dec PRIVATE
         ${ZSTD_ROOT}

@@ -1,0 +1,112 @@
+name: Phase Gate CI
+
+# This is the actual enforcement mechanism for constraint #8 ("Automated
+# CI/CD Emulator Testing"). The local Stop hook (.claude/hooks/
+# verify-phase-gate.sh) only checks code-level wiring + that the release
+# build compiles — it cannot drive an emulator. This workflow is what
+# constraint #8 is actually asking for, and what phase 1/2/3/4 SKILL.md
+# files point to as "CI job" evidence.
+#
+# Adjust: module path if not a single ':app' module, JDK version, and the
+# api-level/profile combo if your target devices differ.
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch: {}
+
+jobs:
+  release-build:
+    name: "Constraint #3 — signed release build (R8/ProGuard on)"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Release build
+        run: ./gradlew assembleRelease --stacktrace
+
+      - name: Upload release APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apk
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+
+  instrumented-tests:
+    name: "Constraints #4/#5/#8 — real emulator, real IPC, no mocks"
+    runs-on: ubuntu-latest
+    needs: release-build
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # Standard workaround for KVM access on GitHub-hosted Ubuntu
+      # runners — required for hardware-accelerated emulator boot.
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: AVD cache
+        uses: actions/cache@v4
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-30-google_apis
+
+      - name: Create AVD snapshot (cache miss only)
+        if: steps.avd-cache.outputs.cache-hit != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: google_apis
+          arch: x86_64
+          profile: pixel_5
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: false
+          script: echo "AVD snapshot created."
+
+      - name: Run instrumented tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          target: google_apis
+          arch: x86_64
+          profile: pixel_5
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: |
+            # Pre-grant the VPN consent dialog. Android's VpnService.prepare()
+            # normally shows an interactive system dialog on first start —
+            # this appops grant lets the instrumented tests start the VPN
+            # without a UiAutomator dialog-click step, which is more
+            # reliable across API levels. If your test suite specifically
+            # needs to test the consent-dialog UX itself, do that in a
+            # separate UiAutomator test that does NOT pre-grant this.
+            adb shell appops set com.adbye.filter ACTIVATE_VPN allow
+            ./gradlew connectedCheck --stacktrace
+
+      - name: Upload test report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: instrumented-test-report
+          path: app/build/reports/androidTests/connected/**

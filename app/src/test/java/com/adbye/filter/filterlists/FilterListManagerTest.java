@@ -95,7 +95,10 @@ public class FilterListManagerTest {
         mgr.addPredefined("on-by-default", FilterListManager.Category.SECURITY, "on.txt",
                 "https://x", true);
 
-        assertEquals(0, mgr.getNumEnabled());
+        // off-by-default should be disabled, on-by-default should be enabled
+        assertEquals(1, mgr.getNumEnabled());
+        assertFalse(mgr.findByFname("off.txt").isEnabled());
+        assertTrue(mgr.findByFname("on.txt").isEnabled());
 
         mgr.setEnabled("off.txt", true);
         assertEquals(2, mgr.getNumEnabled());

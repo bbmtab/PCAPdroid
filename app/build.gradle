@@ -93,7 +93,9 @@ android {
         // needed by robolectric
         unitTests.includeAndroidResources = true
         unitTests.all {
-            systemProperty "java.library.path", "${buildDir}/hostJni"
+            // zstd DLL is built by host-jni task into ${buildDir}/hostJni/Debug (MSVC nests config subdir).
+            // Prepend it so System.loadLibrary("zstd_dec") finds it.
+            systemProperty "java.library.path", "${buildDir}/hostJni/Debug" + java.io.File.pathSeparator + System.getProperty("java.library.path", "")
         }
     }
     namespace = 'com.adbye.filter'
@@ -112,10 +114,43 @@ abstract class BuildHostZstdJniTask extends DefaultTask {
     void build() {
         execOps.exec {
             commandLine 'cmake', '-S', jniSrcDir, '-B', cmakeBuildDir,
-                "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${outputDir}"
+                "-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=${outputDir}",
+                "-DCMAKE_RUNTIME_OUTPUT_DIRECTORY=${outputDir}"
         }
         execOps.exec {
-            commandLine 'cmake', '--build', cmakeBuildDir
+            commandLine 'cmake', '--build', cmakeBuildDir, '--config', 'Debug'
+        }
+        // On Windows MSVC, the DLL may end up in a config-specific subdirectory (e.g., Debug/)
+        // Copy it to the output directory if needed
+        File[] dlls = cmakeBuildDir.listFiles({ file ->
+            (file.name.endsWith('.dll') || file.name.endsWith('.so') || file.name.endsWith('.dylib')) &&
+            file.getParentFile().getName() == 'Debug'
+        } as FileFilter)
+        if (dlls) {
+            dlls.each { File dll ->
+                File dest = new File(outputDir, dll.name)
+                if (!dest.exists() || dll.lastModified() > dest.lastModified()) {
+                    copy {
+                        from dll
+                        into outputDir
+                    }
+                }
+            }
+        }
+        // Also check root cmakeBuildDir for any DLLs
+        File[] rootDlls = cmakeBuildDir.listFiles({ file ->
+            file.name.endsWith('.dll') || file.name.endsWith('.so') || file.name.endsWith('.dylib')
+        } as FileFilter)
+        if (rootDlls) {
+            rootDlls.each { File dll ->
+                File dest = new File(outputDir, dll.name)
+                if (!dest.exists() || dll.lastModified() > dest.lastModified()) {
+                    copy {
+                        from dll
+                        into outputDir
+                    }
+                }
+            }
         }
     }
 }

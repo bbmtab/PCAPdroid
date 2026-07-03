@@ -235,8 +235,11 @@ public class FilterListManager {
     }
     synchronized void endUpdate() {
         mUpdateInProgress = false;
-        mLastUpdate = System.currentTimeMillis();
+        long now = System.currentTimeMillis();
+        mLastUpdate = now;
         mLastUpdateMonotonic = SystemClock.elapsedRealtime();
+        // Mark all entries as up-to-date so getNumUpdated() reflects completion
+        for (FilterListEntry f : mLists) f.setUpdated(now);
         notifyListeners();
     }
 }

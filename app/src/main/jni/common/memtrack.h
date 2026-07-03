@@ -22,7 +22,10 @@
 
 #include <malloc.h>
 #include <string.h>
+
+#if !defined(PCAPDROID_NO_MEMTRACK) && !defined(ZSTD_NO_STDATOMIC)
 #include <stdatomic.h>
+#endif
 
 // Uncomment to track allocations (with a performance impact)
 //#define PCAPDROID_TRACK_ALLOCS
@@ -37,8 +40,14 @@ enum memtrack_scope {
     MEMTRACK_SCOPE_N
 };
 
+#if !defined(PCAPDROID_NO_MEMTRACK)
+
 typedef struct {
+#if !defined(ZSTD_NO_STDATOMIC)
     atomic_size_t scopes[MEMTRACK_SCOPE_N];
+#else
+    size_t scopes[MEMTRACK_SCOPE_N];
+#endif
 } memtrack_t;
 
 extern memtrack_t memtrack;
@@ -137,5 +146,22 @@ static inline void pd_ndpi_free(void *ptr) {
 #define bl_strdup strdup
 
 #endif // PCAPDROID_TRACK_ALLOCS
+
+#else // PCAPDROID_NO_MEMTRACK
+
+// When memtrack is disabled, use standard malloc/free
+#define pd_malloc malloc
+#define pd_calloc calloc
+#define pd_free free
+#define pd_realloc realloc
+#define pd_strdup strdup
+#define pd_strndup strndup
+
+#define bl_malloc malloc
+#define bl_calloc calloc
+#define bl_free free
+#define bl_strdup strdup
+
+#endif // PCAPDROID_NO_MEMTRACK
 
 #endif

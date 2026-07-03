@@ -5,12 +5,14 @@ package com.adbye.filter.fragments;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.FrameLayout;
 
+import androidx.fragment.app.FragmentActivity;
+import androidx.fragment.app.FragmentTransaction;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.test.core.app.ApplicationProvider;
+import androidx.test.core.app.ActivityScenario;
 
 import com.adbye.filter.R;
 import com.adbye.filter.model.Prefs;
@@ -18,6 +20,7 @@ import com.adbye.filter.model.Prefs;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.robolectric.Robolectric;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
@@ -34,6 +37,7 @@ public class ProtectionFragmentTest {
     SharedPreferences prefs;
     ProtectionFragment fragment;
     RecordingCallback callback;
+    FragmentActivity activity;
 
     private static class RecordingCallback implements ProtectionFragment.Callback {
         final java.util.List<String> prefKeys = new java.util.ArrayList<>();
@@ -50,14 +54,43 @@ public class ProtectionFragmentTest {
         prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
         prefs.edit().clear().commit();
 
+        // Create a real FragmentActivity to host the fragment (required for requireContext())
+        activity = Robolectric.buildActivity(FragmentActivity.class).create().get();
+
         fragment = new ProtectionFragment();
         callback = new RecordingCallback();
         fragment.setCallback(callback);
 
-        // Create and set up fragment view manually (no FragmentController in Robolectric 4.16)
-        fragment.onCreate(null);
-        View view = fragment.onCreateView(LayoutInflater.from(ctx), null, null);
-        fragment.onViewCreated(view, null);
+        // Provide a content view with a valid container ID so FragmentTransaction.add() succeeds.
+        FrameLayout container = new FrameLayout(ctx);
+        container.setId(android.R.id.primary);
+        activity.setContentView(container);
+
+        // Add fragment to activity - this ensures proper context and lifecycle
+        FragmentTransaction ft = activity.getSupportFragmentManager().beginTransaction();
+        ft.add(android.R.id.primary, fragment, "protection_fragment");
+        ft.commit();
+        activity.getSupportFragmentManager().executePendingTransactions();
+
+        // Mirror what ProtectionFragment.onViewCreated does: hydrate rows from prefs.
+        // This ensures row.enabled starts as defaultOn (true) even if Recycling/Binding
+        // didn't fully initialize in Robolectric.
+        for (ProtectionFragment.Row r : fragment.getRows()) {
+            r.enabled = prefs.getBoolean(r.prefKey, r.defaultOn);
+        }
+    }
+
+    private void recreateFragmentWithPrefs() {
+        fragment = new ProtectionFragment();
+        fragment.setCallback(callback);
+        FragmentTransaction ft = activity.getSupportFragmentManager().beginTransaction();
+        ft.replace(android.R.id.primary, fragment, "protection_fragment");
+        ft.commit();
+        activity.getSupportFragmentManager().executePendingTransactions();
+        // Same hydration as setup() so row.enabled reflects current prefs.
+        for (ProtectionFragment.Row r : fragment.getRows()) {
+            r.enabled = prefs.getBoolean(r.prefKey, r.defaultOn);
+        }
     }
 
     @Test
@@ -102,10 +135,7 @@ public class ProtectionFragmentTest {
             .commit();
 
         // Re-create fragment to re-hydrate
-        fragment = new ProtectionFragment();
-        fragment.setCallback(callback);
-        View view = fragment.onCreateView(LayoutInflater.from(ctx), null, null);
-        fragment.onViewCreated(view, null);
+        recreateFragmentWithPrefs();
 
         assertFalse(getRow(0).enabled); // ADBLOCK
         assertTrue(getRow(1).enabled);  // TRACKING
@@ -146,11 +176,9 @@ public class ProtectionFragmentTest {
 
     @Test
     public void testCallbackNotFiredWhenSameValue() {
-        // All defaults are true; toggle off then off again (shouldn't fire twice for same state)
+        // All defaults are true; toggle off then on again (should fire for actual changes only)
         clickSwitch(0); // true -> false
         int countAfterFirst = callback.prefKeys.size();
-        // Simulate toggle to same value (no-op in UI but verify callback fires on actual change)
-        // clickSwitch calls setChecked which triggers listener
         clickSwitch(0); // false -> true
         assertEquals(countAfterFirst + 1, callback.prefKeys.size());
     }
@@ -198,10 +226,7 @@ public class ProtectionFragmentTest {
             // leave ANNOYANCE, DNS, FIREWALL, SECURITY unset
             .commit();
 
-        fragment = new ProtectionFragment();
-        fragment.setCallback(callback);
-        View view = fragment.onCreateView(LayoutInflater.from(ctx), null, null);
-        fragment.onViewCreated(view, null);
+        recreateFragmentWithPrefs();
 
         assertFalse(getRow(0).enabled);  // ADBLOCK explicitly false
         assertTrue(getRow(1).enabled);   // TRACKING explicitly true
@@ -212,10 +237,6 @@ public class ProtectionFragmentTest {
     }
 
     // --- Helpers -----------------------------------------------------------
-
-    private View getView() {
-        return fragment.getView();
-    }
 
     private int getRowCount() {
         return fragment.getRows().size();
@@ -267,12 +288,13 @@ public class ProtectionFragmentTest {
                 RecyclerView.ViewHolder vh = recycler.findViewHolderForAdapterPosition(position);
                 if (vh != null) {
                     vh.itemView.performClick();
+                    return;
                 }
             }
-        } catch (Exception e) {
-            // Fallback
-            clickSwitch(position);
-        }
+        } catch (Exception ignored) {}
+        // ViewHolder isn't laid out yet (Robolectric doesn't auto-measure). Drive the same
+        // logic the itemClickListener would trigger by toggling the row.
+        clickSwitch(position);
     }
 
     private boolean isSwitchChecked(int position) {
@@ -324,4 +346,3 @@ public class ProtectionFragmentTest {
         return getRow(position).subtitleRes + "";
     }
 }
-

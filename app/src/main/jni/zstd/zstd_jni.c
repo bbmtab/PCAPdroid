@@ -137,7 +137,7 @@ static jbyteArray decompress_single_shot(JNIEnv *env, jclass io_exc,
  * Returns the decompressed data or null on error (possibly with an IOException thrown).
  */
 JNIEXPORT jbyteArray JNICALL
-Java_com_emanuelef_remote_1capture_ZstdDecoder_decompress(JNIEnv *env, jclass cls, jbyteArray src) {
+Java_com_adbye_filter_ZstdDecoder_nativeDecompress(JNIEnv *env, jclass cls, jbyteArray src) {
     jsize src_len = (*env)->GetArrayLength(env, src);
     jbyte *src_buf = (*env)->GetByteArrayElements(env, src, NULL);
     if (!src_buf)
