@@ -1,4 +1,4 @@
-﻿package com.adbye.filter.pcap_dump;
+package com.adbye.filter.pcap_dump;
 
 import android.content.Context;
 import android.net.Uri;

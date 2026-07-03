@@ -58,7 +58,7 @@ Tugas:
 Constraint:
 - JANGAN simpan private key di file/SharedPrefs
 - Gunakan Android Keystore API untuk penyimpanan key
-- Leaf cert validity: 1 hari saja (minimize risk kalau bocor)
+- Leaf cert validity: 365 hari
 
 ### FASE 3 — Local MITM Proxy Server
 ✅ Buat file baru: `core/proxy/LocalHttpsProxy.kt`

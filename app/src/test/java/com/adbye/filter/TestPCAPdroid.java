@@ -1,4 +1,4 @@
-﻿package com.adbye.filter;
+package com.adbye.filter;
 
 import org.robolectric.TestLifecycleApplication;
 

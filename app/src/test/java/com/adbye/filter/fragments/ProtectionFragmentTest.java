@@ -1,4 +1,4 @@
-﻿/*
+/*
  * This file is part of ADBye (PCAPdroid).
  */
 package com.adbye.filter.fragments;

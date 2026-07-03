@@ -1,4 +1,4 @@
-﻿/*
+/*
  * The MIT License
  *
  * Copyright (c) 2013 Edin Dazdarevic (edin.dazdarevic@gmail.com)

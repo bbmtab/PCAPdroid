@@ -1,4 +1,4 @@
-﻿/*
+/*
  * This file is part of ADBye (PCAPdroid).
  *
  * Protection tab â€” AdGuard-style master switches (6 toggles).

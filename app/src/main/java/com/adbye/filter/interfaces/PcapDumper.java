@@ -1,4 +1,4 @@
-﻿package com.adbye.filter.interfaces;
+package com.adbye.filter.interfaces;
 
 import java.io.IOException;
 

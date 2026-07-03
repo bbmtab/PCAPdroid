@@ -1,4 +1,4 @@
-﻿package com.adbye.filter.activities;
+package com.adbye.filter.activities;
 
 import android.content.Context;
 import android.content.SharedPreferences;
