@@ -5,6 +5,8 @@ package com.adbye.filter.fragments;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.view.LayoutInflater;
+import android.view.LayoutInflater;
 import android.view.View;
 
 import androidx.preference.PreferenceManager;
@@ -20,7 +22,6 @@ import org.junit.runner.RunWith;
 import org.robolectric.RobolectricTestRunner;
 import org.robolectric.RuntimeEnvironment;
 import org.robolectric.annotation.Config;
-import org.robolectric.util.FragmentController;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -46,7 +47,7 @@ public class ProtectionFragmentTest {
 
     @Before
     public void setup() {
-        ctx = ApplicationProvider.getApplicationContext();
+        ctx = RuntimeEnvironment.getApplication();
         prefs = PreferenceManager.getDefaultSharedPreferences(ctx);
         prefs.edit().clear().commit();
 
@@ -54,9 +55,9 @@ public class ProtectionFragmentTest {
         callback = new RecordingCallback();
         fragment.setCallback(callback);
 
-        // Use FragmentController to properly initialize the fragment
-        org.robolectric.util.FragmentController.setupFragment(fragment);
-        fragment.onCreate(null);
+        // Create and set up fragment view manually (no FragmentController in Robolectric 4.16)
+        View view = fragment.onCreateView(LayoutInflater.from(ctx), null, null);
+        fragment.onViewCreated(view, null);
     }
 
     @Test
@@ -103,8 +104,8 @@ public class ProtectionFragmentTest {
         // Re-create fragment to re-hydrate
         fragment = new ProtectionFragment();
         fragment.setCallback(callback);
-        FragmentController.setupFragment(fragment);
-        fragment.onCreate(null);
+        View view = fragment.onCreateView(LayoutInflater.from(ctx), null, null);
+        fragment.onViewCreated(view, null);
 
         assertFalse(getRow(0).enabled); // ADBLOCK
         assertTrue(getRow(1).enabled);  // TRACKING
@@ -199,8 +200,8 @@ public class ProtectionFragmentTest {
 
         fragment = new ProtectionFragment();
         fragment.setCallback(callback);
-        FragmentController.setupFragment(fragment);
-        fragment.onCreate(null);
+        View view = fragment.onCreateView(LayoutInflater.from(ctx), null, null);
+        fragment.onViewCreated(view, null);
 
         assertFalse(getRow(0).enabled);  // ADBLOCK explicitly false
         assertTrue(getRow(1).enabled);   // TRACKING explicitly true
