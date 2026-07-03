@@ -81,6 +81,7 @@
 - [ ] **⚙️ Testing Gate:**
   * *E2E Test:* Install both ADBye and the modified MITM addon. Enable HTTPS filtering.
   * *Browser Test:* Visit `adblock-tester.com` or `d3ward.github.io/toolz/adblock`. Verify cosmetic rules (hiding empty ad containers) and scriptlets are successfully executed inside the page HTML.
+  Leaf cert validity: 365 hari
 
 ---
 

@@ -87,7 +87,7 @@ public class FirewallActivity extends BaseActivity {
                     return EditListFragment.newInstance(ListInfo.Type.FIREWALL_WHITELIST);
                 case POS_PROTECTION:
                     ProtectionFragment pf = new ProtectionFragment();
-                    pf.setCallback(this::onProtectionChanged);
+                    pf.setCallback(FirewallActivity.this::onProtectionChanged);
                     return pf;
             }
         }
