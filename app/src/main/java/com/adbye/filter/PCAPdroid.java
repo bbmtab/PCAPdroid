@@ -31,6 +31,7 @@ import androidx.annotation.NonNull;
 import androidx.preference.PreferenceManager;
 
 import com.adbye.filter.activities.ErrorActivity;
+import com.adbye.filter.filterlists.FilterListManager;
 import com.adbye.filter.model.Blocklist;
 import com.adbye.filter.model.CtrlPermissions;
 import com.adbye.filter.model.MatchList;
