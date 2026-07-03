@@ -6,7 +6,6 @@ package com.adbye.filter.fragments;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.view.LayoutInflater;
-import android.view.LayoutInflater;
 import android.view.View;
 
 import androidx.preference.PreferenceManager;
@@ -56,6 +55,7 @@ public class ProtectionFragmentTest {
         fragment.setCallback(callback);
 
         // Create and set up fragment view manually (no FragmentController in Robolectric 4.16)
+        fragment.onCreate(null);
         View view = fragment.onCreateView(LayoutInflater.from(ctx), null, null);
         fragment.onViewCreated(view, null);
     }
