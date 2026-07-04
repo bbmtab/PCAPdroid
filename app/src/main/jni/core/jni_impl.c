@@ -1473,23 +1473,4 @@ Java_com_emanuelef_remote_1capture_CaptureService_reloadAdblockList(JNIEnv *env,
 }
 
 /* ******************************************************* */
-    return has_seen_dump_extensions;
-}
-
-/* ******************************************************* */
-
-JNIEXPORT jboolean JNICALL
-Java_com_emanuelef_remote_1capture_CaptureService_extractKeylogFromPcapng(JNIEnv *env, jclass clazz,
-                    jstring pcapng_path, jstring out_path
-) {
-    const char *pcapng_s = (*env)->GetStringUTFChars(env, pcapng_path, 0);
-    const char *out_s = (*env)->GetStringUTFChars(env, out_path, 0);
-
-    bool rv = pcapng_to_keylog(pcapng_s, out_s);
-
-    (*env)->ReleaseStringUTFChars(env, out_path, out_s);
-    (*env)->ReleaseStringUTFChars(env, pcapng_path, pcapng_s);
-    return rv;
-}
-
 #endif // ANDROID
