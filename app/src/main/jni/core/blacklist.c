@@ -34,6 +34,11 @@ typedef struct {
     UT_hash_handle hh;
 } app_allowlist_t;
 
+struct int_entry {
+    int key;
+    UT_hash_handle hh;
+};
+
 struct blacklist {
     struct HashTable *domains;
     int_entry_t *uids;
