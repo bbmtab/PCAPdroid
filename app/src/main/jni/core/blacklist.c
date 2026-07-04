@@ -29,11 +29,6 @@ typedef struct {
 } country_entry_t;
 
 typedef struct {
-    int key;
-    UT_hash_handle hh;
-} int_entry_t;
-
-typedef struct {
     int uid;
     blacklist_t *allowlist;
     UT_hash_handle hh;

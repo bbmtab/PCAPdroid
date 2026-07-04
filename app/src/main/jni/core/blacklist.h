@@ -52,6 +52,12 @@ typedef enum {
     SNI_BLACKLIST
 } blacklist_type;
 
+/* Integer hash entry for UID tracking */
+typedef struct {
+    int key;
+    UT_hash_handle hh;
+} int_entry_t;
+
 typedef struct {
     struct HashTable *sni_domains;
     int_entry_t *uids;
