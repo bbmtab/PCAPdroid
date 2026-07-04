@@ -12,7 +12,7 @@
 >
 > Each layer is independently shippable and falls back gracefully if downstream capability is missing.
 >
-> **Status:** ⬜ NOT STARTED (all phases).
+> **Status:** 🟡 IN PROGRESS (Phase 0 nearing completion; Phase 1 pending)
 
 ---
 
@@ -84,6 +84,22 @@
   Leaf cert validity: 365 hari
 
 ---
+
+## 📊 Recent Progress (Updated: 2026-07-04)
+
+**Phase 0 — Plumbing (Near Completion):**
+- ✅ Package rename complete (`com.emanuelef.remote_capture` → `com.adbye.filter`)
+- ✅ FilterListManager implemented with addPredefined/addCustom/setEnabled/findByFname
+- ✅ Filter list merging functional (writes bypass fragment + user rules)
+- ✅ Zstd native decoder integrated (JNI binding + Android build via NDK/CMake)
+- ✅ Protection tab UI skeleton created (6 master toggles in ProtectionFragment)
+- ✅ CI/CD pipeline configured (android-ci.yml + phase-gate-ci.yml) with SDK license acceptance step
+- ✅ VPN permission handling automated via UIAutomator
+- ✅ Emulator boot timeout increased to 20 minutes, using API 30 for faster boot
+- ✅ Added `-debug-init` flag for verbose emulator logs
+- 🔄 CI verification pending (awaiting results of latest run)
+- 🔧 Current Focus: Monitoring CI logs for emulator boot success; if successful, Phase 0 verification will be complete.
+Next step: Upon successful CI run, proceed to Phase 1 (Protection Tab GUI implementation).
 
 ## Non-Negotiable Constraints
 
