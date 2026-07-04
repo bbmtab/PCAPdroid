@@ -1432,7 +1432,7 @@ Java_com_emanuelef_remote_1capture_CaptureService_reloadAdblockList(JNIEnv *env,
         return false;
     }
 
-    if(pd->adblock.new_bl != NULL) {
+    if(pd->adblock.new_list != NULL) {
         log_e("previous adblock list not loaded yet");
         return false;
     }
