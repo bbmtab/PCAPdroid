@@ -99,3 +99,4 @@
 8. **Automated CI/CD Emulator Testing.** Code integration is gated by automated UI/E2E tests running on a CI/CD emulator (e.g., GitHub Actions with UIAutomator/Espresso). 
    - The test must physically install the APK, accept the VPN permission dialog, toggle the Protection switches, and perform real HTTP requests to verify dropping/blocking behavior.
    - Code that passes Unit Tests but fails the Emulator E2E pipeline will be rejected.
+   gh run view --job to check the workflow progress

@@ -106,7 +106,9 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: app-release-standard
-          path: apk/      - name: Start Emulator
+          path: apk/
+
+      - name: Start Emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 36
@@ -118,11 +120,12 @@ jobs:
           disable-animations: false
           script: |
             echo "Waiting for emulator to boot..."
-            adb wait-for-device shell 'while [[ -z  ]]; do sleep 1; done'
+            adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done'
             echo "Emulator booted"
             adb shell settings put global window_animation_scale 0
             adb shell settings put global transition_animation_scale 0
             adb shell settings put global animator_duration_scale 0
+
       - name: Install APK
         run: |
           adb install -r apk/*.apk
@@ -140,6 +143,3 @@ jobs:
         env:
           GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g"
         timeout-minutes: 35
-
-
-

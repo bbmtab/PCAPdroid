@@ -24,3 +24,9 @@ keystore
 
 # Python
 __pycache__
+
+# Local session docs (not for repo — worknotes/progress only)
+progress.md
+todo.md
+fixed.md
+session-*.md
