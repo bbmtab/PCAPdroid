@@ -109,7 +109,7 @@ jobs:
           path: apk/
 
       - name: Start Emulator
-        uses: android-actions/start-emulator@v2
+        uses: android-actions/start-emulator@v1
         with:
           api-level: 36
           arch: x86_64
