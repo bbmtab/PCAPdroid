@@ -145,14 +145,37 @@ jobs:
 
       - name: Install APK
         run: |
-          adb install -r apk/*.apk
+          # The non-KVM swiftshader emulator briefly flips "device offline" right after
+          # boot. wait-for-device blocks until it's back, then retry the install a few
+          # times in case it drops again mid-install. (run: blocks execute as a single
+          # bash script, so a for-loop is fine here -- unlike emulator-runner's script:)
+          adb wait-for-device
+          adb shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done'
+          installed=0
+          for i in 1 2 3 4 5; do
+            if adb install -r apk/*.apk; then
+              echo "APK installed on attempt $i"
+              installed=1
+              break
+            fi
+            echo "Install attempt $i failed, waiting 5s and retrying..."
+            sleep 5
+            adb wait-for-device
+          done
+          if [ "$installed" -ne 1 ]; then
+            echo "ERROR: APK install failed after 5 attempts"
+            exit 1
+          fi
 
       - name: Grant VPN Permission
         run: |
-          adb shell am start -n com.adbye.filter/.activities.MainActivity
-          sleep 3
-          # Accept VPN permission dialog (if shown) - run the AcceptVpnDialogTest UIAutomator test
-          adb shell uiautomator runtest -c com.adbye.filter.ui.AcceptVpnDialogTest .
+          # `uiautomator runtest` was removed from the uiautomator binary around API 24-26,
+          # so it does NOT exist on the API 30 image. Pre-grant the VPN authorization via
+          # appops instead: setting ACTIVATE_VPN=allow makes VpnService.prepare() return
+          # null (already authorized), so no dialog is shown. No UI interaction needed.
+          adb wait-for-device
+          adb shell appops set com.adbye.filter ACTIVATE_VPN allow
+          adb shell appops get com.adbye.filter ACTIVATE_VPN
 
       - name: Run E2E Instrumented Tests
         run: |
