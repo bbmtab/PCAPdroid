@@ -47,7 +47,7 @@ public class AcceptVpnDialogTest {
     private UiDevice device;
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         device = UiDevice.getInstance(InstrumentationRegistry.getInstrumentation());
         // Wake up the device if needed
         device.wakeUp();
@@ -82,7 +82,7 @@ public class AcceptVpnDialogTest {
         }
 
         assertNotNull("VPN permission dialog OK/Allow button not found", okButton);
-        assertTrue("Failed to click VPN permission OK button", okButton.click());
+        okButton.click();
 
         // Wait a moment for the dialog to dismiss
         device.waitForIdle(2000);
