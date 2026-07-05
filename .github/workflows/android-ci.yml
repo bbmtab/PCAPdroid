@@ -111,13 +111,7 @@ jobs:
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Download Release APK
-        uses: actions/download-artifact@v4
-        with:
-          name: app-release-standard
-          path: apk/
-
-      - name: Start Emulator
+      - name: Start Emulator & Run E2E Tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 30
@@ -127,59 +121,40 @@ jobs:
           force-avd-creation: true
           emulator-options: -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -memory 2048 -partition-size 4096 -debug-init -no-metrics
           disable-animations: false
-          # IMPORTANT: android-emulator-runner@v2 runs the script by splitting it on
-          # newlines and executing EACH LINE as its own `/usr/bin/sh -c <line>`. So
-          # every command here MUST be a single self-contained line -- no multi-line
-          # for/while/if blocks, no variables expected to persist across lines.
+          # CRITICAL ARCHITECTURE: android-emulator-runner@v2 boots the emulator, runs
+          # `script:`, then TERMINATES the emulator (step log shows "Terminate Emulator"
+          # -> `adb emu kill`). So ALL emulator-dependent work -- installing the app,
+          # granting the VPN appop, and the gradle instrumented-test run itself -- MUST
+          # live inside this `script:` block. Steps placed after this action execute with
+          # NO device, so any `adb`/`wait-for-device` there blocks forever (this is exactly
+          # what canceled run 28729987723: Install APK hung 39 min on `adb wait-for-device`
+          # until the 50-min job timeout).
+          #
+          # GOTCHA: the action splits `script:` on newlines and runs EACH LINE as its own
+          # `/usr/bin/sh -c <line>`. So every command MUST be a single self-contained line:
+          # no multi-line for/while/if blocks (the `do` line lands alone and parse-errors),
+          # and variables do NOT persist across lines. Use `;` plus `&&`/`||` to keep any
+          # compound construct on ONE physical line.
+          #
+          # The app under test is com.adbye.filter.debug (standardDebug variant has
+          # applicationIdSuffix '.debug'). `connectedStandardDebugAndroidTest` does its own
+          # `adb install -r` of the debug apk then `am instrument`; we pre-install + pre-grant
+          # ACTIVATE_VPN so the reinstall (same package uid -> appops preserved) has the VPN
+          # already authorized, and VpnService.prepare() returns null without a dialog.
           script: |
             echo "Waiting for emulator to finish booting..."
             adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done'
             echo "Emulator booted. Warming up adb connection..."
-            adb shell true 2>/dev/null || (sleep 3 && adb shell true 2>/dev/null) || (sleep 3 && adb shell true 2>/dev/null) || (sleep 3 && adb shell true 2>/dev/null) || true
+            adb shell true 2>/dev/null || (sleep 3 && adb shell true 2>/dev/null) || (sleep 3 && adb shell true 2>/dev/null) || true
             echo "adb warm-up complete"
-            adb shell settings put global window_animation_scale 0 || true
-            adb shell settings put global transition_animation_scale 0 || true
-            adb shell settings put global animator_duration_scale 0 || true
-            echo "Emulator ready, script complete."
+            adb shell settings put global window_animation_scale 0 2>/dev/null || true
+            adb shell settings put global transition_animation_scale 0 2>/dev/null || true
+            adb shell settings put global animator_duration_scale 0 2>/dev/null || true
+            echo "Building + installing the DEBUG app under test (com.adbye.filter.debug)..."
+            GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx4g" ./gradlew :app:installStandardDebug --no-daemon
+            echo "Pre-granting VPN authorization for the DEBUG app under test..."
+            adb shell appops set com.adbye.filter.debug ACTIVATE_VPN allow
+            adb shell appops get com.adbye.filter.debug ACTIVATE_VPN
+            echo "Running E2E instrumented tests on the live emulator..."
+            GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx4g" ./gradlew :app:connectedStandardDebugAndroidTest --no-daemon
           emulator-boot-timeout: 1200
-
-      - name: Install APK
-        run: |
-          # The non-KVM swiftshader emulator briefly flips "device offline" right after
-          # boot. wait-for-device blocks until it's back, then retry the install a few
-          # times in case it drops again mid-install. (run: blocks execute as a single
-          # bash script, so a for-loop is fine here -- unlike emulator-runner's script:)
-          adb wait-for-device
-          adb shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done'
-          installed=0
-          for i in 1 2 3 4 5; do
-            if adb install -r apk/*.apk; then
-              echo "APK installed on attempt $i"
-              installed=1
-              break
-            fi
-            echo "Install attempt $i failed, waiting 5s and retrying..."
-            sleep 5
-            adb wait-for-device
-          done
-          if [ "$installed" -ne 1 ]; then
-            echo "ERROR: APK install failed after 5 attempts"
-            exit 1
-          fi
-
-      - name: Grant VPN Permission
-        run: |
-          # `uiautomator runtest` was removed from the uiautomator binary around API 24-26,
-          # so it does NOT exist on the API 30 image. Pre-grant the VPN authorization via
-          # appops instead: setting ACTIVATE_VPN=allow makes VpnService.prepare() return
-          # null (already authorized), so no dialog is shown. No UI interaction needed.
-          adb wait-for-device
-          adb shell appops set com.adbye.filter ACTIVATE_VPN allow
-          adb shell appops get com.adbye.filter ACTIVATE_VPN
-
-      - name: Run E2E Instrumented Tests
-        run: |
-          ./gradlew :app:connectedStandardDebugAndroidTest --no-daemon
-        env:
-          GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g"
-        timeout-minutes: 35
