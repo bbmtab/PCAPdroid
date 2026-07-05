@@ -119,7 +119,7 @@ jobs:
           arch: x86_64
           profile: pixel_5
           force-avd-creation: true
-          emulator-options: -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -memory 2048 -partition-size 4096 -debug-init -no-metrics
+          emulator-options: -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -memory 1536 -partition-size 4096 -debug-init -no-metrics
           disable-animations: false
           # CRITICAL ARCHITECTURE: android-emulator-runner@v2 boots the emulator, runs
           # `script:`, then TERMINATES the emulator (step log shows "Terminate Emulator"
@@ -151,7 +151,7 @@ jobs:
             # completed -- `installStandardDebug` -> InstallException. So block until `pm`
             # answers 3x in a row (bounded to 90 x 2s = 180s), and FAIL loud (test $n -ge 3)
             # if it never stabilizes instead of proceeding into a flaky install.
-            adb shell 'i=0; n=0; while [ $i -lt 90 ] && [ $n -lt 3 ]; do i=$((i+1)); pm path android >/dev/null 2>&1 && n=$((n+1)) || n=0; sleep 2; done; test $n -ge 3'
+            adb shell 'i=0; n=0; while [ $i -lt 90 ] && [ $n -lt 3 ]; do i=$((i+1)); pm list packages android >/dev/null 2>&1 && n=$((n+1)) || n=0; sleep 2; done; test $n -ge 3'
             echo "PackageManager stable. Warming up adb connection..."
             adb shell true 2>/dev/null || true
             adb shell settings put global window_animation_scale 0 2>/dev/null || true
@@ -161,10 +161,10 @@ jobs:
             # Retry the install up to 3x in case pm/-r flakes after the gate. The whole
             # construct is ONE physical line so the action's per-line sh -c splits it fine;
             # `[ $ok -eq 1 ]` makes the line fail loud if all 3 attempts bomb.
-            ok=0; for i in 1 2 3; do GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx4g" ./gradlew :app:installStandardDebug --no-daemon && { ok=1; break; }; sleep 10; done; [ $ok -eq 1 ]
+            ok=0; for i in 1 2 3; do GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx2g" ./gradlew :app:installStandardDebug --no-daemon && { ok=1; break; }; sleep 10; done; [ $ok -eq 1 ]
             echo "Pre-granting VPN authorization for the DEBUG app under test..."
             adb shell appops set com.adbye.filter.debug ACTIVATE_VPN allow
             adb shell appops get com.adbye.filter.debug ACTIVATE_VPN
             echo "Running E2E instrumented tests on the live emulator..."
-            GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx4g" ./gradlew :app:connectedStandardDebugAndroidTest --no-daemon
+            GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx2g" ./gradlew :app:connectedStandardDebugAndroidTest --no-daemon
           emulator-boot-timeout: 1200
