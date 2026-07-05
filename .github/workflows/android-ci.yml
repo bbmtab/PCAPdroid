@@ -165,6 +165,18 @@ jobs:
             echo "Pre-granting VPN authorization for the DEBUG app under test..."
             adb shell appops set com.adbye.filter.debug ACTIVATE_VPN allow
             adb shell appops get com.adbye.filter.debug ACTIVATE_VPN
-            echo "Running E2E instrumented tests on the live emulator..."
-            GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx2g" ./gradlew :app:connectedStandardDebugAndroidTest --no-daemon
+            echo "Letting adbd settle before the test task re-fetches device properties..."
+            # WHY: connectedStandardDebugAndroidTest spawns a FRESH ddmlib session that
+            # re-discovers the device and re-fetches ro.build.version.sdk / ABI / density
+            # to run its compatibility check. Right after the 4-min install + appops grant,
+            # the slow swiftshader emulator doesn't answer `getprop` within ddmlib's default
+            # 2s shell timeout -> PropertyFetcher throws ShellCommandUnresponsiveException
+            # -> device is marked "Unknown API Level" -> gradle rejects it as "No compatible
+            # devices" -> BUILD FAILED (this is exactly what failed run b7086a86 at 09:13:40,
+            # ~55s after install succeeded at 09:12:39). A 30s settle lets adbd drain. The
+            # 2x retry below catches a residual race where the property fetch still flakes.
+            sleep 30
+            adb wait-for-device
+            echo "Running E2E instrumented tests on the live emulator (up to 2 attempts)..."
+            ok=0; for i in 1 2; do GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx2g" ./gradlew :app:connectedStandardDebugAndroidTest --no-daemon && { ok=1; break; }; echo "Test attempt $i failed (likely property-fetch race), retrying in 20s..."; sleep 20; adb wait-for-device; done; [ $ok -eq 1 ]
           emulator-boot-timeout: 1200
