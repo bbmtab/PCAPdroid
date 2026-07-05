@@ -115,7 +115,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 30
-          target: google_apis
+          target: default
           arch: x86_64
           profile: pixel_5
           force-avd-creation: true
