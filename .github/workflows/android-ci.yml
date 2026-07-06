@@ -119,7 +119,7 @@ jobs:
           arch: x86_64
           profile: pixel_5
           force-avd-creation: true
-          emulator-options: -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -memory 1536 -partition-size 4096 -debug-init -no-metrics
+          emulator-options: -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -memory 2048 -partition-size 4096 -debug-init -no-metrics
           disable-animations: false
           # CRITICAL ARCHITECTURE: android-emulator-runner@v2 boots the emulator, runs
           # `script:`, then TERMINATES the emulator (step log shows "Terminate Emulator"
@@ -148,20 +148,33 @@ jobs:
             # WHY: on the non-KVM swiftshader emulator, system services (package, settings)
             # keep returning `cmd: Can't find service: package` for *minutes* after
             # sys.boot_completed=1. Run 28732010023 died here at 06:46 -- 4 min *after* boot
-            # completed -- `installStandardDebug` -> InstallException. So block until `pm`
-            # answers 3x in a row (bounded to 90 x 2s = 180s), and FAIL loud (test $n -ge 3)
-            # if it never stabilizes instead of proceeding into a flaky install.
-            adb shell 'i=0; n=0; while [ $i -lt 90 ] && [ $n -lt 3 ]; do i=$((i+1)); pm list packages android >/dev/null 2>&1 && n=$((n+1)) || n=0; sleep 2; done; test $n -ge 3'
-            echo "PackageManager stable. Warming up adb connection..."
-            adb shell true 2>/dev/null || true
+            # completed -- `installStandardDebug` -> InstallException. Run 28764550095 hit the
+            # same error AFTER the gate passed (1-shot `pm list packages` worked but full
+            # `pm install create` from gradle's ddmlib hit "Can't find service: package" 2 min
+            # later). So we now require 5x consecutive `pm list packages -d android` confirms
+            # bounded to 240 x 2s = 480s, AND run a heavy PMS warm-up (cmd package
+            # install-existing) below before gradle takes over.
+            adb shell 'i=0; n=0; while [ $i -lt 240 ] && [ $n -lt 5 ]; do i=$((i+1)); pm list packages -d android >/dev/null 2>&1 && n=$((n+1)) || n=0; sleep 2; done; test $n -ge 5'
+            echo "PackageManager stable. Warming PMS with synthetic install-existing..."
+            # WHY: `pm list packages` only proves PMS is responsive to a LIGHT call -- but
+            # gradle's ddmlib install actually invokes `pm install create` + commit, which
+            # bind PMS heavier. On the AOSP default image (no GMS keeping PMS warm) the heavy
+            # path flakes for ~minutes after boot. We hammer a real PMS state-changing call
+            # (`cmd package install-existing com.android.shell`) up to 5x; one success in a
+            # row is enough to prove PMS is ready for install. If PMS is dead, we proceed
+            # anyway (warn) -- gradle's 5x install retry below will catch the case.
+            ok_w=0; for w in 1 2 3 4 5; do if adb shell cmd package install-existing com.android.shell >/dev/null 2>&1; then ok_w=1; break; fi; sleep 4; done; echo "PMS warmup ok=$ok_w (1 = PMS responded; 0 = proceeding to gradle anyway)"
+            echo "Warming animation settings..."
             adb shell settings put global window_animation_scale 0 2>/dev/null || true
             adb shell settings put global transition_animation_scale 0 2>/dev/null || true
             adb shell settings put global animator_duration_scale 0 2>/dev/null || true
             echo "Building + installing the DEBUG app under test (com.adbye.filter.debug)..."
-            # Retry the install up to 3x in case pm/-r flakes after the gate. The whole
-            # construct is ONE physical line so the action's per-line sh -c splits it fine;
-            # `[ $ok -eq 1 ]` makes the line fail loud if all 3 attempts bomb.
-            ok=0; for i in 1 2 3; do GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx2g" ./gradlew :app:installStandardDebug --no-daemon && { ok=1; break; }; sleep 10; done; [ $ok -eq 1 ]
+            # Retry install up to 5x with 30s gaps. The whole construct is ONE physical line
+            # so the action's per-line sh -c splits it fine. Each gradle invocation re-spawns
+            # ddmlib; on the AOSP image PMS can take a few minutes to fully warm, so 30s gaps
+            # let PMS finish settling between attempts. `[ $ok -eq 1 ]` makes the line fail
+            # loud if all 5 attempts bomb.
+            ok=0; for i in 1 2 3 4 5; do GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx2g" ./gradlew :app:installStandardDebug --no-daemon && { ok=1; break; }; echo "install attempt $i of 5 failed; sleeping 30s"; sleep 30; done; [ $ok -eq 1 ]
             echo "Pre-granting VPN authorization for the DEBUG app under test..."
             adb shell appops set com.adbye.filter.debug ACTIVATE_VPN allow
             adb shell appops get com.adbye.filter.debug ACTIVATE_VPN
@@ -177,6 +190,9 @@ jobs:
             # 2x retry below catches a residual race where the property fetch still flakes.
             sleep 30
             adb wait-for-device
-            echo "Running E2E instrumented tests on the live emulator (up to 2 attempts)..."
-            ok=0; for i in 1 2; do GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx2g" ./gradlew :app:connectedStandardDebugAndroidTest --no-daemon && { ok=1; break; }; echo "Test attempt $i failed (likely property-fetch race), retrying in 20s..."; sleep 20; adb wait-for-device; done; [ $ok -eq 1 ]
+            echo "Running E2E instrumented tests on the live emulator (up to 3 attempts)..."
+            # 3 retries on transient PropertyFetcher races (run b7086a86 hit it at 09:13:40,
+            # ~55s after install succeeded; settle gives adbd drain time before retries).
+            # Each attempt sleeps 30s + adb wait-for-device to let adbd recover.
+            ok=0; for i in 1 2 3; do GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx2g" ./gradlew :app:connectedStandardDebugAndroidTest --no-daemon && { ok=1; break; }; echo "Test attempt $i of 3 failed (likely property-fetch race), sleeping 30s..."; sleep 30; adb wait-for-device; done; [ $ok -eq 1 ]
           emulator-boot-timeout: 1200
