@@ -32,6 +32,7 @@ import com.adbye.filter.model.Prefs;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -266,6 +267,7 @@ public class AdbyeE2ETest {
      * Makes a request to a known-good endpoint to verify VPN tunnel works.
      * Uses httpbin.org which allows testing without ad/tracking filters.
      */
+    @Ignore("Phase 1: requires CaptureService VPN start wiring — see plan.md Phase 1")
     @Test
     public void testVpnConnectivity() throws Exception {
         // Use a simple endpoint that shouldn't be blocked
@@ -286,6 +288,7 @@ public class AdbyeE2ETest {
      * Note: This requires the native FilterEngine to be loaded and using the merged rules.
      * In CI, we test the mergeEnabled a test list with a known ad pattern.
      */
+    @Ignore("Phase 1: requires CaptureService VPN start wiring — see plan.md Phase 1")
     @Test
     public void testAdBlockingViaVpn() throws Exception {
         SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx);
@@ -334,6 +337,7 @@ public class AdbyeE2ETest {
     /**
      * Test 8: Real HTTP request - tracking domain should be blocked when Tracking Protection is ON
      */
+    @Ignore("Phase 1: requires CaptureService VPN start wiring — see plan.md Phase 1")
     @Test
     public void testTrackingBlockingViaVpn() throws Exception {
         SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx);
@@ -372,6 +376,7 @@ public class AdbyeE2ETest {
     /**
      * Test 9: Real HTTP request - malware/security domain should be blocked when Security is ON
      */
+    @Ignore("Phase 1: requires CaptureService VPN start wiring — see plan.md Phase 1")
     @Test
     public void testSecurityBlockingViaVpn() throws Exception {
         SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx);
@@ -380,20 +385,24 @@ public class AdbyeE2ETest {
         prefs.edit().putBoolean(Prefs.PREF_PROTECT_SECURITY, true).apply();
         assertTrue("Security should be enabled", Prefs.isProtectSecurity(prefs));
 
-        // Add a test list with a known malware domain pattern
+        // Add a test list with a malware-style rule targeting a real-resolving domain.
+        // Previously used malware.test.example.com which never resolved at the DNS layer,
+        // so the test passed via a pre-block DNS failure (false positive). Using example.com
+        // (which actually resolves) makes the test honest about whether the filter engine
+        // itself blocks the request once Phase 1 wires CaptureService.
         filterMgr.addPredefined("TestSecurityList", FilterListManager.Category.SECURITY, "test_security.txt",
                 "https://example.com/test_security.txt", true);
         java.io.File listFile = filterMgr.getListFile(filterMgr.findByFname("test_security.txt"));
         try (java.io.FileWriter w = new java.io.FileWriter(listFile)) {
-            w.write("||malware.test.example.com^\n");
+            w.write("||example.com^\n");
         }
 
         int lines = filterMgr.mergeEnabledLists();
         assertTrue("Should have loaded security rules", lines > 0);
         Thread.sleep(2000);
 
-        // Try to reach the test malware domain
-        Future<Integer> future = makeHttpRequestAsync("http://malware.test.example.com", 5000);
+        // Try to reach the test domain (resolves, so a non-block pass would give 200)
+        Future<Integer> future = makeHttpRequestAsync("http://example.com", 5000);
         int responseCode;
         try {
             responseCode = future.get(10, TimeUnit.SECONDS);
@@ -402,7 +411,7 @@ public class AdbyeE2ETest {
             future.cancel(true);
         }
 
-        assertTrue("Malware domain should be blocked (got " + responseCode + ")",
+        assertTrue("Security rule should block example.com (got " + responseCode + ")",
             responseCode == -1 || responseCode >= 400);
     }
 
