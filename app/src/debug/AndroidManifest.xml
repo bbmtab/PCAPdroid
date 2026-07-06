@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!--
+      Debug-only manifest overlay.
+      Allows cleartext HTTP for instrumented tests that use http:// endpoints (e.g., httpbin.org).
+      This mergees into the main manifest for debug builds only; release remains secure.
+    -->
+    <application android:usesCleartextTraffic="true" />
+</manifest>

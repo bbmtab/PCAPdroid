@@ -70,8 +70,9 @@ public class AdbyeE2ETest {
         ctx = InstrumentationRegistry.getInstrumentation().getTargetContext();
         executor = Executors.newSingleThreadExecutor();
 
-        // Clean prefs
-        ctx.getSharedPreferences("com.adbye.filter_preferences", Context.MODE_PRIVATE)
+        // Clean prefs - use getDefaultSharedPreferences to match the app's actual prefs file
+        // (debug build uses com.adbye.filter.debug_preferences via applicationIdSuffix)
+        androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx)
             .edit().clear().commit();
 
         BypassManager.resetForTests();

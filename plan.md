@@ -112,7 +112,7 @@ Next step: Upon successful CI run, proceed to Phase 1 (Protection Tab GUI implem
 5. **JNI & IPC Verification.** For Layer 2 (SNI) and Layer 3 (HTTPS MITM), testing must include actual packet interception. Mocking the PCAPdroid core or Mocking the MitmService IPC is **STRICTLY PROHIBITED** for final validation.
 6. **MITM is opt-in.** Master switch `"pref_global_https_filtering"` must default `false`. CA install + `MitmAddon.needsSetup()` gates the L3 menu.
 7. **Hot-reload.** Toggling any of the 6 master switches in the Protection tab must re-merge rules and reload the engine without restarting `CaptureService`.
-8. **Automated CI/CD Emulator Testing.** Code integration is gated by automated UI/E2E tests running on a CI/CD emulator (e.g., GitHub Actions with UIAutomator/Espresso). 
-   - The test must physically install the APK, accept the VPN permission dialog, toggle the Protection switches, and perform real HTTP requests to verify dropping/blocking behavior.
-   - Code that passes Unit Tests but fails the Emulator E2E pipeline will be rejected.
-   gh run view --job to check the workflow progress
+8. **Automated CI/CD Emulator Testing.** Code integration is gated by automated UI/E2E tests running on a CI/CD emulator (e.g., GitHub Actions with UIAutomator/Espresso).
+   - The test must install the APK on the emulator, accept the VPN permission dialog, toggle the Protection switches, and perform real (non-mocked) HTTP requests to verify dropping/blocking behavior.
+   - This is the final gate: there is no separate physical-device testing step. Code that passes Unit Tests but fails the Emulator E2E pipeline will be rejected.
+   - Use `gh run view --job <job-id>` to check workflow progress.
