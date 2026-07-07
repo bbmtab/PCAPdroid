@@ -4,10 +4,12 @@
 package com.adbye.filter.filterlists;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 
 import androidx.test.core.app.ApplicationProvider;
 
 import com.adbye.filter.filterlists.FilterListManager.OnChangeListener;
+import com.adbye.filter.model.Prefs;
 
 import org.junit.After;
 import org.junit.Before;
@@ -390,6 +392,102 @@ public class FilterListManagerTest {
                 FilterListManager.Category.LANGUAGE,
                 FilterListManager.Category.OTHER,
                 FilterListManager.Category.CUSTOM), mixed);
+    }
+
+    // --- enabledCategories: per-Prefs-flag mapping ----------------------------
+
+    /**
+     * Verifies that {@link FilterListManager#enabledCategories} reflects each
+     * of the {@code Prefs.PREF_PROTECT_*} master toggles that gate filter
+     * merge. The 4 helper-consulted flags map 1:1 to a Category:
+     * <pre>
+     *   pref_protect_adblock    → AD_BLOCKING
+     *   pref_protect_tracking   → PRIVACY
+     *   pref_protect_annoyance  → ANNOYANCE
+     *   pref_protect_security   → SECURITY
+     *</pre>
+     *
+     * <p>For each gated flag we (a) reset all 6 {@code PREF_PROTECT_*} keys to
+     * true in an isolated prefs fixture, (b) flip just the one under test to
+     * false, (c) feed the 4 helper-consulted booleans via the {@link Prefs}
+     * API (so the round-trip from prefs → helper is exercised), and (d) assert
+     * the returned {@code EnumSet} excludes exactly the mapped Category and
+     * contains every other Category per the helper's documented contract:
+     * the always-on trio (LANGUAGE / OTHER / CUSTOM) is present, {@code SOCIAL}
+     * is never gated by a master toggle.
+     */
+    @Test
+    public void testEnabledCategoriesExcludesMappedCategoryPerProtectFlag() throws Exception {
+        // Isolated prefs file so this test does not disturb the global
+        // default-preps fixture that other tests in this class rely on.
+        SharedPreferences prefs = ctx.getSharedPreferences(
+                "test_enabled_categories_isolated",
+                Context.MODE_PRIVATE);
+        prefs.edit().clear().commit();
+
+        String[][] gatedCases = {
+                {Prefs.PREF_PROTECT_ADBLOCK,   "AD_BLOCKING"},
+                {Prefs.PREF_PROTECT_TRACKING,  "PRIVACY"},
+                {Prefs.PREF_PROTECT_ANNOYANCE, "ANNOYANCE"},
+                {Prefs.PREF_PROTECT_SECURITY,  "SECURITY"},
+        };
+
+        for (String[] c : gatedCases) {
+            String offFlagKey = c[0];
+            FilterListManager.Category mapped = FilterListManager.Category.valueOf(c[1]);
+
+            prefs.edit()
+                    .putBoolean(Prefs.PREF_PROTECT_ADBLOCK, true)
+                    .putBoolean(Prefs.PREF_PROTECT_TRACKING, true)
+                    .putBoolean(Prefs.PREF_PROTECT_ANNOYANCE, true)
+                    .putBoolean(Prefs.PREF_PROTECT_DNS, true)
+                    .putBoolean(Prefs.PREF_PROTECT_FIREWALL, true)
+                    .putBoolean(Prefs.PREF_PROTECT_SECURITY, true)
+                    .commit();
+            prefs.edit().putBoolean(offFlagKey, false).commit();
+
+            EnumSet<FilterListManager.Category> result = FilterListManager.enabledCategories(
+                    Prefs.isProtectAdblock(prefs),
+                    Prefs.isProtectTracking(prefs),
+                    Prefs.isProtectAnnoyance(prefs),
+                    Prefs.isProtectSecurity(prefs));
+
+            assertFalse("case " + offFlagKey + " off → mapped Category "
+                            + mapped + " must be absent",
+                    result.contains(mapped));
+
+            for (FilterListManager.Category cat : FilterListManager.Category.values()) {
+                boolean expected;
+                switch (cat) {
+                    case AD_BLOCKING: case PRIVACY: case ANNOYANCE: case SECURITY:
+                        expected = (cat != mapped);
+                        break;
+                    case LANGUAGE: case OTHER: case CUSTOM:
+                        expected = true;
+                        break;
+                    case SOCIAL:
+                        expected = false;
+                        break;
+                    default:
+                        throw new IllegalStateException("unhandled: " + cat);
+                }
+                assertEquals("case " + offFlagKey + " off → Category " + cat,
+                        expected, result.contains(cat));
+            }
+        }
+
+        // ----- DNS / Firewall out-of-scope (degenerate-coverage boundary) -----
+        //
+        // pref_protect_dns and pref_protect_firewall have no parameter in
+        // enabledCategories(...). They gate VPN routing, not filter-merge.
+        // A meaningful test would require varying helper inputs in a way
+        // the current 4-bool signature does not permit. The intent —
+        // "DNS/Firewall do not gate filter-merge" — is enforced statically
+        // by the helper's signature itself: there is no DNS or Firewall
+        // parameter to flip. Per this test's scope contract, no degenerate
+        // test is added here; coverage is the helper's documented contract
+        // and FirewallActivity.onProtectionChanged's reader (which only
+        // pulls the 4 gated booleans).
     }
 }
 
