@@ -113,6 +113,14 @@ public class CaptureService extends VpnService implements Runnable {
     public static final int NOTIFY_ID_APP_BLOCKED = 3;
     private static CaptureService INSTANCE;
     private static boolean HAS_ERROR = false;
+    /**
+     * Visible-for-test hook: flips true the moment {@link Builder#establish()}
+     * returns a non-null {@link ParcelFileDescriptor}, and false again when the
+     * service tears down. E2E tests in {@code AdbyeE2ETest} poll this rather
+     * than guessing with {@code Thread.sleep} whether the TUN dev is up.
+     * Not part of the public API — package-private reads only.
+     */
+    private static volatile boolean sTunnelEstablished = false;
     final ReentrantLock mLock = new ReentrantLock();
     final Condition mCaptureStopped = mLock.newCondition();
     private ParcelFileDescriptor mParcelFileDescriptor;
@@ -536,7 +544,9 @@ public class CaptureService extends VpnService implements Runnable {
 
             try {
                 mParcelFileDescriptor = builder.setSession(CaptureService.VpnSessionName).establish();
+                sTunnelEstablished = mParcelFileDescriptor != null;
             } catch (IllegalArgumentException | IllegalStateException | SecurityException e) {
+                sTunnelEstablished = false;
                 e.printStackTrace();
                 Utils.showToast(this, R.string.vpn_setup_failed);
                 return abortStart();
@@ -1112,6 +1122,25 @@ public class CaptureService extends VpnService implements Runnable {
         return(INSTANCE != null && (INSTANCE.mDecryptionList != null));
     }
 
+    /**
+     * Test-only readiness signal: {@code true} iff the VpnService.Builder
+     * {@code .establish()} call returned a live file descriptor. E2E tests
+     * poll this instead of guessing with {@code Thread.sleep}.
+     */
+    static boolean isTunnelEstablished() {
+        return sTunnelEstablished;
+    }
+
+    /**
+     * Test-only hook: reset the readiness flag back to {@code false} between
+     * E2E test runs. Does NOT close the actual TUN — capture still owns that.
+     * Use only in {@code @After} of instrumented tests in the
+     * {@code com.adbye.filter} package.
+     */
+    static void clearTunnelEstablishedForTests() {
+        sTunnelEstablished = false;
+    }
+
     public static Prefs.PayloadMode getCurPayloadMode() {
         if(INSTANCE == null)
             return Prefs.PayloadMode.MINIMAL;
@@ -1298,6 +1327,7 @@ public class CaptureService extends VpnService implements Runnable {
                 e.printStackTrace();
             }
             mParcelFileDescriptor = null;
+            sTunnelEstablished = false;
         }
 
         // NOTE: join the threads here instead in onDestroy to avoid ANR

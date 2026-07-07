@@ -82,29 +82,57 @@ public class AdbyeE2ETest {
         filterMgr = new FilterListManager(ctx);
 
         // Ensure native VPN is up - wait for VpnService to be ready
-        waitForVpnReady();
+        waitForVpnTunnelEstablished();
     }
 
     @After
     public void tearDown() {
         BypassManager.resetForTests();
+        com.adbye.filter.CaptureService.clearTunnelEstablishedForTests();
         if (executor != null) {
             executor.shutdownNow();
         }
     }
 
-    private void waitForVpnReady() {
-        long deadline = SystemClock.elapsedRealtime() + 20000; // 20s max wait
+    private static final long VPN_READY_TIMEOUT_MS = 60_000;
+    private static final long VPN_READY_POLL_MS = 250;
+
+    /**
+     * Poll {@link com.adbye.filter.CaptureService#isTunnelEstablished()} until
+     * the VpnService.Builder {@code establish()} call has produced a live
+     * ParcelFileDescriptor — or fail loudly after {@link #VPN_READY_TIMEOUT_MS}.
+     *
+     * <p>Replaces the original {@code waitForVpnReady} helper that only slept
+     * without polling any state: on the AOSP non-KVM emulator CI runs on, the
+     * ANR/PMS race could keep the service starting long past the prior 20s
+     * budget, and the test proceeded regardless of VPN state.
+     *
+     * <p>Caller contract: {@code setup()} must have run, which constructs
+     * {@code filterMgr} — but the VPN service is started by the application
+     * before instrumented tests boot, so this just waits for the flag the
+     * service already flips on establish-success. If no service ever started
+     * during instrumentation boot, this times out and the test fails with a
+     * single clear message; no flaky {@code Thread.sleep} masking.
+     */
+    private void waitForVpnTunnelEstablished() {
+        long deadline = SystemClock.elapsedRealtime() + VPN_READY_TIMEOUT_MS;
+        long slept = 0;
         while (SystemClock.elapsedRealtime() < deadline) {
-            // Check if VPN interface is up by trying a simple request
-            // The app should have established the VPN tunnel by now
+            if (com.adbye.filter.CaptureService.isTunnelEstablished()) return;
             try {
-                Thread.sleep(1000);
+                Thread.sleep(VPN_READY_POLL_MS);
+                slept += VPN_READY_POLL_MS;
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                break;
+                throw new AssertionError("interrupted while waiting for VPN tunnel", e);
             }
         }
+        throw new AssertionError(
+                "VPN tunnel not established within " + VPN_READY_TIMEOUT_MS + "ms "
+                        + "(polled every " + VPN_READY_POLL_MS + "ms, slept " + slept + "ms). "
+                        + "CaptureService.isTunnelEstablished() remained false — the app's "
+                        + "CaptureService likely never started before this test, or "
+                        + "establish() threw and was swallowed.");
     }
 
     /** Helper to make an HTTP request and return response code or -1 on failure */
