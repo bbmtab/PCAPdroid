@@ -267,7 +267,7 @@ public class AdbyeE2ETest {
      * Makes a request to a known-good endpoint to verify VPN tunnel works.
      * Uses httpbin.org which allows testing without ad/tracking filters.
      */
-    @Ignore("Phase 1: requires CaptureService VPN start wiring — see plan.md Phase 1")
+    @Ignore("Phase 1.b — VPN-Start Test Harness: requires CaptureService start + tun0 readiness check (see plan.md 'Phase 1.b — VPN-Start Test Harness')")
     @Test
     public void testVpnConnectivity() throws Exception {
         // Use a simple endpoint that shouldn't be blocked
@@ -288,7 +288,7 @@ public class AdbyeE2ETest {
      * Note: This requires the native FilterEngine to be loaded and using the merged rules.
      * In CI, we test the mergeEnabled a test list with a known ad pattern.
      */
-    @Ignore("Phase 1: requires CaptureService VPN start wiring — see plan.md Phase 1")
+    @Ignore("Phase 1.b — VPN-Start Test Harness: requires CaptureService start + tun0 readiness check (see plan.md 'Phase 1.b — VPN-Start Test Harness')")
     @Test
     public void testAdBlockingViaVpn() throws Exception {
         SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx);
@@ -337,7 +337,7 @@ public class AdbyeE2ETest {
     /**
      * Test 8: Real HTTP request - tracking domain should be blocked when Tracking Protection is ON
      */
-    @Ignore("Phase 1: requires CaptureService VPN start wiring — see plan.md Phase 1")
+    @Ignore("Phase 1.b — VPN-Start Test Harness: requires CaptureService start + tun0 readiness check (see plan.md 'Phase 1.b — VPN-Start Test Harness')")
     @Test
     public void testTrackingBlockingViaVpn() throws Exception {
         SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx);
@@ -376,7 +376,7 @@ public class AdbyeE2ETest {
     /**
      * Test 9: Real HTTP request - malware/security domain should be blocked when Security is ON
      */
-    @Ignore("Phase 1: requires CaptureService VPN start wiring — see plan.md Phase 1")
+    @Ignore("Phase 1.b — VPN-Start Test Harness: requires CaptureService start + tun0 readiness check (see plan.md 'Phase 1.b — VPN-Start Test Harness')")
     @Test
     public void testSecurityBlockingViaVpn() throws Exception {
         SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx);

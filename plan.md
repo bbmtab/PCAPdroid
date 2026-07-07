@@ -40,15 +40,25 @@
   * *Unit Test:* Mock 3 filter URLs. Verify `FilterListManager.merge()` correctly combines them into `filesDir/adblock_rules.txt` without duplicates.
   * *Manual Check:* Inspect the generated `.txt` file via Android Studio Device Explorer to ensure standard AdGuard syntax is preserved.
 
-### Phase 1 — GUI: Protection Tab
+### Phase 1 — GUI: Protection Tab (Java + Espresso; no live VPN required)
 *Focus: Exposing master switches to the user and triggering hot-reloads.*
 - [ ] Add 4th tab (`POS_PROTECTION`) to `FirewallActivity`.
 - [ ] Implement `ProtectionFragment` with the 6 master toggles (Ad, Tracking, Annoyance, DNS, Firewall, Security).
 - [ ] Wire UI state to `Prefs.java` (e.g., `pref_protect_adblock`).
 - [ ] Trigger `FilterListManager.mergeEnabledLists()` dynamically when toggles change.
-- [ ] **⚙️ Testing Gate:**
+- [ ] **⚙️ Testing Gate (no live VPN required):**
   * *UI Test (Espresso):* Click toggles and verify `Prefs.java` updates.
-  * *Integration Test:* Toggle "Ad blocking" off while VPN is running. Verify `adblock_rules.txt` is regenerated instantly (excluding Ad lists) *without* restarting `CaptureService`.
+  * Live-VPN verification is **out of scope** here — see Phase 1.b.
+
+### Phase 1.b — VPN-Start Test Harness (the shared prerequisite)
+*Focus: Give the test suite a real running VPN + native filter engine, so VPN-dependent tests prove something instead of assuming it. This is the shared prerequisite for Phase 1's own "Integration Test" gate below AND for re-enabling the 4 tests currently `@Ignore`d from Phase 0 (`testAdBlockingViaVpn`, `testTrackingBlockingViaVpn`, `testVpnConnectivity`, `testSecurityBlockingViaVpn`).*
+- [ ] Test setup (`@Before`): start `CaptureService`, accept VPN permission dialog via UIAutomator (same pattern as prior dialog handling).
+- [ ] Block until `tun0` exists / VPN state == CONNECTED — no fixed sleep as a substitute for a real readiness check.
+- [ ] Load merged rules into the running engine (`reloadAdblockRules`) before any assertion executes.
+- [ ] **⚙️ Testing Gate:**
+  * *Integration Test:* Toggle "Ad blocking" off while VPN is genuinely running. Verify `adblock_rules.txt` regenerates instantly (excluding Ad lists) *without* restarting `CaptureService`.
+  * Pass condition must confirm the tunnel is actually up (state / `tun0` check) — not a file diff or log grep alone. Same false-positive shape as the `testSecurityBlockingViaVpn` DNS issue if skipped.
+  * **Done-signal = both:** this Integration Test must be green *and* the 4 currently `@Ignore`d Phase 0 tests must be un-`@Ignore`d and passing against this harness. "Integration test is green" alone does NOT count as 1.b complete — that is exactly the gap that produced the testSecurityBlockingViaVpn DNS-failure false positive.
 
 ### Phase 2 — Resource Protection (The "Anti-Crash" Layer)
 *Focus: Ensuring critical system traffic and heavy payloads bypass the filtering engine completely.*
