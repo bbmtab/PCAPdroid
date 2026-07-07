@@ -20,6 +20,7 @@ import java.io.FileWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -229,7 +230,7 @@ public class FilterListManagerTest {
                 "||doubleclick.net^\n" +
                 "||ads.example.org^\n");
 
-        int lines = mgr.mergeEnabledLists();
+        int lines = mgr.mergeEnabledLists(EnumSet.allOf(FilterListManager.Category.class));
         assertEquals(2, lines);
 
         String merged = new String(Files.readAllBytes(mgr.getMergedRulesFile().toPath()),
@@ -253,7 +254,7 @@ public class FilterListManagerTest {
         writeListFile(mgr.findByFname("on.txt"),  "||on.example.com^\n");
         writeListFile(mgr.findByFname("off.txt"), "||off.example.com^\n");
 
-        mgr.mergeEnabledLists();
+        mgr.mergeEnabledLists(EnumSet.allOf(FilterListManager.Category.class));
         String merged = new String(Files.readAllBytes(mgr.getMergedRulesFile().toPath()),
                 StandardCharsets.UTF_8);
         assertTrue(merged.contains("||on.example.com^"));
@@ -270,7 +271,7 @@ public class FilterListManagerTest {
         // enabled entry, but file does not exist on disk -> must not throw.
         mgr.addPredefined("nofile", FilterListManager.Category.AD_BLOCKING, "missing.txt", "u", true);
 
-        int lines = mgr.mergeEnabledLists();
+        int lines = mgr.mergeEnabledLists(EnumSet.allOf(FilterListManager.Category.class));
         // No user rules written; calls must succeed.
         assertEquals(0, lines);
 
@@ -289,7 +290,106 @@ public class FilterListManagerTest {
         writeListFile(mgr.findByFname("a.txt"), "||a1.com^\n||a2.com^\n");
         writeListFile(mgr.findByFname("b.txt"), "||b1.com^\n");
 
-        assertEquals(3, mgr.mergeEnabledLists());
+        assertEquals(3, mgr.mergeEnabledLists(EnumSet.allOf(FilterListManager.Category.class)));
+    }
+
+    // --- merge: category-aware gating (Phase 1 Integration Test prerequisite) ---
+
+    /**
+     * Plan.md Phase 1 Integration Test requires that toggling "Ad blocking"
+     * OFF causes {@code adblock_rules.txt} to regenerate <em>excluding</em>
+     * {@code AD_BLOCKING}-categorized lists — i.e. {@link FilterListManager#mergeEnabledLists}
+     * must consult the master switch bound to the list's category, not just
+     * the per-list {@code isEnabled()} flag. This test closes that gap with a
+     * no-VPN assertion.
+     */
+    @Test
+    public void testMergeRespectsMasterCategoryGating() throws Exception {
+        mgr.addPredefined("ad",   FilterListManager.Category.AD_BLOCKING, "ad.txt",   "u", true);
+        mgr.addPredefined("priv", FilterListManager.Category.PRIVACY,     "priv.txt", "u", true);
+        writeListFile(mgr.findByFname("ad.txt"),   "||ad-marker.example^\n");
+        writeListFile(mgr.findByFname("priv.txt"), "||priv-marker.example^\n");
+
+        // Master switches: AD_BLOCKING off, TRACKING (=PRIVACY) on. Plus the
+        // always-on trio (no master gate but listed for completeness).
+        EnumSet<FilterListManager.Category> enabled = EnumSet.of(
+                FilterListManager.Category.PRIVACY,
+                FilterListManager.Category.LANGUAGE,
+                FilterListManager.Category.OTHER,
+                FilterListManager.Category.CUSTOM);
+        assertFalse("Sanity: AD_BLOCKING master is off in this fixture",
+                enabled.contains(FilterListManager.Category.AD_BLOCKING));
+
+        int lines = mgr.mergeEnabledLists(enabled);
+
+        String merged = new String(
+                Files.readAllBytes(mgr.getMergedRulesFile().toPath()),
+                StandardCharsets.UTF_8);
+        assertFalse("AD_BLOCKING-categorized list leaked despite master switch off",
+                merged.contains("ad-marker.example"));
+        assertTrue("PRIVACY-categorized list missing despite master switch on",
+                merged.contains("priv-marker.example"));
+        // Only "priv-marker.example^" should contribute (bypass fragment doesn't
+        // count — see merge's return contract).
+        assertEquals(1, lines);
+    }
+
+    /**
+     * With every category enabled the merge must keep the pre-Phase-1
+     * shape: both per-list enabled entries contribute. Anchors the
+     * signature change so a future regression can't silently drop a
+     * category from the all-on case.
+     */
+    @Test
+    public void testMergeAllCategoriesEnabledMatchesLegacyShape() throws Exception {
+        mgr.addPredefined("ad",   FilterListManager.Category.AD_BLOCKING, "ad.txt",   "u", true);
+        mgr.addPredefined("priv", FilterListManager.Category.PRIVACY,     "priv.txt", "u", true);
+        writeListFile(mgr.findByFname("ad.txt"),   "||a1.example^\n||a2.example^\n");
+        writeListFile(mgr.findByFname("priv.txt"), "||p1.example^\n");
+
+        int lines = mgr.mergeEnabledLists(
+                EnumSet.allOf(FilterListManager.Category.class));
+        assertEquals(3, lines);
+    }
+
+    /**
+     * Confirms the helper that {@code FirewallActivity} uses to translate
+     * top-level {@code Prefs.isProtect*} booleans into the {@link FilterListManager.Category}
+     * set. Categories without a master gate ({@link FilterListManager.Category#LANGUAGE},
+     * {@link FilterListManager.Category#OTHER}, {@link FilterListManager.Category#CUSTOM})
+     * are always present; the four that DO have a gate are present iff their
+     * flag is true.
+     */
+    @Test
+    public void testEnabledCategoriesHelperReflectsMasterToggles() {
+        // All master toggles off — only the no-master-gate categories remain.
+        EnumSet<FilterListManager.Category> allOff = FilterListManager.enabledCategories(
+                false, false, false, false);
+        assertEquals(EnumSet.of(
+                FilterListManager.Category.LANGUAGE,
+                FilterListManager.Category.OTHER,
+                FilterListManager.Category.CUSTOM), allOff);
+
+        // Only AD_BLOCKING on.
+        EnumSet<FilterListManager.Category> adOnly = FilterListManager.enabledCategories(
+                true, false, false, false);
+        assertTrue(adOnly.contains(FilterListManager.Category.AD_BLOCKING));
+        assertFalse(adOnly.contains(FilterListManager.Category.PRIVACY));
+        assertFalse(adOnly.contains(FilterListManager.Category.ANNOYANCE));
+        assertFalse(adOnly.contains(FilterListManager.Category.SECURITY));
+        assertTrue(adOnly.contains(FilterListManager.Category.LANGUAGE));
+        assertTrue(adOnly.contains(FilterListManager.Category.OTHER));
+        assertTrue(adOnly.contains(FilterListManager.Category.CUSTOM));
+
+        // Mixed: TRACKING (=PRIVACY) + SECURITY on, AD + ANNOYANCE off.
+        EnumSet<FilterListManager.Category> mixed = FilterListManager.enabledCategories(
+                false, true, false, true);
+        assertEquals(EnumSet.of(
+                FilterListManager.Category.PRIVACY,
+                FilterListManager.Category.SECURITY,
+                FilterListManager.Category.LANGUAGE,
+                FilterListManager.Category.OTHER,
+                FilterListManager.Category.CUSTOM), mixed);
     }
 }
 

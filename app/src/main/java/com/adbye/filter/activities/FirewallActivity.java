@@ -26,6 +26,7 @@ import android.view.KeyEvent;
 import android.view.View;
 
 import java.io.File;
+import java.util.EnumSet;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
@@ -123,19 +124,34 @@ public class FirewallActivity extends BaseActivity {
      * regenerated {@code adblock_rules.txt} into the running native engine without
      * restarting {@link CaptureService}.
      *
-     * <p>{@link FilterListManager#mergeEnabledLists()} is {@code @WorkerThread}-only, so
+     * <p>{@link FilterListManager#mergeEnabledLists} is {@code @WorkerThread}-only, so
      * the disk write runs on a short-lived worker; thereafter
      * {@link CaptureService#reloadAdblockRules(String)} hot-swaps the new list into the
      * engine. If {@code CaptureService.INSTANCE == null} the reload is a no-op (logged)
      * and the fresh file is picked up at the next VPN start.
+     *
+     * <p>Category-aware filtering (plan.md Phase 1 Integration Test):
+     * only the four Protection master switches bound to filter-merge
+     * (AD_BLOCKING / PRIVACY / ANNOYANCE / SECURITY) gate which lists are
+     * written; the other two (DNS / Firewall) operate at the VPN routing
+     * layer and are not consulted here. Toggling "Ad blocking" OFF therefore
+     * produces a fresh {@code adblock_rules.txt} that excludes
+     * {@code AD_BLOCKING}-categorized entries.
      */
     private void onProtectionChanged(String prefKey, boolean enabled) {
         Log.d(TAG, "Protection changed: " + prefKey + "=" + enabled);
 
         new Thread(() -> {
             try {
+                EnumSet<FilterListManager.Category> cats = FilterListManager.enabledCategories(
+                        Prefs.isProtectAdblock(mPrefs),
+                        Prefs.isProtectTracking(mPrefs),
+                        Prefs.isProtectAnnoyance(mPrefs),
+                        Prefs.isProtectSecurity(mPrefs));
+                Log.d(TAG, "Master switches -> enabled categories: " + cats);
+
                 FilterListManager mgr = new FilterListManager(this);
-                int n = mgr.mergeEnabledLists();
+                int n = mgr.mergeEnabledLists(cats);
                 File merged = mgr.getMergedRulesFile();
                 Log.d(TAG, "mergeEnabledLists wrote " + n + " user lines -> " + merged);
                 CaptureService.reloadAdblockRules(merged.getAbsolutePath());
