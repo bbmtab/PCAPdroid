@@ -81,14 +81,17 @@ public class AdbyeE2ETest {
         bypassMgr = BypassManager.get(ctx);
         filterMgr = new FilterListManager(ctx);
 
-        // Ensure native VPN is up - wait for VpnService to be ready
-        waitForVpnTunnelEstablished();
+        // VPN-needing tests call waitForVpnTunnelEstablished() themselves at
+        // the top of their body. The 6 baseline tests (prefs / bypass / filter
+        // merge) do NOT need VPN — calling here would unjustly block them.
     }
 
     @After
     public void tearDown() {
         BypassManager.resetForTests();
-        com.adbye.filter.CaptureService.clearTunnelEstablishedForTests();
+        if (com.adbye.filter.CaptureService.isTunnelEstablished()) {
+            com.adbye.filter.CaptureService.clearTunnelEstablishedForTests();
+        }
         if (executor != null) {
             executor.shutdownNow();
         }
