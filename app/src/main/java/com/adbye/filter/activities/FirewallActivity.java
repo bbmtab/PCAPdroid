@@ -25,6 +25,8 @@ import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
 
+import java.io.File;
+
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
@@ -32,12 +34,14 @@ import androidx.preference.PreferenceManager;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.adbye.filter.CaptureService;
 import com.adbye.filter.Log;
 import com.adbye.filter.R;
 import com.adbye.filter.Utils;
 import com.adbye.filter.fragments.EditListFragment;
 import com.adbye.filter.fragments.FirewallStatus;
 import com.adbye.filter.fragments.ProtectionFragment;
+import com.adbye.filter.filterlists.FilterListManager;
 import com.adbye.filter.model.ListInfo;
 import com.adbye.filter.model.Prefs;
 import com.google.android.material.tabs.TabLayout;
@@ -114,12 +118,31 @@ public class FirewallActivity extends BaseActivity {
     }
 
     /**
-     * Toggled by {@link ProtectionFragment.Callback}; for now we just log.
-     * Engine hooks (FilterListManager.mergeEnabledLists / CaptureService reloads) are
-     * wired in the next phase â€” see plan.md Phase 1 â†’ Phase 4 handoff.
+     * Toggled by {@link ProtectionFragment.Callback}. Plan.md Phase 1 + constraint #7
+     * (Hot-reload): re-merge filter lists on every master-switch flip and push the
+     * regenerated {@code adblock_rules.txt} into the running native engine without
+     * restarting {@link CaptureService}.
+     *
+     * <p>{@link FilterListManager#mergeEnabledLists()} is {@code @WorkerThread}-only, so
+     * the disk write runs on a short-lived worker; thereafter
+     * {@link CaptureService#reloadAdblockRules(String)} hot-swaps the new list into the
+     * engine. If {@code CaptureService.INSTANCE == null} the reload is a no-op (logged)
+     * and the fresh file is picked up at the next VPN start.
      */
     private void onProtectionChanged(String prefKey, boolean enabled) {
         Log.d(TAG, "Protection changed: " + prefKey + "=" + enabled);
+
+        new Thread(() -> {
+            try {
+                FilterListManager mgr = new FilterListManager(this);
+                int n = mgr.mergeEnabledLists();
+                File merged = mgr.getMergedRulesFile();
+                Log.d(TAG, "mergeEnabledLists wrote " + n + " user lines -> " + merged);
+                CaptureService.reloadAdblockRules(merged.getAbsolutePath());
+            } catch (java.io.IOException e) {
+                Log.e(TAG, "mergeEnabledLists failed for " + prefKey + ": " + e);
+            }
+        }, "AdbyeHotReload").start();
     }
 
     @SuppressLint("NotifyDataSetChanged")

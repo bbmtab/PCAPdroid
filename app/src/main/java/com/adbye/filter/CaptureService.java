@@ -1794,6 +1794,22 @@ public class CaptureService extends VpnService implements Runnable {
         reloadDecryptionList(INSTANCE.mDecryptionList.toListDescriptor());
     }
 
+    /**
+     * Phase 1.a — push a freshly-merged adblock rules file into the running
+     * native filter engine without restarting this service. Defensive: silently
+     * no-ops if the service isn't alive (the merged file will be picked up on
+     * the next VPN start) or if {@code path} is null. The native side
+     * additionally gates on VPN-capture mode (calls in root / pcap-read modes
+     * fail and are logged by {@code jni_impl.c::reloadAdblockList}).
+     */
+    public static void reloadAdblockRules(String path) {
+        if((INSTANCE == null) || (path == null))
+            return;
+
+        Log.i(TAG, "reloading adblock list from " + path);
+        reloadAdblockList(path);
+    }
+
     public static void setFirewallEnabled(boolean enabled) {
         if(INSTANCE == null)
             return;
