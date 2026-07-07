@@ -39,6 +39,7 @@ import org.junit.runner.RunWith;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.EnumSet;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -217,7 +218,7 @@ public class AdbyeE2ETest {
             w.write("||ads.example.com^\n");
         }
 
-        int lines = filterMgr.mergeEnabledLists();
+        int lines = filterMgr.mergeEnabledLists(EnumSet.allOf(FilterListManager.Category.class));
         assertEquals("Should have 1 user rule line", 1, lines);
 
         String merged = new String(
@@ -308,7 +309,7 @@ public class AdbyeE2ETest {
         }
 
         // Merge the rules
-        int lines = filterMgr.mergeEnabledLists();
+        int lines = filterMgr.mergeEnabledLists(EnumSet.allOf(FilterListManager.Category.class));
         assertTrue("Should have loaded ad blocking rules", lines > 0);
 
         // Small delay for native engine to pick up new rules if hot-reload is supported
@@ -355,7 +356,7 @@ public class AdbyeE2ETest {
             w.write("||connect.facebook.net^\n");
         }
 
-        int lines = filterMgr.mergeEnabledLists();
+        int lines = filterMgr.mergeEnabledLists(EnumSet.allOf(FilterListManager.Category.class));
         assertTrue("Should have loaded tracking rules", lines > 0);
         Thread.sleep(2000);
 
@@ -397,7 +398,7 @@ public class AdbyeE2ETest {
             w.write("||example.com^\n");
         }
 
-        int lines = filterMgr.mergeEnabledLists();
+        int lines = filterMgr.mergeEnabledLists(EnumSet.allOf(FilterListManager.Category.class));
         assertTrue("Should have loaded security rules", lines > 0);
         Thread.sleep(2000);
 
@@ -444,7 +445,7 @@ public class AdbyeE2ETest {
             w.write("||googlevideo.com^\n");
         }
 
-        int lines = filterMgr.mergeEnabledLists();
+        int lines = filterMgr.mergeEnabledLists(EnumSet.allOf(FilterListManager.Category.class));
         assertTrue("Should have loaded aggressive rules", lines >= 3);
         Thread.sleep(2000);
 
