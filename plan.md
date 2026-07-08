@@ -65,6 +65,12 @@
 - **Commit A landed** — `44cd001a` + `5431b5a4` (opt-in harness). Run `28866720715` GREEN. 6 pass / 4 skip / 0 fail.
 - **Commit B landed** — `26ac6c95` + `b0569c4b` (fix: tunnel-grain-on-VPN-up). Run `28881766569` GREEN. 7 pass / 4 skip / 0 fail. New test: `testToggleAdBlockingOffRegeneratesRulesWithoutRestart`.
 - Note: `CaptureService.INSTANCE` is null in the instrumented-test emulator (no main-activity launch). The integration test pins file-content/mtime contracts unconditionally; VPN-aware asserts (CaptureService PID + tunnel-established) run only when the tunnel wait succeeds.
+- **Phase 1.b probe landed** — commit `24da7dd9` adds a `ctx.startService(CaptureService)` probe before the `waitForVpnTunnelEstablished` poll, plus an always-on `adb logcat -d` capture + `actions/upload-artifact` post-step in android-ci.yml. Run `28917368931` (attempt 1) RED — but NOT Outcome A or B: the e2e job 3-struck on the existing transient `PropertyFetcher.ShellCommandUnresponsiveException` race (workflow line ~184, the one run `b7086a86` also hit) and never reached `Starting 11 tests`, so no testToggleAd probe ran, no A/B measurement was taken. Rerun kicked (`gh run rerun --failed`); next attempt must reach `Starting 11 tests` before the rubric below is even applicable.
+- **A/B known-signature rubric** — applied to the rerun's filtered logcat artifact (`-s CaptureService:* VpnService:* AndroidRuntime:* System.err:* ActivityManager:*`):
+  - **Outcome A (tunnel established):** a `CaptureService` or `VpnService` line containing "establish" with a non-null/success result, OR `sTunnelEstablished`-related output near the test timestamp.
+  - **Outcome B (real failure):** an `AndroidRuntime:` exception with `CaptureService` or `VpnService` in the stack trace, OR a `VpnService:` line containing "prepare" followed by null/`SecurityException`, OR total silence from `CaptureService`/`VpnService` tags for the full test window (i.e. `onCreate()` never ran at all).
+  - **No-match rule:** if neither signature hits, the report must SAY so explicitly and paste a representative slice of what IS there, not paraphrase.
+  - Reporting discipline: paste the exact matching lines, not a paraphrase. No Commit C, no Phase 1.b.4 proposal, until one of these two signatures is confirmed with real logcat content in hand.
 - **Commit C pending** — un-`@Ignore` the 4 Phase 0 VPN tests against the harness.
 
 ### Phase 2 — Resource Protection (The "Anti-Crash" Layer)
