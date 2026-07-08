@@ -574,8 +574,29 @@ public class AdbyeE2ETest {
         boolean vpnOk = false;
         try {
             waitForVpnTunnelEstablished();
+            // probe2 (success branch): waitForVpnTunnelEstablished() has only TWO
+            // exits -- line ~127 `return` (isTunnelEstablished() == true) or a throw
+            // of AssertionError (interrupt / 60s timeout). Reaching here means the
+            // line-127 return fired, i.e. isTunnelEstablished() WAS true the instant
+            // the helper returned. Log the live flag again so the success path is
+            // recorded via System.err (robust -- the probe1 line survived intact),
+            // not via Log.d which logd can drop under the AM "Slow operation" burst.
+            // Expected on the prepared-app-registered hypothesis: =true (establish()
+            // returned a non-null fd -> tunnel up). If this prints =false, the helper
+            // returned true-then-false (race) and the success inference is unsound.
+            System.err.println("[probe2] post-wait isTunnelEstablished()="
+                    + com.adbye.filter.CaptureService.isTunnelEstablished()
+                    + " (success return path taken)");
             vpnOk = true;
         } catch (AssertionError ae) {
+            // probe2 (catch branch): the helper threw (60s timeout OR interrupt).
+            // Log the live flag at throw time + the assertion message. Expected if
+            // establish() returned null (the de6ede46 outcome): =false + the
+            // "... remained false ..." AssertionError text. Catching this proves the
+            // 161bba62 run did NOT take this path (and pins exactly what it took).
+            System.err.println("[probe2] caught AssertionError isTunnelEstablished()="
+                    + com.adbye.filter.CaptureService.isTunnelEstablished()
+                    + " msg=" + ae.getMessage());
             System.err.println("[testToggleAdBlockingOffRegeneratesRulesWithoutRestart] "
                     + "VPN tunnel not up; skipping PID/tunnel-stable checks: " + ae.getMessage());
         }
