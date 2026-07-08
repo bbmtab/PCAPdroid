@@ -534,6 +534,37 @@ public class AdbyeE2ETest {
                 new com.adbye.filter.model.CaptureSettings(ctx, prefs);
         Intent kickService = new Intent(ctx, com.adbye.filter.CaptureService.class);
         kickService.putExtra("settings", settings);
+
+        // Phase 1.b diagnostic probe — falsify/confirm the leading hypothesis for
+        // why establish() returned null silently in the de6ede46 run (no stack
+        // trace, no vpn_setup_failed toast, no "VPN fd:"/"Invalid VPN fd:" log;
+        // establish() returned null at CaptureService.java:546, not thrown).
+        // The production start path calls VpnService.prepare(ctx) at
+        // CaptureHelper.java:89 BEFORE startForegroundService; this probe
+        // skipped it. Log what prepare() actually returns:
+        //   null      -> consent recognized (app IS the prepared VPN). If
+        //               establish() then STILL returns null, the cause is
+        //               deeper than consent state — grep the full run for
+        //               avc:/TUNSETIFF before any A/B/C decision.
+        //   non-null  -> appops ACTIVATE_VPN allow did NOT satisfy the
+        //               prepared-VPN-app registration establish() checks; THIS
+        //               is why establish() returns null. Fix belongs in the
+        //               test invocation (call prepare() + handle the returned
+        //               consent Intent), not production code.
+        //   threw     -> prepare() itself is denied; its own signature prints
+        //               here (still distinguishes the failure shape).
+        try {
+            Intent prepareResult = android.net.VpnService.prepare(ctx);
+            System.err.println("[probe] VpnService.prepare(ctx) returned "
+                    + (prepareResult == null
+                        ? "null (consent granted)"
+                        : "non-null Intent (consent NOT granted)"));
+        } catch (Exception e) {
+            System.err.println("[probe] VpnService.prepare(ctx) threw "
+                    + e.getClass().getName() + ": " + e.getMessage());
+            e.printStackTrace();
+        }
+
         androidx.core.content.ContextCompat.startForegroundService(ctx, kickService);
 
         // VPN service is not started in instrumented-test context (no main
