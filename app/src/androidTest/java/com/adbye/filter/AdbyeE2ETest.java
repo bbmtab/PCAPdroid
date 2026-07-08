@@ -515,20 +515,26 @@ public class AdbyeE2ETest {
     public void testToggleAdBlockingOffRegeneratesRulesWithoutRestart() throws Exception {
         SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx);
 
-        // Phase 1.b probe — kick CaptureService.onCreate() so sTunnelEstablished
-        // has a chance to flip in CI. The android-ci.yml e2e workflow installs the
-        // APK and grants ACTIVATE_VPN via appops, but never launches
-        // MainActivity, so without this startService the service stays uncreated
-        // and the harness below times out in 60s. If this lets establish()
-        // return a live fd, the `if (vpnOk)` block at the bottom of the test
-        // runs both CaptureService PID + tunnel-established asserts and the
-        // test truly proves the hot-reload contract. If establish() fails
-        // (CI image limitation, missing capability, etc.), the existing
-        // soft-gate below falls through to the file-contract assertions and
-        // we get a stderr log to investigate via the captured logcat artifact.
-        Intent kickService = new Intent();
-        kickService.setClassName(ctx.getPackageName(), "com.adbye.filter.CaptureService");
-        ctx.startService(kickService);
+        // Phase 1.b probe — drive the production start path.
+        //
+        // The bare-Intent probe (commit 24da7dd9) reached CaptureService.onCreate
+        // and got the Builder gate entered, but the Intent had no `"settings"`
+        // extra so CaptureService.java:295 set `mIsAlwaysOnVPN = true`. Logcat
+        // from that run (28917368931) shows establish() was called and returned
+        // null on this CI image; the file-diff asserts carried a green pass
+        // while the tunnel never came up. This probe uses the exact production
+        // start shape (CaptureSettings(ctx, prefs) + Intent.putExtra("settings")
+        // + ContextCompat.startForegroundService) that CaptureHelper.startCaptureOk()
+        // at app/src/main/java/com/adbye/filter/CaptureHelper.java:67-74 uses.
+        //
+        // VpnService.prepare()'s first-install consent dialog is bypassed because
+        // android-ci.yml pre-grants appops ACTIVATE_VPN, so prepare() returns null.
+        // API 30 = no ForegroundServiceStartNotAllowedException risk.
+        com.adbye.filter.model.CaptureSettings settings =
+                new com.adbye.filter.model.CaptureSettings(ctx, prefs);
+        Intent kickService = new Intent(ctx, com.adbye.filter.CaptureService.class);
+        kickService.putExtra("settings", settings);
+        androidx.core.content.ContextCompat.startForegroundService(ctx, kickService);
 
         // VPN service is not started in instrumented-test context (no main
         // activity launch). Try to wait for it briefly; if it's not up,
