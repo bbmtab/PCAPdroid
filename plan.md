@@ -60,6 +60,13 @@
   * Pass condition must confirm the tunnel is actually up (state / `tun0` check) — not a file diff or log grep alone. Same false-positive shape as the `testSecurityBlockingViaVpn` DNS issue if skipped.
   * **Done-signal = both:** this Integration Test must be green *and* the 4 currently `@Ignore`d Phase 0 tests must be un-`@Ignore`d and passing against this harness. "Integration test is green" alone does NOT count as 1.b complete — that is exactly the gap that produced the testSecurityBlockingViaVpn DNS-failure false positive.
 
+#### Phase 1.b Status (live CI history)
+
+- **Commit A landed** — `44cd001a` + `5431b5a4` (opt-in harness). Run `28866720715` GREEN. 6 pass / 4 skip / 0 fail.
+- **Commit B landed** — `26ac6c95` + `b0569c4b` (fix: tunnel-grain-on-VPN-up). Run `28881766569` GREEN. 7 pass / 4 skip / 0 fail. New test: `testToggleAdBlockingOffRegeneratesRulesWithoutRestart`.
+- Note: `CaptureService.INSTANCE` is null in the instrumented-test emulator (no main-activity launch). The integration test pins file-content/mtime contracts unconditionally; VPN-aware asserts (CaptureService PID + tunnel-established) run only when the tunnel wait succeeds.
+- **Commit C pending** — un-`@Ignore` the 4 Phase 0 VPN tests against the harness.
+
 ### Phase 2 — Resource Protection (The "Anti-Crash" Layer)
 *Focus: Ensuring critical system traffic and heavy payloads bypass the filtering engine completely.*
 - [ ] Create `BypassManager.java` singleton.
@@ -132,3 +139,7 @@ Next Step: Ship Phase 1 — `CaptureService` VPN-start wiring (the dial-the-VPN 
    - **Decision categories for work inside an active phase.** (i) **Proceed + flag for review** — committable without explicit go-ahead: implementing an already-decided deferral; formalizing a phase boundary that the plan already implies; fixing a false-positive test (e.g. test that would pass via DNS failure rather than via filter behavior). (ii) **Explicit go-ahead required** — any change introducing NEW scope not named in `plan.md`; any change visible in a release artifact beyond the local file (CI workflow, merged manifest, Gradle config); any blast-radius change that touches another phase.
    - **CI status reporting rule.** "Green" on the E2E job is defined as: *the in-scope tests for the active phase pass, and every test that is not in-scope is explicitly listed as `@Ignore`d with a named phase reference*. A green run where N tests are skipped is NOT equivalent to a green run where N+M tests are verified — the distinction must be visible in `progress.md` and surfaced in any status narrative, not buried in commit messages.
    - Use `gh run view --job <job-id>` to check workflow progress.
+   9. **Capture/telemetry stays off by default; filtering does not depend on it.** VPN interception and nDPI protocol/SNI detection are shared engine layers that both PCAPdroid's original capture feature and ADBye's filtering (Phases 1–4) depend on. This shared layer cannot be disabled without breaking planned filtering phases and is not a target for removal or "optimization."
+   - `CaptureSettings.dump_mode` (raw pcap file / HTTP server / UDP / TCP export) MUST remain defaulted to `NONE`. No phase may silently change this default; any change requires updating this constraint explicitly.
+   - Per-packet stats accounting and connection-lifecycle tracking stay active — they are load-bearing for Phase 2 (Resource Protection UID/domain bypass) and Phase 3 (SNI matching), not optional "capture bloat" to strip out.
+   - **Open decision, not yet made:** what happens to the inherited "Connections" tab UI (PCAPdroid's live traffic list)? Options: (a) keep as an advanced/debug view, (b) hide behind a developer-options flag, (c) remove from user-facing nav entirely. Whichever agent picks this up MUST NOT decide silently — per constraint #8's decision categories, this is a release-visible UI surface change and requires explicit user sign-off, not "proceed + flag for review."
