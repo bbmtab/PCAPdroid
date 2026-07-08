@@ -19,6 +19,7 @@
 package com.adbye.filter;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.SystemClock;
 
@@ -513,6 +514,21 @@ public class AdbyeE2ETest {
     @Test
     public void testToggleAdBlockingOffRegeneratesRulesWithoutRestart() throws Exception {
         SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx);
+
+        // Phase 1.b probe — kick CaptureService.onCreate() so sTunnelEstablished
+        // has a chance to flip in CI. The android-ci.yml e2e workflow installs the
+        // APK and grants ACTIVATE_VPN via appops, but never launches
+        // MainActivity, so without this startService the service stays uncreated
+        // and the harness below times out in 60s. If this lets establish()
+        // return a live fd, the `if (vpnOk)` block at the bottom of the test
+        // runs both CaptureService PID + tunnel-established asserts and the
+        // test truly proves the hot-reload contract. If establish() fails
+        // (CI image limitation, missing capability, etc.), the existing
+        // soft-gate below falls through to the file-contract assertions and
+        // we get a stderr log to investigate via the captured logcat artifact.
+        Intent kickService = new Intent();
+        kickService.setClassName(ctx.getPackageName(), "com.adbye.filter.CaptureService");
+        ctx.startService(kickService);
 
         // VPN service is not started in instrumented-test context (no main
         // activity launch). Try to wait for it briefly; if it's not up,

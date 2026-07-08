@@ -121,6 +121,22 @@
 
 Next Step: Ship Phase 1 — `CaptureService` VPN-start wiring (the dial-the-VPN trigger from `ProtectionFragment` + hot-reload throughput required by constraint #7). Once that lands, remove the four `@Ignore` annotations in `AdbyeE2ETest.java` and rerun the e2e-test job to obtain a true 10/10.
 
+---
+
+## External references
+
+### `L:\test-code\adguard\adguard-project` — read-only, no code reuse
+
+**What this directory is.** A `jadx`-flattened decompile of `L:\test-code\adguard\adguard.apk` (AdGuard for Android v4.12.81, namespace `com.adguard.android`). It is *not* a normal Android source tree — top-level classes are intact (`com/adguard/android/AdguardApplication.java`, `service/vpn/LocalVpnService.java`, `service/protectionstate/*`), but most leaf classes/packages are R8-obfuscated to `p000A` … `p493z7`. The package root is `app/src/main/java/java/*` because the jadx tool snaps every package under a single `java/` parent. **It contains proprietary code from a closed-source commercial app.**
+
+**How ADBye uses this tree.** Read-only structural reference, *zero code lift into this repo*. We study the architectural shape (where the protection state machine lives; how the VpnService fans out to per-concern managers; how lifecycle hooks are wired), and cite those patterns in plan/phase documents. If a future agent or session proposes copying strings, types, or method bodies from this tree into ADBye: stop and ask — that's the wrong direction regardless of the surrounding plan.
+
+**Specifically useful patterns as of 2026-07-08.**
+- `service/protectionstate/C3457a.java` (state-info pair): immutable `(state, cause)` record where `state ∈ {Started, Stopped}` and `cause ∈ {Unknown, VpnRevokedBySystem, RestrictedUser, CannotCreateTunInterface, NativeStackFinishedUnexpectedly, ConfigurationNotReceived}`. ADBye's `CaptureService.ServiceStatus` and `onRevoke()` should be checked for parity with this cause taxonomy before Phase 1.b.4 lands (i.e., our state machine should at least enumerate the same failure causes, even if we emit them as Android `Log.w` lines instead of a typed object).
+- `service/vpn/LocalVpnService.java` (per-concern manager decomposition): holds separate fields for `filteringLogManager`, `firewallManager`, `statisticsManager`, `pcapManager`, `storage`, `bus` (event bus), `nativeStack`, and the `stateInfo` from above. Note ADBye already has `FilterListManager`; whether we need similar factoring for firewall/stats/pcap is a Phase-3+ decision and is **not in scope for Phase 1 / Phase 1.b**.
+
+**Anti-patterns to avoid.** Obfuscated-leaf method bodies + Kotlin-Metadata blobs are not a place to "grab" `Kotlin-style` snippets from — they round-trip through `kotlin.Metadata(d1 = "...")` strings and lose meaning. If we need a Kotlin idiom, refer to AdGuard's *open-source* repos (e.g. `AdGuardHome`, `AdguardDNSLibs`) instead, which are MIT-licensed and reference-clean.
+
 ## Non-Negotiable Constraints
 
 ## Non-Negotiable Constraints (Anti-Fake Green Tests)

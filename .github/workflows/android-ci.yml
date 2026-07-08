@@ -194,5 +194,19 @@ jobs:
             # 3 retries on transient PropertyFetcher races (run b7086a86 hit it at 09:13:40,
             # ~55s after install succeeded; settle gives adbd drain time before retries).
             # Each attempt sleeps 30s + adb wait-for-device to let adbd recover.
-            ok=0; for i in 1 2 3; do GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx2g" ./gradlew :app:connectedStandardDebugAndroidTest --no-daemon && { ok=1; break; }; echo "Test attempt $i of 3 failed (likely property-fetch race), sleeping 30s..."; sleep 30; adb wait-for-device; done; [ $ok -eq 1 ]
+            ok=0; for i in 1 2 3; do GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx2g" ./gradlew :app:connectedStandardDebugAndroidTest --no-daemon && { ok=1; break; }; echo "Test attempt $i of 3 failed (likely property-fetch race), sleeping 30s..."; sleep 30; adb wait-for-device; done; adb logcat -d > "$GITHUB_WORKSPACE/logcat-e2e.txt" 2>&1 || echo "WARN: adb logcat -d failed but continuing"; [ $ok -eq 1 ]
           emulator-boot-timeout: 1200
+
+      # Always-stream device logcat from the e2e run, whether the gradle
+      # task above passed or failed. Phase 1.b probe evidence: a soft-pass
+      # in the file-diff branch is not enough to claim the tunnel came up
+      # — we still need to read whether CaptureService.onCreate ran and
+      # what establish() returned. The post-step upload uses `if: always()`
+      # so this fires in both green and red cases.
+      - name: Upload E2E device logcat
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-logcat
+          path: ${{ github.workspace }}/logcat-e2e.txt
+          retention-days: 7
