@@ -92,9 +92,13 @@ public class AdbyeE2ETest {
     @After
     public void tearDown() {
         BypassManager.resetForTests();
-        if (com.adbye.filter.CaptureService.isTunnelEstablished()) {
-            com.adbye.filter.CaptureService.clearTunnelEstablishedForTests();
-        }
+        // Intentionally do NOT clear CaptureService.sTunnelEstablished here. A second
+        // startForegroundService while the capture is running trips CaptureService.java:271-276
+        // ("Restarting the capture is not supported" -> abortStart -> stopService), so
+        // startVpnForTest reuses a tunnel a prior test started. Clearing the flag between
+        // tests would desync it from the still-running service and force the next VPN test
+        // into the restart-abort path. The flag accurately reflects live tunnel state, so
+        // leaving it set is correct, not cross-test bleed.
         if (executor != null) {
             executor.shutdownNow();
         }
@@ -139,6 +143,65 @@ public class AdbyeE2ETest {
                         + "CaptureService.isTunnelEstablished() remained false — the app's "
                         + "CaptureService likely never started before this test, or "
                         + "establish() threw and was swallowed.");
+    }
+
+    /**
+     * Start the VPN capture service for a test using the exact production
+     * start shape that the Phase 1.b probe2 differential (de6ede46 silent-null
+     * establish() vs 161bba62+62484400 tunnel-up; the only differing line was
+     * the {@code prepare(ctx)} call below) proved is the working invocation.
+     *
+     * <p>Two invariants this preserves:
+     * <ol>
+     *   <li><b>{@code VpnService.prepare(ctx)} before {@code startForegroundService}.</b>
+     *       Calling {@code prepare()} has the side-effect of registering the app
+     *       as the currently-prepared VPN app — the registration
+     *       {@code Builder.establish()} authorizes. {@code appops set ACTIVATE_VPN
+     *       allow} (pre-granted by android-ci.yml) sets the appop <em>mode</em> but
+     *       does <em>not</em> perform that registration; omitting {@code prepare()} is
+     *       exactly what produced the silent-null {@code establish()} in the de6ede46
+     *       run, and calling it is exactly what produced the probe2 tunnel-up verdict.</li>
+     *   <li><b>Fast-path an already-running service.</b> A second
+     *       {@code startForegroundService} while capture is running trips
+     *       CaptureService.java:271-276 ("Restarting the capture is not supported"
+     *       &rarr; {@code abortStart()} &rarr; {@code stopService()}), tearing down
+     *       the live tunnel mid-test. Once any test in the suite has started the
+     *       service, subsequent tests reuse it instead of re-starting. {@code tearDown}
+     *       preserves {@code sTunnelEstablished} across tests for the same reason.</li>
+     * </ol>
+     *
+     * <p>Lives entirely in the test source set; no production code depends on it.
+     */
+    private void startVpnForTest(SharedPreferences prefs) {
+        // (2) fast path: a prior test in this instrumentation run already brought
+        // the service up; reuse the live tunnel instead of re-starting (a restart
+        // hits CaptureService.java:271-276 and tears the tunnel down).
+        if (com.adbye.filter.CaptureService.isServiceActive()) {
+            return;
+        }
+        // (1) production start shape, matching CaptureHelper.startCaptureOk()
+        // (CaptureHelper.java:67-74): CaptureSettings(ctx, prefs) + "settings" extra.
+        com.adbye.filter.model.CaptureSettings settings =
+                new com.adbye.filter.model.CaptureSettings(ctx, prefs);
+        Intent kickService = new Intent(ctx, com.adbye.filter.CaptureService.class);
+        kickService.putExtra("settings", settings);
+
+        // The gate the prior probes skipped. probe2 confirmed prepare() returns
+        // null here (appops ACTIVATE_VPN pre-granted) on the CI image. If it ever
+        // throws or returns non-null, log the signature and still proceed — the
+        // tunnel wait below then fails loudly with a clear timeout rather than a
+        // speculative skip, and the prepare() signature is in the run log.
+        try {
+            Intent prepareResult = android.net.VpnService.prepare(ctx);
+            System.err.println("[startVpnForTest] VpnService.prepare(ctx) returned "
+                    + (prepareResult == null
+                        ? "null (consent granted / app is the prepared-VPN holder)"
+                        : "non-null Intent (consent NOT granted — establish() will return null)"));
+        } catch (Exception e) {
+            System.err.println("[startVpnForTest] VpnService.prepare(ctx) threw "
+                    + e.getClass().getName() + ": " + e.getMessage());
+        }
+        androidx.core.content.ContextCompat.startForegroundService(ctx, kickService);
     }
 
     /** Helper to make an HTTP request and return response code or -1 on failure */
@@ -301,10 +364,29 @@ public class AdbyeE2ETest {
      * Test 6: Real HTTP request through VPN - baseline connectivity
      * Makes a request to a known-good endpoint to verify VPN tunnel works.
      * Uses httpbin.org which allows testing without ad/tracking filters.
+     *
+     * <p>Phase 1.b path-A test: this is the one VPN-dependent test that can
+     * be honestly un-{@code Ignore}d, because it asserts only baseline
+     * connectivity (no blocking). The three blocking tests
+     * (testAdBlockingViaVpn / testTrackingBlockingViaVpn / testSecurityBlockingViaVpn)
+     * stay {@code @Ignore}d for a native-engine reason documented on each —
+     * see plan.md "Phase 1.b Status" &rarr; "Dead adblock gate (tracked defect)".
      */
-    @Ignore("Phase 1.b — VPN-Start Test Harness: requires CaptureService start + tun0 readiness check (see plan.md 'Phase 1.b — VPN-Start Test Harness')")
     @Test
     public void testVpnConnectivity() throws Exception {
+        SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx);
+
+        // Bring the tunnel up using the production start shape proven by the
+        // probe2 differential (prepare() + startForegroundService), then block
+        // until isTunnelEstablished() flips. The tunnel-up assertion below is
+        // what makes this honest: a request that returned 200 while the tunnel
+        // was never up would be a false positive (traffic bypassed the VPN),
+        // not a pass.
+        startVpnForTest(prefs);
+        waitForVpnTunnelEstablished();
+        assertTrue("Tunnel must be established before connectivity is asserted",
+            com.adbye.filter.CaptureService.isTunnelEstablished());
+
         // Use a simple endpoint that shouldn't be blocked
         Future<Integer> future = makeHttpRequestAsync("http://httpbin.org/get", 15000);
         int responseCode = future.get(20, TimeUnit.SECONDS);
@@ -323,7 +405,16 @@ public class AdbyeE2ETest {
      * Note: This requires the native FilterEngine to be loaded and using the merged rules.
      * In CI, we test the mergeEnabled a test list with a known ad pattern.
      */
-    @Ignore("Phase 1.b — VPN-Start Test Harness: requires CaptureService start + tun0 readiness check (see plan.md 'Phase 1.b — VPN-Start Test Harness')")
+    @Ignore("Not a VPN-start problem (Phase 1.b harness is live — see testVpnConnectivity). "
+            + "Blocked until the native adblock gate is armed: pd->adblock.enabled is never "
+            + "assigned true (struct initializer at jni_impl.c:605-648 omits .adblock; the "
+            + "only production .enabled= assignment is pd->firewall.enabled at jni_impl.c:1040). "
+            + "Even if armed, the adblock matcher is TLS-SNI-only (sole call at pcapdroid.c:604 "
+            + "inside case NDPI_PROTOCOL_TLS) and this test drives a plain-HTTP URL, so the "
+            + "matcher never fires regardless. Firewall's blacklist_match_domain (pcapdroid.c:328) "
+            + "achieves HTTP+TLS matching via data->info / check_domain_block_rules; arming "
+            + "adblock that way is a scope decision (constraint #8), not this commit's scope. "
+            + "See plan.md 'Phase 1.b Status' -> 'Dead adblock gate (tracked defect)'.")
     @Test
     public void testAdBlockingViaVpn() throws Exception {
         SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx);
@@ -372,7 +463,14 @@ public class AdbyeE2ETest {
     /**
      * Test 8: Real HTTP request - tracking domain should be blocked when Tracking Protection is ON
      */
-    @Ignore("Phase 1.b — VPN-Start Test Harness: requires CaptureService start + tun0 readiness check (see plan.md 'Phase 1.b — VPN-Start Test Harness')")
+    @Ignore("Not a VPN-start problem (Phase 1.b harness is live — see testVpnConnectivity). "
+            + "Same native-gate defect as testAdBlockingViaVpn: pd->adblock.enabled is never "
+            + "armed (jni_impl.c struct initializer omits .adblock), and the adblock matcher "
+            + "is TLS-SNI-only (pcapdroid.c:604) while this test drives a plain-HTTP URL "
+            + "(http://www.google-analytics.com/collect). The merge produces the rule and the "
+            + "tunnel comes up, but no adblock match fires on HTTP -> test would pass only via "
+            + "a false positive. Arming the gate is a scope decision (constraint #8). "
+            + "See plan.md 'Phase 1.b Status' -> 'Dead adblock gate (tracked defect)'.")
     @Test
     public void testTrackingBlockingViaVpn() throws Exception {
         SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx);
@@ -411,7 +509,16 @@ public class AdbyeE2ETest {
     /**
      * Test 9: Real HTTP request - malware/security domain should be blocked when Security is ON
      */
-    @Ignore("Phase 1.b — VPN-Start Test Harness: requires CaptureService start + tun0 readiness check (see plan.md 'Phase 1.b — VPN-Start Test Harness')")
+    @Ignore("Not a VPN-start problem (Phase 1.b harness is live — see testVpnConnectivity). "
+            + "Same native-gate defect as testAdBlockingViaVpn / testTrackingBlockingViaVpn: "
+            + "pd->adblock.enabled is never armed (jni_impl.c struct initializer omits "
+            + ".adblock) and the adblock matcher is TLS-SNI-only (pcapdroid.c:604) while "
+            + "this test drives a plain-HTTP URL (http://example.com). The earlier "
+            + "malware.test.example.com false positive (passed via DNS failure, not "
+            + "filtering) was fixed by switching to example.com, which resolves — so the "
+            + "test is now honest, which is exactly why it now fails and stays @Ignore'd "
+            + "until the gate is armed (a scope decision, constraint #8). "
+            + "See plan.md 'Phase 1.b Status' -> 'Dead adblock gate (tracked defect)'.")
     @Test
     public void testSecurityBlockingViaVpn() throws Exception {
         SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx);
@@ -515,88 +622,27 @@ public class AdbyeE2ETest {
     public void testToggleAdBlockingOffRegeneratesRulesWithoutRestart() throws Exception {
         SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx);
 
-        // Phase 1.b probe — drive the production start path.
-        //
-        // The bare-Intent probe (commit 24da7dd9) reached CaptureService.onCreate
-        // and got the Builder gate entered, but the Intent had no `"settings"`
-        // extra so CaptureService.java:295 set `mIsAlwaysOnVPN = true`. Logcat
-        // from that run (28917368931) shows establish() was called and returned
-        // null on this CI image; the file-diff asserts carried a green pass
-        // while the tunnel never came up. This probe uses the exact production
-        // start shape (CaptureSettings(ctx, prefs) + Intent.putExtra("settings")
-        // + ContextCompat.startForegroundService) that CaptureHelper.startCaptureOk()
-        // at app/src/main/java/com/adbye/filter/CaptureHelper.java:67-74 uses.
-        //
-        // VpnService.prepare()'s first-install consent dialog is bypassed because
-        // android-ci.yml pre-grants appops ACTIVATE_VPN, so prepare() returns null.
-        // API 30 = no ForegroundServiceStartNotAllowedException risk.
-        com.adbye.filter.model.CaptureSettings settings =
-                new com.adbye.filter.model.CaptureSettings(ctx, prefs);
-        Intent kickService = new Intent(ctx, com.adbye.filter.CaptureService.class);
-        kickService.putExtra("settings", settings);
+        // Phase 1.b path-A: start the VPN via the shared production-shape helper.
+        // This lifts the inline probe1/probe2 code (the prepare() + startForegroundService
+        // + tunnel wait that prior commits carried inside this test) into startVpnForTest,
+        // which this test now shares with testVpnConnectivity. The probe2 differential
+        // (de6ede46 silent-null establish() vs 161bba62+62484400 tunnel-up; the only
+        // differing line was prepare(ctx)) CONFIRMED this invocation brings the tunnel up
+        // — recorded in plan.md "Phase 1.b Status" -> probe2 CONFIRMED.
+        startVpnForTest(prefs);
 
-        // Phase 1.b diagnostic probe — falsify/confirm the leading hypothesis for
-        // why establish() returned null silently in the de6ede46 run (no stack
-        // trace, no vpn_setup_failed toast, no "VPN fd:"/"Invalid VPN fd:" log;
-        // establish() returned null at CaptureService.java:546, not thrown).
-        // The production start path calls VpnService.prepare(ctx) at
-        // CaptureHelper.java:89 BEFORE startForegroundService; this probe
-        // skipped it. Log what prepare() actually returns:
-        //   null      -> consent recognized (app IS the prepared VPN). If
-        //               establish() then STILL returns null, the cause is
-        //               deeper than consent state — grep the full run for
-        //               avc:/TUNSETIFF before any A/B/C decision.
-        //   non-null  -> appops ACTIVATE_VPN allow did NOT satisfy the
-        //               prepared-VPN-app registration establish() checks; THIS
-        //               is why establish() returns null. Fix belongs in the
-        //               test invocation (call prepare() + handle the returned
-        //               consent Intent), not production code.
-        //   threw     -> prepare() itself is denied; its own signature prints
-        //               here (still distinguishes the failure shape).
-        try {
-            Intent prepareResult = android.net.VpnService.prepare(ctx);
-            System.err.println("[probe] VpnService.prepare(ctx) returned "
-                    + (prepareResult == null
-                        ? "null (consent granted)"
-                        : "non-null Intent (consent NOT granted)"));
-        } catch (Exception e) {
-            System.err.println("[probe] VpnService.prepare(ctx) threw "
-                    + e.getClass().getName() + ": " + e.getMessage());
-            e.printStackTrace();
-        }
-
-        androidx.core.content.ContextCompat.startForegroundService(ctx, kickService);
-
-        // VPN service is not started in instrumented-test context (no main
-        // activity launch). Try to wait for it briefly; if it's not up,
-        // skip the VPN-aware assertions below — the file regeneration
-        // contract is what this CI can actually verify.
+        // Block until the tunnel is established. The file-regeneration contract
+        // below runs unconditionally; the PID/tunnel-stable assertions are gated on
+        // vpnOk so they execute only when there is a live tunnel to keep stable.
         boolean vpnOk = false;
         try {
             waitForVpnTunnelEstablished();
-            // probe2 (success branch): waitForVpnTunnelEstablished() has only TWO
-            // exits -- line ~127 `return` (isTunnelEstablished() == true) or a throw
-            // of AssertionError (interrupt / 60s timeout). Reaching here means the
-            // line-127 return fired, i.e. isTunnelEstablished() WAS true the instant
-            // the helper returned. Log the live flag again so the success path is
-            // recorded via System.err (robust -- the probe1 line survived intact),
-            // not via Log.d which logd can drop under the AM "Slow operation" burst.
-            // Expected on the prepared-app-registered hypothesis: =true (establish()
-            // returned a non-null fd -> tunnel up). If this prints =false, the helper
-            // returned true-then-false (race) and the success inference is unsound.
-            System.err.println("[probe2] post-wait isTunnelEstablished()="
+            System.err.println("[testToggleAdBlockingOffRegeneratesRulesWithoutRestart] "
+                    + "post-wait isTunnelEstablished()="
                     + com.adbye.filter.CaptureService.isTunnelEstablished()
                     + " (success return path taken)");
             vpnOk = true;
         } catch (AssertionError ae) {
-            // probe2 (catch branch): the helper threw (60s timeout OR interrupt).
-            // Log the live flag at throw time + the assertion message. Expected if
-            // establish() returned null (the de6ede46 outcome): =false + the
-            // "... remained false ..." AssertionError text. Catching this proves the
-            // 161bba62 run did NOT take this path (and pins exactly what it took).
-            System.err.println("[probe2] caught AssertionError isTunnelEstablished()="
-                    + com.adbye.filter.CaptureService.isTunnelEstablished()
-                    + " msg=" + ae.getMessage());
             System.err.println("[testToggleAdBlockingOffRegeneratesRulesWithoutRestart] "
                     + "VPN tunnel not up; skipping PID/tunnel-stable checks: " + ae.getMessage());
         }
