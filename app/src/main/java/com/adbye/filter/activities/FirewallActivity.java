@@ -141,6 +141,16 @@ public class FirewallActivity extends BaseActivity {
     private void onProtectionChanged(String prefKey, boolean enabled) {
         Log.d(TAG, "Protection changed: " + prefKey + "=" + enabled);
 
+        // Keep the native adblock gate (pd->adblock.enabled) synced with the
+        // "Ad blocking" master switch. Pref-driven variant: mirrors the firewall
+        // precedent (FirewallStatus -> CaptureService.setFirewallEnabled). The
+        // merge+reload below regenerates adblock_rules.txt; this flips the gate
+        // that decides whether the freshly reloaded list is consulted at all.
+        // (Phase 1.b Path B Commit A — see plan.md "Phase 1.b Status".)
+        if(Prefs.PREF_PROTECT_ADBLOCK.equals(prefKey)) {
+            CaptureService.setAdblockEnabled(enabled);
+        }
+
         new Thread(() -> {
             try {
                 EnumSet<FilterListManager.Category> cats = FilterListManager.enabledCategories(

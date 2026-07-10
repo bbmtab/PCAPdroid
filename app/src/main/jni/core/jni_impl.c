@@ -642,6 +642,17 @@ Java_com_adbye_filter_CaptureService_runPacketLoop(JNIEnv *env, jclass type, jin
             .firewall = {
                     .enabled = (bool) getIntPref(env, vpn, "firewallEnabled"),
             },
+            // ADBye adblock gate — pref-driven (mirrors .firewall).
+            // Seed at boot from CaptureService.adblockEnabled() (Java), which reads
+            // mAdblockEnabled, itself seeded from Prefs.isProtectAdblock in onCreate.
+            // Runtime toggles (ProtectionFragment "Ad blocking" switch) keep it in sync
+            // via CaptureService.setAdblockEnabled -> nativeSetAdblockEnabled (see below).
+            // NOTE (Phase 1.b Path B): arming the gate alone does not block anything until
+            // the parser strips ||/^ and the matcher fires off HTTP-Host as well as SNI —
+            // see commit B (blacklist.c + pcapdroid.c). This commit only arms the gate.
+            .adblock = {
+                    .enabled = (bool) getIntPref(env, vpn, "adblockEnabled"),
+            },
             .tls_decryption = {
                     .enabled = (bool) getIntPref(env, vpn, "isTlsDecryptionEnabled"),
             }
@@ -1038,6 +1049,27 @@ Java_com_adbye_filter_CaptureService_nativeSetFirewallEnabled(JNIEnv *env, jclas
     }
 
     pd->firewall.enabled = enabled;
+}
+
+/* ******************************************************* */
+
+// ADBye adblock gate toggle (mirrors nativeSetFirewallEnabled above).
+// Called from CaptureService.setAdblockEnabled when the ProtectionFragment
+// "Ad blocking" master switch flips (FirewallActivity.onProtectionChanged).
+// Arming/disarming pd->adblock.enabled takes effect on the next packet
+// through check_adblock_sni_rules (pcapdroid.c) without a service restart.
+// NOTE (Phase 1.b Path B): inert until the parser fix + HTTP-Host routing
+// land in commit B — this commit only wires the gate, it does not make
+// anything match.
+JNIEXPORT void JNICALL
+Java_com_adbye_filter_CaptureService_nativeSetAdblockEnabled(JNIEnv *env, jclass clazz, jboolean enabled) {
+    pcapdroid_t *pd = global_pd;
+    if(!pd) {
+        log_e("NULL pd instance");
+        return;
+    }
+
+    pd->adblock.enabled = enabled;
 }
 
 /* ******************************************************* */

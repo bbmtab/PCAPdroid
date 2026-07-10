@@ -161,6 +161,7 @@ public class CaptureService extends VpnService implements Runnable {
     private boolean mMalwareDetectionEnabled;
     private boolean mBlacklistsUpdateRequested;
     private boolean mFirewallEnabled;
+    private boolean mAdblockEnabled;
     private boolean mBlockPrivateDns;
     private boolean mDnsEncrypted;
     private boolean mStrictDnsNoticeShown;
@@ -470,6 +471,13 @@ public class CaptureService extends VpnService implements Runnable {
 
         mMalwareDetectionEnabled = !mSettings.readFromPcap() && Prefs.isMalwareDetectionEnabled(this, mPrefs);
         mFirewallEnabled = !mSettings.readFromPcap() && Prefs.isFirewallEnabled(this, mPrefs);
+        // ADBye adblock gate seeding (mirrors mFirewallEnabled above). Pref-driven from
+        // the ProtectionFragment "Ad blocking" master switch (pref_protect_adblock).
+        // Suppressed in pcap-read/root modes so it never fires outside a real VPN capture
+        // (matches the firewall precedent). The native struct initializer reads this back
+        // via adblockEnabled() below to arm pd->adblock.enabled at boot; live toggles keep
+        // it in sync via setAdblockEnabled() -> nativeSetAdblockEnabled (jni_impl.c).
+        mAdblockEnabled = !mSettings.readFromPcap() && Prefs.isProtectAdblock(mPrefs);
 
         if(!mSettings.root_capture && !mSettings.readFromPcap()) {
             Log.i(TAG, "Using DNS server " + dns_server);
@@ -1534,6 +1542,12 @@ public class CaptureService extends VpnService implements Runnable {
 
     public int firewallEnabled() { return(mFirewallEnabled ? 1 : 0); }
 
+    // ADBye adblock gate accessor (mirrors firewallEnabled()). Called from the
+    // JNI struct initializer (getIntPref(..., "adblockEnabled")) to seed
+    // pd->adblock.enabled at boot. Returns 1/0 per the getIntPref() "()I"
+    // signature convention the native side expects.
+    public int adblockEnabled() { return(mAdblockEnabled ? 1 : 0); }
+
     public int dumpExtensionsEnabled() { return(mSettings.dump_extensions ? 1 : 0); }
 
     public int isPcapngEnabled() { return(mSettings.pcapng_format ? 1 : 0); }
@@ -1848,6 +1862,24 @@ public class CaptureService extends VpnService implements Runnable {
         nativeSetFirewallEnabled(enabled);
     }
 
+    // ADBye adblock gate runtime toggle (mirrors setFirewallEnabled above).
+    // Called by FirewallActivity.onProtectionChanged when the ProtectionFragment
+    // "Ad blocking" master switch flips. Defensive against a null INSTANCE (the
+    // change is already persisted to prefs and will be picked up at the next VPN
+    // start via adblockEnabled() in the struct initializer).
+    //
+    // Phase 1.b Path B: arming the gate is inert on its own — the parser fix
+    // (blacklist.c: strip ||/^, honor @@) and HTTP-Host routing (pcapdroid.c
+    // case NDPI_PROTOCOL_HTTP) both land in commit B. This setter only flips
+    // the boolean that commit B's matcher consults.
+    public static void setAdblockEnabled(boolean enabled) {
+        if(INSTANCE == null)
+            return;
+
+        INSTANCE.mAdblockEnabled = enabled;
+        nativeSetAdblockEnabled(enabled);
+    }
+
     public static @NonNull CaptureStats getStats() {
         CaptureStats stats = lastStats.getValue();
         return((stats != null) ? stats : new CaptureStats());
@@ -1906,6 +1938,7 @@ public class CaptureService extends VpnService implements Runnable {
     public static native void askStatsDump();
     public static native byte[] getPcapHeader();
     public static native void nativeSetFirewallEnabled(boolean enabled);
+    public static native void nativeSetAdblockEnabled(boolean enabled);
     public static native int getNumCheckedMalwareConnections();
     public static native int getNumCheckedFirewallConnections();
     public static native int rootCmd(String prog, String args);
