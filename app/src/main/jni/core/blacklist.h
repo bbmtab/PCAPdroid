@@ -98,6 +98,7 @@ bool blacklist_match_ip(blacklist_t *bl, const zdtun_ip_t *ip, int ipver);
 bool blacklist_match_ipstr(blacklist_t *bl, const char *ip);
 bool blacklist_match_domain(blacklist_t *bl, const char *domain);
 bool blacklist_match_sni(const blacklist_t *bl, const char *domain);
+bool blacklist_match_sni_allowlist(const blacklist_t *bl, const char *domain); // Phase 1.b Path B Commit B — @@ bypass lookup; consult BEFORE blacklist_match_sni in check_adblock_sni_rules (constraint #2)
 bool blacklist_match_uid(blacklist_t *bl, int uid);
 bool blacklist_match_country(blacklist_t *bl, const char country_code[3]);
 void blacklist_get_stats(const blacklist_t *bl, blacklists_stats_t *stats);

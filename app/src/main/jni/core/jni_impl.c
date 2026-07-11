@@ -1483,9 +1483,13 @@ Java_com_adbye_filter_CaptureService_reloadAdblockList(JNIEnv *env, jclass clazz
         return false;
     }
 
-    // We'll parse the file for SNI domains (AdGuard exception rules @@||domain^)
-    // For now, just load the file - the parsing will be done in the native function
-    // Actually, let's just load all domains as SNI blocklist
+    // Load the merged rules file as an SNI blacklist. Phase 1.b Path B
+    // Commit B: the loader (blacklist_load_file SNI_BLACKLIST branch) handles
+    // the AdBlock-rule syntax strip — @@||domain^ exception rules route into
+    // bl->sni_allowlist (the bypass consulted before the blocklist in
+    // check_adblock_sni_rules, see constraint #2), ||domain^ / bare hosts
+    // route into bl->sni_domains (blocks), $option modifiers and !-comment
+    // headers are stripped/skipped (see test_bombshell_fixed.c).
     blacklist_stats_t stats;
     int rv = blacklist_load_file(bl, path, SNI_BLACKLIST, &stats);
     if(rv < 0) {

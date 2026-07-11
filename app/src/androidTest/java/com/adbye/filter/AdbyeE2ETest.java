@@ -405,19 +405,32 @@ public class AdbyeE2ETest {
      * Note: This requires the native FilterEngine to be loaded and using the merged rules.
      * In CI, we test the mergeEnabled a test list with a known ad pattern.
      */
-    @Ignore("Not a VPN-start problem (Phase 1.b harness is live — see testVpnConnectivity). "
-            + "Blocked until the native adblock gate is armed: pd->adblock.enabled is never "
-            + "assigned true (struct initializer at jni_impl.c:605-648 omits .adblock; the "
-            + "only production .enabled= assignment is pd->firewall.enabled at jni_impl.c:1040). "
-            + "Even if armed, the adblock matcher is TLS-SNI-only (sole call at pcapdroid.c:604 "
-            + "inside case NDPI_PROTOCOL_TLS) and this test drives a plain-HTTP URL, so the "
-            + "matcher never fires regardless. Firewall's blacklist_match_domain (pcapdroid.c:328) "
-            + "achieves HTTP+TLS matching via data->info / check_domain_block_rules; arming "
-            + "adblock that way is a scope decision (constraint #8), not this commit's scope. "
-            + "See plan.md 'Phase 1.b Status' -> 'Dead adblock gate (tracked defect)'.")
+    @Ignore("Phase 1.b harness is live (testVpnConnectivity is the un-@Ignore'd sibling — "
+            + "that test drives prepare() + startForegroundService + waitForVpnTunnelEstablished "
+            + "and asserts a real 200/301/302). But this body requires the adblock gate to "
+            + "be ARMED in production to be honest. Commit B (in this push) fixed the parser: "
+            + "||/^/$options are stripped, @@ honors allowlist-first (constraint #2). "
+            + "Verifier: test_bombshell_fixed.c — F1 realism, F2 constraint-#2 interlock, "
+            + "F3 edges+no-regression ALL PASS. What's left: pd->adblock.enabled is still "
+            + "never assigned true after jni_init (struct initializer at jni_impl.c:639-648 "
+            + "omits .adblock; the only production .enabled= assignment is "
+            + "pd->firewall.enabled at jni_impl.c:1040) — see plan.md 'Phase 1.b Status' -> "
+            + "'Dead adblock gate'. Without arming, the matcher is unreachable and this "
+            + "test would pass only via false-positive. Body is now startVpnForTest + "
+            + "waitForVpnTunnelEstablished so it can be un-@Ignore'd verbatim once the "
+            + "gate-armed commit ships.")
     @Test
     public void testAdBlockingViaVpn() throws Exception {
         SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx);
+
+        // Phase 1.b path-A rewire (Commit B narrative): drive the VPN tunnel up via the
+        // production-shape helper shared with testVpnConnectivity and testToggle...WithoutRestart.
+        // The Phase 1.b probe2 differential (de6ede46 silent-null establish() vs 161bba62+62484400
+        // tunnel-up; the only differing line was prepare(ctx)) proved this invocation brings the
+        // tunnel up — recorded in plan.md "Phase 1.b Status" -> "probe2 CONFIRMED". Replaces the
+        // prior Thread.sleep(2000) "native engine pick-up" wait that masked VPN-readiness flake.
+        startVpnForTest(prefs);
+        waitForVpnTunnelEstablished();
 
         // Enable Ad Blocking
         prefs.edit().putBoolean(Prefs.PREF_PROTECT_ADBLOCK, true).apply();
@@ -437,8 +450,12 @@ public class AdbyeE2ETest {
         int lines = filterMgr.mergeEnabledLists(EnumSet.allOf(FilterListManager.Category.class));
         assertTrue("Should have loaded ad blocking rules", lines > 0);
 
-        // Small delay for native engine to pick up new rules if hot-reload is supported
-        Thread.sleep(2000);
+        // Tighter-than-before wait for the native engine to hot-reload the merged rules file.
+        // The previous 2000ms was masking VPN-readiness flake; the startVpnForTest+
+        // waitForVpnTunnelEstablished above now handles THAT concern. This 500ms is the remaining
+        // "engine reload" wait — there's no rules-loaded signal in production yet (gate not
+        // armed). See plan.md 'Phase 1.b Status' -> 'SNI reload signal pending'.
+        Thread.sleep(500);
 
         // Try to reach a known ad domain - should be blocked (timeout or connection refused)
         // Note: In a real scenario, the DNS resolution will fail or connection will be dropped
@@ -463,17 +480,22 @@ public class AdbyeE2ETest {
     /**
      * Test 8: Real HTTP request - tracking domain should be blocked when Tracking Protection is ON
      */
-    @Ignore("Not a VPN-start problem (Phase 1.b harness is live — see testVpnConnectivity). "
-            + "Same native-gate defect as testAdBlockingViaVpn: pd->adblock.enabled is never "
-            + "armed (jni_impl.c struct initializer omits .adblock), and the adblock matcher "
-            + "is TLS-SNI-only (pcapdroid.c:604) while this test drives a plain-HTTP URL "
-            + "(http://www.google-analytics.com/collect). The merge produces the rule and the "
-            + "tunnel comes up, but no adblock match fires on HTTP -> test would pass only via "
-            + "a false positive. Arming the gate is a scope decision (constraint #8). "
-            + "See plan.md 'Phase 1.b Status' -> 'Dead adblock gate (tracked defect)'.")
+    @Ignore("Phase 1.b harness is live (testVpnConnectivity is the un-@Ignore'd sibling). "
+            + "Same gate-armed defect as testAdBlockingViaVpn: pd->adblock.enabled never "
+            + "becomes true after jni_init, so check_adblock_sni_rules never runs and this "
+            + "test would pass only via false-positive. Commit B (this push) fixed the parser "
+            + "(||/^/$option strip + @@ allowlist) — verifier test_bombshell_fixed.c F1/F2/F3 "
+            + "all PASS. The gate-armed commit (separate, scope decision per constraint #8) is "
+            + "what unblocks un-@Ignore here. See plan.md 'Phase 1.b Status' -> 'Dead adblock "
+            + "gate'. Body rewire (startVpnForTest + waitForVpnTunnelEstablished) applies "
+            + "identically so un-@Ignore can be verbatim once the gate-armed commit ships.")
     @Test
     public void testTrackingBlockingViaVpn() throws Exception {
         SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx);
+
+        // Phase 1.b path-A rewire: shared production-shape start (see testAdBlockingViaVpn).
+        startVpnForTest(prefs);
+        waitForVpnTunnelEstablished();
 
         // Enable Tracking Protection
         prefs.edit().putBoolean(Prefs.PREF_PROTECT_TRACKING, true).apply();
@@ -490,7 +512,11 @@ public class AdbyeE2ETest {
 
         int lines = filterMgr.mergeEnabledLists(EnumSet.allOf(FilterListManager.Category.class));
         assertTrue("Should have loaded tracking rules", lines > 0);
-        Thread.sleep(2000);
+
+        // Engine-reload wait (no rules-loaded signal in production yet — see plan.md 'Phase 1.b
+        // Status' -> 'SNI reload signal pending'). VPN readiness is now via the startVpnForTest
+        // helpers above, not this sleep.
+        Thread.sleep(500);
 
         // Try to reach a tracking endpoint
         Future<Integer> future = makeHttpRequestAsync("http://www.google-analytics.com/collect", 5000);
@@ -509,29 +535,35 @@ public class AdbyeE2ETest {
     /**
      * Test 9: Real HTTP request - malware/security domain should be blocked when Security is ON
      */
-    @Ignore("Not a VPN-start problem (Phase 1.b harness is live — see testVpnConnectivity). "
-            + "Same native-gate defect as testAdBlockingViaVpn / testTrackingBlockingViaVpn: "
-            + "pd->adblock.enabled is never armed (jni_impl.c struct initializer omits "
-            + ".adblock) and the adblock matcher is TLS-SNI-only (pcapdroid.c:604) while "
-            + "this test drives a plain-HTTP URL (http://example.com). The earlier "
-            + "malware.test.example.com false positive (passed via DNS failure, not "
-            + "filtering) was fixed by switching to example.com, which resolves — so the "
-            + "test is now honest, which is exactly why it now fails and stays @Ignore'd "
-            + "until the gate is armed (a scope decision, constraint #8). "
-            + "See plan.md 'Phase 1.b Status' -> 'Dead adblock gate (tracked defect)'.")
+    @Ignore("Two independent defects, both must land before this test is honest. "
+            + "(A) The adblock gate is still not armed — see plan.md 'Phase 1.b Status' "
+            + "-> 'Dead adblock gate'. (B) DISTINCT from (A): SECURITY-category rules "
+            + "do NOT flow into pd->adblock.list at all. jni_impl.c:639-640 wires "
+            + ".malware_detection.enabled from prefs; the entire SECURITY category loads "
+            + "into pd->malware_detection.bl (pcapdroid.c:925-1015, subpath malware_bl/) "
+            + "and is matched via blacklist_match_domain(data->info) at pcapdroid.c:305 — "
+            + "NOT via check_adblock_sni_rules. So even after gate-armed + Commit B parser, "
+            + "the rule ||example.com^ in TestSecurityList (Category.SECURITY) still routes "
+            + "nowhere this test exercises. The earlier malware.test.example.com false "
+            + "positive (passed via DNS failure, not filtering) was fixed by switching to "
+            + "example.com (which resolves), which is exactly why it now fails honestly. "
+            + "Body rewire (startVpnForTest + waitForVpnTunnelEstablished) applies so "
+            + "un-@Ignore can be verbatim once both (A) and (B) land.")
     @Test
     public void testSecurityBlockingViaVpn() throws Exception {
         SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx);
+
+        // Phase 1.b path-A rewire: shared production-shape start (see testAdBlockingViaVpn).
+        startVpnForTest(prefs);
+        waitForVpnTunnelEstablished();
 
         // Enable Browsing Security
         prefs.edit().putBoolean(Prefs.PREF_PROTECT_SECURITY, true).apply();
         assertTrue("Security should be enabled", Prefs.isProtectSecurity(prefs));
 
         // Add a test list with a malware-style rule targeting a real-resolving domain.
-        // Previously used malware.test.example.com which never resolved at the DNS layer,
-        // so the test passed via a pre-block DNS failure (false positive). Using example.com
-        // (which actually resolves) makes the test honest about whether the filter engine
-        // itself blocks the request once Phase 1 wires CaptureService.
+        // The previous malware.test.example.com false positive (passed via DNS failure, not
+        // filtering) is gone — example.com resolves. Honesty first.
         filterMgr.addPredefined("TestSecurityList", FilterListManager.Category.SECURITY, "test_security.txt",
                 "https://example.com/test_security.txt", true);
         java.io.File listFile = filterMgr.getListFile(filterMgr.findByFname("test_security.txt"));
@@ -541,7 +573,10 @@ public class AdbyeE2ETest {
 
         int lines = filterMgr.mergeEnabledLists(EnumSet.allOf(FilterListManager.Category.class));
         assertTrue("Should have loaded security rules", lines > 0);
-        Thread.sleep(2000);
+
+        // Engine-reload wait (no rules-loaded signal in production yet — see plan.md 'Phase 1.b
+        // Status' -> 'SNI reload signal pending'). VPN readiness is via startVpnForTest above.
+        Thread.sleep(500);
 
         // Try to reach the test domain (resolves, so a non-block pass would give 200)
         Future<Integer> future = makeHttpRequestAsync("http://example.com", 5000);
