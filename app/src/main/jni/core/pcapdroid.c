@@ -297,6 +297,13 @@ static bool firewall_app_allowlisted(pcapdroid_t *pd, const zdtun_5tuple_t *tupl
            (data->info && data->info[0] && blacklist_match_domain(allowlist, data->info));
 }
 
+/* Forward declaration — check_domain_block_rules consults the armed adblock
+ * gate at SYN by calling check_adblock_sni_rules(pd, data, tuple, data->info)
+ * (defined at :547), reusing its allowlist-first (constraint #2 Resource
+ * Protection) + per-UID logic so the new at-SYN path cannot drift from the
+ * post-parse gate's @@-exemption order. */
+static void check_adblock_sni_rules(pcapdroid_t *pd, pd_conn_t *data, const zdtun_5tuple_t *tuple, const char *sni);
+
 /* ******************************************************* */
 
 static void check_domain_block_rules(pcapdroid_t *pd, pd_conn_t *data, const zdtun_5tuple_t *tuple) {
@@ -342,6 +349,47 @@ static void check_domain_block_rules(pcapdroid_t *pd, pd_conn_t *data, const zdt
                 }
             }
         }
+
+        // ADBye adblock DNS-time gate (Phase 1.b root-cause fix, 2026-07-12):
+        // consult the armed adblock list at SYN (new-connection moment) via the
+        // DNS-LRU-resolved hostname (data->info), reusing the SAME function the
+        // post-parse SNI/HTTP-Host gate uses. Why this call site + this function:
+        //   * WHY HERE: pd->adblock.list was previously NEVER consulted at SYN
+        //     (only post-parse via process_ndpi_data at :607/:628, which fires
+        //     after the HTTP Host is parsed). On short HTTP exchanges nDPI does
+        //     not surface the Host in time to drop the outgoing GET, so the
+        //     server's 200 returns before the gate fires (anchor test
+        //     testAdblockGateArmedFiresOnEarlyDrop proved this on run
+        //     29143647827). data->info is known AT SYN for any host the app
+        //     resolved via DNS through the VPN (ip_lru_find at :420), the normal
+        //     adblock case — so consulting it here blocks the connection before
+        //     any app data flows, beating the post-parse timing race entirely.
+        //   * WHY REUSE check_adblock_sni_rules (rather than re-implement the
+        //     allowlist + per-UID logic here): the @@ bypass gateway +
+        //     blacklist_match_sni + per-UID app allowlist + the !to_block
+        //     precedence guard all live in that one function (allowlist check
+        //     at :557, blocklist at :561, per-uid at :562-563). Reusing it makes
+        //     constraint #2 Resource Protection (googlevideo/Play Store MUST
+        //     stay reachable even if a filter list also matches them) preserved
+        //     BY CONSTRUCTION on the new at-SYN path — the new path calls the
+        //     exact same function the post-parse path uses, so the @@ consult
+        //     cannot silently drop. A re-implementation here would risk drifting
+        //     from the post-parse gate's exemption order, which is exactly the
+        //     gap this fix is trying to close, not open.
+        //   * data->info is just a domain string ("example.com" from DNS); the
+        //     sni parameter is used by the function only for blacklist_match_sni
+        //     + blacklist_match_sni_allowlist + a log/allowlist lookup, all of
+        //     which work identically on a hostname. (Note: blacklist_match_domain
+        //     could NOT be reused here — it queries bl->domains, but pd->adblock.list
+        //     is loaded SNI_BLACKLIST which populates bl->sni_domains /
+        //     bl->sni_allowlist, not bl->domains; blacklist_match_domain against
+        //     the adblock list would be a silent no-op.)
+        //   * For first-touch / hardcoded-IP / DoH bypassed flows,
+        //     data->info is NULL at SYN and this no-ops; the post-parse gate
+        //     remains as a best-effort backstop (symmetric with the firewall's
+        //     own at-SYN limitation, comment :283).
+        if(pd->adblock.enabled && pd->adblock.list)
+            check_adblock_sni_rules(pd, data, tuple, data->info);
     }
 }
 

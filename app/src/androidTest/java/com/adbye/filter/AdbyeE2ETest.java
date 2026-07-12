@@ -578,6 +578,176 @@ public class AdbyeE2ETest {
     }
 
     /**
+     * Anchor test proving constraint #2 Resource Protection is preserved through
+     * the NEW at-SYN adblock consult (Phase 1.b root-cause fix, 2026-07-12).
+     *
+     * <p>The fix consults {@code pd->adblock.list} against {@code data->info}
+     * (the DNS-resolved hostname) inside
+     * {@code check_domain_block_rules(pcapdroid_t, pd_conn_t, const zdtun_5tuple_t*)}
+     * at the SYN/new-connection moment, by calling the SAME function the
+     * post-parse gate uses ({@code check_adblock_sni_rules}). That reuse is what
+     * lets this test exist: by construction it cannot drift from the post-parse
+     * gate's @@-exemption order, because it calls that exact function. A
+     * re-implementation of the consult in {@code check_domain_block_rules}
+     * would risk silently skipping the {@code sni_allowlist} consult &mdash;
+     * which is exactly the gap this fix is trying to close, not open.
+     *
+     * <p>Test shape (within-test baseline / probe-pair differentials, NOT a
+     * bare {@code responseCode == -1 || >= 400} assertion; the bare-assertion
+     * false-positive trap is documented on testSecurityBlockingViaVpn):
+     * <ul>
+     *   <li><b>Baseline</b>: probe BOTH {@code http://example.com} (the
+     *       allowlisted host) AND {@code http://example.net} (the block-only
+     *       gate-active control). Both must return 200-399. A baseline failure
+     *       fails the test loudly &mdash; the post-arm assertions below only
+     *       discriminate the allowlist if both were reachable first</li>
+     *   <li><b>Arm + load</b>: {@code setAdblockEnabled(true)} + a three-rule
+     *       list: {@code ||example.com^} (block), {@code @@||example.com^}
+     *       (bypass for the SAME host, to {@code sni_allowlist}), and
+     *       {@code ||example.net^} (block-only, NO bypass). The third rule is
+     *       the discriminator: a later drop on {@code example.net} proves the
+     *       gate IS active so the {@code example.com}-200 is the allowlist
+     *       working, not a dead gate. Then {@code mergeEnabledLists(all)} +
+     *       assert the merged file contains all three rules +
+     *       {@code reloadAdblockRules(mergedFile)}</li>
+     *   <li><b>Allowlist probe</b>: {@code http://example.com} must return
+     *       200-399 despite the co-loaded block rule. If the new at-SYN path
+     *       skipped {@code sni_allowlist} (the constraint-#2 regression this
+     *       test forecloses), the block rule would win and {@code example.com}
+     *       would be dropped here &mdash; this assertion is the load-bearing
+     *       one</li>
+     *   <li><b>Block-only probe</b>: {@code http://example.net} must return
+     *       -1 or >= 400. This proves example.com's 200 is the allowlist,
+     *       not "the gate didn't load the list." Without this control, a passing
+     *       allowlist probe would be vacuous if the gate were entirely off</li>
+     *   <li><b>Tunnel-still-alive</b>: the SYN-time consult drops the matching
+     *       CONNECTION, not the tunnel. Tunnel-alive re-assert is the surgery
+     *       vs. anesthesia check</li>
+     *</ul>
+     */
+    @Test
+    public void testAdblockAllowlistExemptsBlockAtSyn() throws Exception {
+        SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx);
+        startVpnForTest(prefs);
+        waitForVpnTunnelEstablished();
+        assertTrue("Tunnel must be established before the allowlist-interaction probe",
+            com.adbye.filter.CaptureService.isTunnelEstablished());
+
+        final String allowlistedHost = "http://example.com";  // block + @@ bypass for the SAME host
+        final String blockOnlyHost   = "http://example.net";  // block-only — gate-active discriminator
+        final int probeTimeoutMs = 8000;
+
+        // 1. Baseline positive controls: BOTH hosts reachable through the VPN
+        //    BEFORE any rule load. A baseline failure fails the test loudly — the
+        //    post-arm assertions only discriminate the cannot-silently-skip-the-
+        //    allowlist property if both were reachable first.
+        int baseAllowlisted = getResponseOrTimeout(
+            makeHttpRequestAsync(allowlistedHost, probeTimeoutMs), 15, TimeUnit.SECONDS);
+        int baseBlockOnly = getResponseOrTimeout(
+            makeHttpRequestAsync(blockOnlyHost, probeTimeoutMs), 15, TimeUnit.SECONDS);
+        assertTrue("Baseline: " + allowlistedHost + " must be reachable (got " + baseAllowlisted
+                + ") — its post-arm 200 is only causal if it was reachable first",
+            baseAllowlisted >= 200 && baseAllowlisted < 400);
+        assertTrue("Baseline: " + blockOnlyHost + " must be reachable (got " + baseBlockOnly
+                + ") — its post-arm drop is only causal if it was reachable first",
+            baseBlockOnly >= 200 && baseBlockOnly < 400);
+
+        boolean armed = false;
+        try {
+            // 2. Arm the gate (the same live-toggle path the anchor test exercises).
+            com.adbye.filter.CaptureService.setAdblockEnabled(true);
+            armed = true;
+            prefs.edit().putBoolean(Prefs.PREF_PROTECT_ADBLOCK, true).commit();
+
+            // 3. Load a THREE-rule list: block + bypass for the SAME host, plus
+            //    a block-only rule on a different host.
+            filterMgr.addPredefined("TestAllowlistInteract", FilterListManager.Category.AD_BLOCKING,
+                    "test_allowlist_interact.txt", "https://example.com/test_allowlist_interact.txt", true);
+            java.io.File listFile =
+                    filterMgr.getListFile(filterMgr.findByFname("test_allowlist_interact.txt"));
+            try (java.io.FileWriter w = new java.io.FileWriter(listFile)) {
+                w.write("||example.com^\n@@||example.com^\n||example.net^\n");
+            }
+            int merged = filterMgr.mergeEnabledLists(EnumSet.allOf(FilterListManager.Category.class));
+            assertTrue("Merged allowlist-interaction rules must load (got " + merged
+                    + ", expected >= 1)", merged >= 1);
+            java.io.File mergedFile = filterMgr.getMergedRulesFile();
+            String mergedText = new String(java.nio.file.Files.readAllBytes(mergedFile.toPath()),
+                java.nio.charset.StandardCharsets.UTF_8);
+            assertTrue("Merged must contain the example.com block rule",
+                mergedText.contains("||example.com^"));
+            assertTrue("Merged must contain the example.com @@ bypass rule (constraint #2 proof "
+                    + "input — without it sni_allowlist never receives the host, and the "
+                    + "allowlist probe below can't fail in the way this test is meant to catch)",
+                mergedText.contains("@@||example.com^"));
+            assertTrue("Merged must contain the example.net block-only rule (its later drop "
+                    + "is the gate-active discriminator — without this rule rule the "
+                    + "allowlist probe would be vacuous if the gate didn't load)",
+                mergedText.contains("||example.net^"));
+            com.adbye.filter.CaptureService.reloadAdblockRules(mergedFile.getAbsolutePath());
+
+            // Housekeeping swap cadence — same wait shape as the anchor (no rules-loaded
+            // signal yet; a too-short wait makes the block-only probe return 200 →
+            // honest fail, never a false pass).
+            Thread.sleep(2000);
+
+            // 4. THE assertion (constraint #2 preserved through the new at-SYN path):
+            //    a host with BOTH ||example.com^ AND @@||example.com^ in the merged
+            //    file must NOT be dropped. If the new at-SYN consult of pd->adblock.list
+            //    skipped sni_allowlist (the exact gap this fix would otherwise open),
+            //    the block rule would win and example.com drops here.
+            int allowlisted = getResponseOrTimeout(
+                makeHttpRequestAsync(allowlistedHost, probeTimeoutMs), 15, TimeUnit.SECONDS);
+            assertTrue("Allowlist probe: " + allowlistedHost + " (block + @@ for the SAME host) "
+                    + "must NOT be dropped at SYN — the @@ bypass must win over the co-loaded "
+                    + "block rule, which is the proof that the new at-SYN consult preserved "
+                    + "constraint #2 (constraint #2 Resource Protection: a bypassed host "
+                    + "is never adblock-blocked). Got " + allowlisted + ", expected 200-399. "
+                    + "A drop here means the new at-SYN path skipped sni_allowlist — the "
+                    + "exact constraint-#2 regression the check_adblock_sni_rules reuse was "
+                    + "meant to forestall (baseline=" + baseAllowlisted + ").",
+                allowlisted >= 200 && allowlisted < 400);
+
+            // 5. Gate-still-active discriminator: example.net has block-only (NO @@),
+            //    so it MUST be dropped. This makes example.com's 200 the allowlist
+            //    working — not a vacuous pass from a dead gate / empty list.
+            int blockedOnly = getResponseOrTimeout(
+                makeHttpRequestAsync(blockOnlyHost, probeTimeoutMs), 15, TimeUnit.SECONDS);
+            assertTrue("Block-only probe: " + blockOnlyHost + " (||example.net^, NO @@) must be "
+                    + "dropped at SYN — proves the gate IS active so example.com's 200 is the "
+                    + "allowlist working, not a dead gate. Got " + blockedOnly + ", expected -1 "
+                    + "or >=400 (baseline=" + baseBlockOnly + ").",
+                blockedOnly == -1 || blockedOnly >= 400);
+
+            // 6. Tunnel-still-alive guard: the SYN-time consult drops one CONNECTION,
+            //    not the VPN.
+            assertTrue("Tunnel must still be established after the allowlist-interaction "
+                    + "probes (a tunnel death would make the allowlisted-blocked probe's 200 "
+                    + "a false pass — the test is causing the right kind of traffic drop, "
+                    + "not the wrong kind of tunnel drop)",
+                com.adbye.filter.CaptureService.isTunnelEstablished());
+        } finally {
+            // Teardown: un-block example.com AND example.net for any later test in this
+            // instrumentation run (and for a future un-@Ignore of testSecurityBlockingViaVpn
+            // which targets example.com). Same shape as the anchor's teardown.
+            if (armed) {
+                try {
+                    com.adbye.filter.CaptureService.setAdblockEnabled(false);
+                    prefs.edit().putBoolean(Prefs.PREF_PROTECT_ADBLOCK, false).commit();
+                    filterMgr.mergeEnabledLists(FilterListManager.enabledCategories(
+                            false, false, false, false));
+                    com.adbye.filter.CaptureService.reloadAdblockRules(
+                        filterMgr.getMergedRulesFile().getAbsolutePath());
+                } catch (Exception e) {
+                    System.err.println("[testAdblockAllowlistExemptsBlockAtSyn] teardown "
+                            + "reload failed (best-effort, native list may still block "
+                            + "example.com / example.net): " + e);
+                }
+            }
+        }
+    }
+
+    /**
      * Test 7: Real HTTP request - ad domain should be blocked when Ad Blocking is ON
      * Enables Ad Blocking, merges a test list with a known ad domain,
      * then verifies the request is blocked (connection refused/timeout).
