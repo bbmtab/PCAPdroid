@@ -434,6 +434,16 @@ pd_conn_t* pd_new_connection(pcapdroid_t *pd, const zdtun_5tuple_t *tuple, int u
     // Try to resolve host name via the LRU cache
     data->info = ip_lru_find(pd->ip_to_host, &dst_ip);
 
+    // TEMPORARY diagnostic (follow-up to the SYN-time revert, commit 1da2d85c):
+    // log data->info's state at SYN to determine whether a future SYN-time
+    // adblock consult would actually execute on the AOSP CI emulator, or
+    // no-op via the data->info && data->info[0] guard. ANSWERS the
+    // "is the CI emulator's anchor-FAILURE a real block or a NULL-LRU no-op?"
+    // question that motivated the SYN-time fix (728f5dea) in the first
+    // place. Greppable for revert via [TEMP-DIAG data->info-at-SYN].
+    log_d("[TEMP-DIAG data->info-at-SYN] remote_ip=%s info=%s", remote_ip,
+          data->info ? data->info : "(NULL)");
+
     if(data->info) {
         log_d("Host LRU cache HIT: %s -> %s", remote_ip, data->info);
         data->info_from_lru = true;
