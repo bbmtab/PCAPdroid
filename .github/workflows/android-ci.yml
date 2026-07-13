@@ -194,14 +194,13 @@ jobs:
             # 3 retries on transient PropertyFetcher races (run b7086a86 hit it at 09:13:40,
             # ~55s after install succeeded; settle gives adbd drain time before retries).
             # Each attempt sleeps 30s + adb wait-for-device to let adbd recover.
-            ok=0; for i in 1 2 3; do GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx2g" ./gradlew :app:connectedStandardDebugAndroidTest --no-daemon && { ok=1; break; }; echo "Test attempt $i of 3 failed (likely property-fetch race), sleeping 30s..."; sleep 30; adb wait-for-device; done; adb logcat -d -s CaptureService:* VpnService:* AndroidRuntime:* System.err:* ActivityManager:* pcapdroid-native:* > "$GITHUB_WORKSPACE/logcat-e2e.txt" 2>&1 || echo "WARN: adb logcat -d failed but continuing"; [ $ok -eq 1 ]
+            ok=0; for i in 1 2 3; do GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx2g" ./gradlew :app:connectedStandardDebugAndroidTest --no-daemon && { ok=1; break; }; echo "Test attempt $i of 3 failed (likely property-fetch race), sleeping 30s..."; sleep 30; adb wait-for-device; done; adb logcat -d -s CaptureService:* VpnService:* AndroidRuntime:* System.err:* ActivityManager:* > "$GITHUB_WORKSPACE/logcat-e2e.txt" 2>&1 || echo "WARN: adb logcat -d failed but continuing"; [ $ok -eq 1 ]
           emulator-boot-timeout: 1200
 
-      # Always-stream device logcat from the e2e run, FILTERED to the 6 tags
-      # (5 original Phase 1.b probe tags + TEMPORARY pcapdroid-native:* for
-      # 728f5dea diagnostic: confirms whether data->info is NULL at SYN on CI
-      # emulator, resolving the "SYN-time fix is a CI no-op" hypothesis).
-      # Filter at capture time, not after — a ~KB artifact with the named signature
+      # Always-stream device logcat from the e2e run, FILTERED to the 5 tags
+      # that distinguish the three Phase 1.b probe failure shapes (never
+      # called / called and threw / called and returned null). Filter at
+      # capture time, not after — a ~KB artifact with the named signature
       # tags instead of a ~4 MB everything-dump.
       #   CaptureService:*  — our own class; catches whatever it logs in
       #     onCreate()/establish(), including silence (silence here is itself
@@ -214,15 +213,6 @@ jobs:
       #     block line, the marker that went missing from the unfiltered dump.
       #   ActivityManager:* — confirms/denies OS recognized the service as
       #     starting/bound.
-      #   pcapdroid-native:* -- TEMPORARY (follow-up to the SYN-time revert,
-      #     commit 1da2d85c): native C++ logs from utils.c log_android()
-      #     (tag="pcapdroid-native" at :30). Carries the "[TEMP-DIAG
-      #     data->info-at-SYN]" lines added at pcapdroid.c:437-445 (logs
-      #     whether data->info is populated or NULL at SYN -- answers whether
-      #     a future SYN-time adblock consult would actually execute on the
-      #     AOSP CI emulator vs no-op'ing on an empty DNS-LRU cache).
-      #     Greppable revert marker is [TEMP-DIAG data->info-at-SYN].
-      #     Remove this tag + revert the native log line once the diagnostic concludes.
       # Outcome A (tunnel established): a CaptureService or VpnService line
       #   containing "establish" with a non-null/success result, OR
       #   sTunnelEstablished-related output near the test timestamp.
