@@ -194,25 +194,30 @@ jobs:
             # 3 retries on transient PropertyFetcher races (run b7086a86 hit it at 09:13:40,
             # ~55s after install succeeded; settle gives adbd drain time before retries).
             # Each attempt sleeps 30s + adb wait-for-device to let adbd recover.
-            ok=0; for i in 1 2 3; do GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx2g" ./gradlew :app:connectedStandardDebugAndroidTest --no-daemon && { ok=1; break; }; echo "Test attempt $i of 3 failed (likely property-fetch race), sleeping 30s..."; sleep 30; adb wait-for-device; done; adb logcat -d -s CaptureService:* VpnService:* AndroidRuntime:* System.err:* ActivityManager:* > "$GITHUB_WORKSPACE/logcat-e2e.txt" 2>&1 || echo "WARN: adb logcat -d failed but continuing"; [ $ok -eq 1 ]
+            ok=0; for i in 1 2 3; do GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx2g" ./gradlew :app:connectedStandardDebugAndroidTest --no-daemon && { ok=1; break; }; echo "Test attempt $i of 3 failed (likely property-fetch race), sleeping 30s..."; sleep 30; adb wait-for-device; done; adb logcat -d -s CaptureService:* VpnService:* AndroidRuntime:* System.err:* ActivityManager:* pcapdroid-native:* > "$GITHUB_WORKSPACE/logcat-e2e.txt" 2>&1 || echo "WARN: adb logcat -d failed but continuing"; [ $ok -eq 1 ]
           emulator-boot-timeout: 1200
 
-      # Always-stream device logcat from the e2e run, FILTERED to the 5 tags
+      # Always-stream device logcat from the e2e run, FILTERED to the 6 tags
       # that distinguish the three Phase 1.b probe failure shapes (never
       # called / called and threw / called and returned null). Filter at
       # capture time, not after — a ~KB artifact with the named signature
       # tags instead of a ~4 MB everything-dump.
-      #   CaptureService:*  — our own class; catches whatever it logs in
+      #   CaptureService:*     — our own class; catches whatever it logs in
       #     onCreate()/establish(), including silence (silence here is itself
       #     the signature for Outcome B "never called").
-      #   VpnService:*      — framework tag for prepare()/establish() failures.
-      #   AndroidRuntime:*  — uncaught exceptions/crashes; if the service
+      #   VpnService:*         — framework tag for prepare()/establish() failures.
+      #   AndroidRuntime:*     — uncaught exceptions/crashes; if the service
       #     dies on create, the stack trace prints here (= Outcome B "called
       #     and threw").
-      #   System.err:*      — the test's own "VPN tunnel not up..." catch
+      #   System.err:*         — the test's own "VPN tunnel not up..." catch
       #     block line, the marker that went missing from the unfiltered dump.
-      #   ActivityManager:* — confirms/denies OS recognized the service as
+      #   ActivityManager:*    — confirms/denies OS recognized the service as
       #     starting/bound.
+      #   pcapdroid-native:*   — TEMP-DIAG (2026-07-13, reverts in next
+      #     commit): TEMP-DIAG init-jni-lookup stamps emitted by Phase 1.b
+      #     diagnostic instrumentation in jni_impl.c. Without this tag,
+      #     init_jni phases are invisible in the artifact. Reverted when
+      #     the init-tail-latency investigation closes.
       # Outcome A (tunnel established): a CaptureService or VpnService line
       #   containing "establish" with a non-null/success result, OR
       #   sTunnelEstablished-related output near the test timestamp.
