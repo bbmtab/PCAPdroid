@@ -811,6 +811,26 @@ Java_com_adbye_filter_CaptureService_getNumCheckedFirewallConnections(JNIEnv *en
     return fw_num_checked_connections;
 }
 
+/* Test-only readiness probe: returns whether the capture engine (global_pd)
+ * has finished initialization (init_jni + pcapdroid_t designated initializer
+ * + nDPI setup, see Java_..._runPacketLoop at jni_impl.c:594 onward).
+ *
+ * Closes the race where CaptureService.onStartCommand sets sTunnelEstablished
+ * = true IMMEDIATELY after builder.establish() (line 555), but global_pd is
+ * assigned later in the data thread spawned by runPacketLoop. Tests polling
+ * just on isTunnelEstablished() raced ahead by ~150-250ms on real devices
+ * (longer on the AOSP non-KVM CI emulator) and called reloadAdblockRules
+ * against a NULL pd, which silently no-ops. The companion test fix is in
+ * AdbyeE2ETest.waitForVpnTunnelEstablished which now also polls this.
+ *
+ * @VisibleForTesting from Java side.
+ */
+JNIEXPORT jboolean JNICALL
+Java_com_adbye_filter_CaptureService_isCaptureEngineReady(JNIEnv *env, jclass clazz) {
+    (void)env; (void)clazz;
+    return (global_pd != NULL) ? JNI_TRUE : JNI_FALSE;
+}
+
 /* ******************************************************* */
 
 JNIEXPORT void JNICALL

@@ -117,6 +117,18 @@ public class AdbyeE2ETest {
      * ANR/PMS race could keep the service starting long past the prior 20s
      * budget, and the test proceeded regardless of VPN state.
      *
+     * <p><b>Both</b> the VPN-fd-established signal and the capture-engine-ready
+     * (i.e. {@code global_pd != NULL}) signal must be true. {@code sTunnelEstablished}
+     * flips on the main thread the moment {@code builder.establish()} returns,
+     * but the JNI's {@code pcapdroid_t} is built in the data thread spawned
+     * afterward (init_jni + ~20 JNI pref round-trips precede the
+     * {@code global_pd = &pd} assignment), so polling only on
+     * {@code isTunnelEstablished()} races ahead by ~150-250ms (real device;
+     * ~400-1000ms on the AOSP non-KVM CI emulator) and the first
+     * {@code reloadAdblockRules} call lands on the JNI's
+     * {@code if(!pd) return false;} guard at {@code jni_impl.c:1457}, silently
+     * rejecting the reload so the rule never reaches the engine.
+     *
      * <p>Caller contract: {@code setup()} must have run, which constructs
      * {@code filterMgr} — but the VPN service is started by the application
      * before instrumented tests boot, so this just waits for the flag the
@@ -128,7 +140,12 @@ public class AdbyeE2ETest {
         long deadline = SystemClock.elapsedRealtime() + VPN_READY_TIMEOUT_MS;
         long slept = 0;
         while (SystemClock.elapsedRealtime() < deadline) {
-            if (com.adbye.filter.CaptureService.isTunnelEstablished()) return;
+            // Both signals must be true; the engine-ready gate is the load-bearing
+            // one closing the ~150-250ms / ~400-1000ms race against reloadAdblockRules.
+            if (com.adbye.filter.CaptureService.isTunnelEstablished()
+                    && com.adbye.filter.CaptureService.isCaptureEngineReady()) {
+                return;
+            }
             try {
                 Thread.sleep(VPN_READY_POLL_MS);
                 slept += VPN_READY_POLL_MS;
@@ -137,12 +154,15 @@ public class AdbyeE2ETest {
                 throw new AssertionError("interrupted while waiting for VPN tunnel", e);
             }
         }
+        boolean tunnelUp = com.adbye.filter.CaptureService.isTunnelEstablished();
+        boolean engineReady = com.adbye.filter.CaptureService.isCaptureEngineReady();
         throw new AssertionError(
-                "VPN tunnel not established within " + VPN_READY_TIMEOUT_MS + "ms "
+                "VPN tunnel / capture engine not ready within " + VPN_READY_TIMEOUT_MS + "ms "
                         + "(polled every " + VPN_READY_POLL_MS + "ms, slept " + slept + "ms). "
-                        + "CaptureService.isTunnelEstablished() remained false — the app's "
-                        + "CaptureService likely never started before this test, or "
-                        + "establish() threw and was swallowed.");
+                        + "isTunnelEstablished=" + tunnelUp + ", isCaptureEngineReady=" + engineReady
+                        + " — the app's CaptureService likely never started before this "
+                        + "test, establish() threw and was swallowed, or runPacketLoop "
+                        + "failed to assign global_pd before the timeout.");
     }
 
     /**

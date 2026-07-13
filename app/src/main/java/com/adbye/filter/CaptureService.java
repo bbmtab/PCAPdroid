@@ -1140,6 +1140,30 @@ public class CaptureService extends VpnService implements Runnable {
     }
 
     /**
+     * Test-only readiness signal: {@code true} iff the capture engine
+     * (the global {@code pcapdroid_t}) has finished initialization in the
+     * native data thread. Closes the ~150-250ms (real device; ~400-1000ms
+     * AOSP non-KVM CI emulator) race after {@link #isTunnelEstablished()}
+     * flips, during which the JNI {@code reloadAdblockList} guard
+     * {@code if(!pd) return false;} at {@code jni_impl.c:1457} silently
+     * rejects the reload and the rule never reaches the engine. E2E
+     * tests poll this in addition to {@link #isTunnelEstablished()}.
+     *
+     * @see {@link #isTunnelEstablished()}
+     * @see jni_impl.c::Java_..._isCaptureEngineReady (JNI getter, returns
+     *      {@code global_pd != NULL})
+     */
+    @androidx.annotation.VisibleForTesting
+    public static boolean isCaptureEngineReady() {
+        try {
+            return nativeIsCaptureEngineReady();
+        } catch (UnsatisfiedLinkError e) {
+            // Pre-JNI-load invocations from earlier unit tests — engine not loaded.
+            return false;
+        }
+    }
+
+    /**
      * Test-only hook: reset the readiness flag back to {@code false} between
      * E2E test runs. Does NOT close the actual TUN — capture still owns that.
      * Use only in {@code @After} of instrumented tests in the
@@ -1935,6 +1959,7 @@ public class CaptureService extends VpnService implements Runnable {
     private static native boolean reloadMalwareWhitelist(MatchList.ListDescriptor whitelist);
     private static native boolean reloadDecryptionList(MatchList.ListDescriptor whitelist);
     private static native boolean reloadAdblockList(String path);
+    @androidx.annotation.VisibleForTesting private static native boolean nativeIsCaptureEngineReady();
     public static native void askStatsDump();
     public static native byte[] getPcapHeader();
     public static native void nativeSetFirewallEnabled(boolean enabled);
