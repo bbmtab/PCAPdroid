@@ -106,6 +106,16 @@ public class AdbyeE2ETest {
 
     private static final long VPN_READY_TIMEOUT_MS = 60_000;
     private static final long VPN_READY_POLL_MS = 250;
+    // Bound for tearing down a ZOMBIE capture thread (service Java-instance alive
+    // via isServiceActive() — mCaptureThread != null — BUT native pd_run has
+    // returned → global_pd == NULL → isCaptureEngineReady() false) before
+    // cold-instating. Unbounded would hang FOREVER on an uninterruptible
+    // post-pd_run native stall (run() stuck between L1341 runPacketLoop-return
+    // and L1355 fd-close — only mBlacklists.save() at L1351-52 sits there); the
+    // bound turns that into a NAMED AssertionError instead of a third
+    // indistinguishable 60s timeout. See fixed.md "407df190 Path C RESOLUTION".
+    private static final long ZOMBIE_TEARDOWN_TIMEOUT_MS = 15_000;
+    private static final long ZOMBIE_TEARDOWN_POLL_MS = 100;
 
     /**
      * Poll {@link com.adbye.filter.CaptureService#isTunnelEstablished()} until
@@ -193,14 +203,64 @@ public class AdbyeE2ETest {
      * <p>Lives entirely in the test source set; no production code depends on it.
      */
     private void startVpnForTest(SharedPreferences prefs) {
-        // (2) fast path: a prior test in this instrumentation run already brought
-        // the service up; reuse the live tunnel instead of re-starting (a restart
-        // hits CaptureService.java:271-276 and tears the tunnel down).
-        if (com.adbye.filter.CaptureService.isServiceActive()) {
+        boolean serviceActive = com.adbye.filter.CaptureService.isServiceActive();
+        boolean engineReady = com.adbye.filter.CaptureService.isCaptureEngineReady();
+        if (serviceActive && engineReady) {
+            // Fast path: a prior test in this instrumentation run already brought
+            // the service up with a LIVE engine; reuse the live tunnel instead of
+            // re-starting (a restart hits CaptureService.java:271-276 and tears the
+            // tunnel down). BOTH signals must be true: isServiceActive() reads
+            // mCaptureThread != null, which stays true while run()'s teardown is
+            // incomplete — but a ZOMBIE (pd_run returned → global_pd=NULL → engine
+            // dead, yet run() stalled before L1371 nulls mCaptureThread) shows
+            // serviceActive=true / engineReady=false and must NOT be reused. See
+            // fixed.md "407df190 Path C RESOLUTION" + todo.md Phase 1.b zombie note.
             return;
         }
-        // (1) production start shape, matching CaptureHelper.startCaptureOk()
+        if (serviceActive && !engineReady) {
+            // ZOMBIE: service Java-instance alive but native engine dead. Tearing it
+            // down explicitly is required — a bare re-startForegroundService would
+            // trip the CaptureService.java:272 restart-guard (mCaptureThread still
+            // non-null) → abortStart → START_NOT_STICKY, WITHOUT a fresh engine
+            // (stopPacketLoop's running=false only unjams a LOOPING pd_run; this
+            // stall is POST-pd_run). Bounded teardown: stopService() then poll
+            // isServiceActive() (reads the same mCaptureThread the guard reads —
+            // false ⇔ run() reached L1371 ⇔ teardown complete). Bound is load-bearing:
+            // an uninterruptible native stall would hang forever unbounded; on
+            // timeout we throw a NAMED AssertionError so CI shows the real failure
+            // mode, not a third indistinguishable 60s wait.
+            System.err.println("[startVpnForTest] ZOMBIE detected — service active but "
+                    + "engine not ready; explicit bounded teardown before cold restart");
+            com.adbye.filter.CaptureService.stopService();
+            long tPrint = SystemClock.elapsedRealtime();
+            long deadline = tPrint + ZOMBIE_TEARDOWN_TIMEOUT_MS;
+            boolean tornDown = false;
+            while (SystemClock.elapsedRealtime() < deadline) {
+                if (!com.adbye.filter.CaptureService.isServiceActive()) {
+                    tornDown = true;
+                    break;
+                }
+                try { Thread.sleep(ZOMBIE_TEARDOWN_POLL_MS); }
+                catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
+            if (!tornDown) {
+                throw new AssertionError("[startVpnForTest] ZOMBIE teardown FAILED within "
+                        + ZOMBIE_TEARDOWN_TIMEOUT_MS + "ms — isServiceActive() still true "
+                        + "(native capture thread stalled post-pd_run, did not reach "
+                        + "CaptureService.java:1371 mCaptureThread=null). Native stall "
+                        + "suspected in run() L1341-L1355 gap; see fixed.md 407df190 entry.");
+            }
+            System.err.println("[startVpnForTest] ZOMBIE torn down in "
+                    + (SystemClock.elapsedRealtime() - tPrint) + "ms; proceeding to cold start");
+        }
+        // Cold start (production shape), matching CaptureHelper.startCaptureOk()
         // (CaptureHelper.java:67-74): CaptureSettings(ctx, prefs) + "settings" extra.
+        // Re-prepare() after teardown — the prepared-VPN-holder registration may
+        // have been cleared by stopSelf→onDestroy (the deferred 9651fbbf consent race);
+        // if still held (zombie-consent-survived case) prepare() returns null again.
         com.adbye.filter.model.CaptureSettings settings =
                 new com.adbye.filter.model.CaptureSettings(ctx, prefs);
         Intent kickService = new Intent(ctx, com.adbye.filter.CaptureService.class);
