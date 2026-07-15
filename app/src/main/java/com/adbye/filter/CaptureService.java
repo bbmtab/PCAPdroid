@@ -1151,7 +1151,7 @@ public class CaptureService extends VpnService implements Runnable {
      * tests poll this in addition to {@link #isTunnelEstablished()}.
      *
      * @see {@link #isTunnelEstablished()}
-     * @see jni_impl.c::Java_..._isCaptureEngineReady (JNI getter, returns
+     * @see jni_impl.c::Java_..._nativeIsCaptureEngineReady (JNI getter, returns
      *      {@code global_pd != NULL})
      */
     @androidx.annotation.VisibleForTesting

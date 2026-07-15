@@ -878,7 +878,7 @@ Java_com_adbye_filter_CaptureService_getNumCheckedFirewallConnections(JNIEnv *en
  * @VisibleForTesting from Java side.
  */
 JNIEXPORT jboolean JNICALL
-Java_com_adbye_filter_CaptureService_isCaptureEngineReady(JNIEnv *env, jclass clazz) {
+Java_com_adbye_filter_CaptureService_nativeIsCaptureEngineReady(JNIEnv *env, jclass clazz) {
     (void)env; (void)clazz;
     return (global_pd != NULL) ? JNI_TRUE : JNI_FALSE;
 }
