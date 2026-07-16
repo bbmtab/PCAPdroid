@@ -5,6 +5,13 @@ on:
     branches: [master, debug-emulator]
   pull_request:
     branches: [master, debug-emulator]
+  workflow_dispatch:
+    inputs:
+      force-all-attempts:
+        description: 'Run all 3 retry attempts unconditionally (bypass early-break) to exercise MODE B consent-recovery on attempts 2-3. Default false preserves push/PR early-break behavior.'
+        type: choice
+        options: ['false', 'true']
+        default: 'false'
 
 jobs:
   test:
@@ -190,11 +197,43 @@ jobs:
             # 2x retry below catches a residual race where the property fetch still flakes.
             sleep 30
             adb wait-for-device
-            echo "Running E2E instrumented tests on the live emulator (up to 3 attempts)..."
-            # 3 retries on transient PropertyFetcher races (run b7086a86 hit it at 09:13:40,
-            # ~55s after install succeeded; settle gives adbd drain time before retries).
-            # Each attempt sleeps 30s + adb wait-for-device to let adbd recover.
-            ok=0; for i in 1 2 3; do GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx2g" ./gradlew :app:connectedStandardDebugAndroidTest --no-daemon && { ok=1; break; }; echo "Test attempt $i of 3 failed (likely property-fetch race), sleeping 30s..."; sleep 30; adb wait-for-device; done; adb logcat -d -s CaptureService:* VpnService:* AndroidRuntime:* System.err:* ActivityManager:* pcapdroid-native:* > "$GITHUB_WORKSPACE/logcat-e2e.txt" 2>&1 || echo "WARN: adb logcat -d failed but continuing"; [ $ok -eq 1 ]
+            echo "Running E2E instrumented tests on the live emulator (up to 3 attempts; per-attempt VPN-consent re-grant)..."
+            # MODE B fix (2026-07-16): AGP/UTP's connectedStandardDebugAndroidTest UNINSTALLS
+            # the app at the END of each attempt (deletePackageX), which clears the
+            # `appops set com.adbye.filter.debug ACTIVATE_VPN allow` pre-grant -> attempts
+            # 2-3 see VpnService.prepare() return non-null -> Builder.establish()=null ->
+            # no tunnel -> waitForVpnTunnelEstablished 60s timeout -> RED (the "consent-lost"
+            # race, fixed.md 2026-07-15 (b) decision (b); also the todo.md MODE B thread).
+            # `-x installStandardDebug` is a verified NO-OP here (local gradle dry-run:
+            # installStandardDebug is NOT a task dependency of connectedStandardDebugAndroidTest
+            # -- the app install is internal to the test task's ddmlib/UTP, so excluding the
+            # gradle task does nothing). Fix shape (1) per constraint #8 (CI-workflow blast
+            # radius only): before EACH attempt re-install the app (a replace-install
+            # preserves a freshly-granted appops op, exactly as attempt-1's L184 install +
+            # L186 grant preserve consent THROUGH connectedAndroidTest) then re-grant
+            # `appops set ... ACTIVATE_VPN allow`. This replicates attempt-1's
+            # [install + grant] sequence for attempts 2-3 -- the only difference that
+            # produced consent-GRANTED (attempt 1) vs consent-LOST (attempts 2-3) in the
+            # verified CI evidence, so replicating it replicates the grant.
+            # The 3x retry on transient PropertyFetcher races (run b7086a86, L189-197) is
+            # PRESERVED: the connectedTest-failed branch still sleeps 30s + adb wait-for-device.
+            #
+            # FORCE_ALL knob (workflow_dispatch input force-all-attempts): on push/PR and the
+            # dispatch default, `${{ inputs.force-all-attempts }}` renders to empty or 'false'
+            # -> early-break on first success (push/PR behavior UNCHANGED). Set to 'true' on
+            # a manual dispatch to bypass the early-break and run all 3 attempts
+            # unconditionally, so MODE B's consent-recovery on attempts 2-3 is EXERCISED even
+            # when attempt-1 would otherwise succeed (N=1-green could skip MODE B entirely --
+            # the 580a107f "3/3" lesson is that a green job proves nothing about a path it
+            # never ran; a green job where attempts 2-3 silently never ran proves nothing
+            # about MODE B specifically).
+            # Verification standard (lead 2026-07-16, same as 580a107f): do NOT accept "job
+            # green" alone. Paste the per-attempt logcat showing attempts 2 AND 3 specifically
+            # hit `prepare() returned null` + `isTunnelEstablished()=true` on the consent
+            # path -- attributed to the specific attempt by the `modeB` logcat anchors
+            # (`adb shell log -t modeB "attempt N start ..."`) below, which the widened
+            # logcat filter (modeB:*) captures into the artifact.
+            FORCE_ALL='${{ inputs.force-all-attempts }}'; ok=0; for i in 1 2 3; do adb shell log -t modeB "attempt $i of 3 start force_all=$FORCE_ALL"; oki=0; for k in 1 2 3; do GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx2g" ./gradlew :app:installStandardDebug --no-daemon && { oki=1; break; }; sleep 10; done; if [ $oki -eq 1 ]; then adb shell appops set com.adbye.filter.debug ACTIVATE_VPN allow; if GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx2g" ./gradlew :app:connectedStandardDebugAndroidTest --no-daemon; then ok=1; if [ "$FORCE_ALL" = true ]; then continue; else break; fi; else echo "Test attempt $i of 3 failed, sleeping 30s..."; sleep 30; adb wait-for-device; fi; else echo "Install attempt $i of 3 failed after 3 tries, sleeping 30s..."; sleep 30; adb wait-for-device; fi; done; adb logcat -d -s CaptureService:* VpnService:* AndroidRuntime:* System.err:* ActivityManager:* pcapdroid-native:* modeB:* > "$GITHUB_WORKSPACE/logcat-e2e.txt" 2>&1 || echo "WARN: adb logcat -d failed but continuing"; [ $ok -eq 1 ]
           emulator-boot-timeout: 1200
 
       # Always-stream device logcat from the e2e run, FILTERED to the 6 tags
@@ -218,6 +257,13 @@ jobs:
       #     diagnostic instrumentation in jni_impl.c. Without this tag,
       #     init_jni phases are invisible in the artifact. Reverted when
       #     the init-tail-latency investigation closes.
+      #   modeB:*              — MODE B fix (2026-07-16): attempt-boundary anchors
+      #     (`adb shell log -t modeB "attempt N of 3 start force_all=..."`) emitted
+      #     at the top of each connectedAndroidTest retry. They let the per-attempt
+      #     consent-recovery verification attribute downstream `prepare() returned
+      #     null` + `isTunnelEstablished()=true` lines to the SPECIFIC attempt
+      #     (esp. attempts 2-3 under force-all-attempts=true), instead of a green
+      #     job that silently never exercised them. NOT a probe-failure-shape tag.
       # Outcome A (tunnel established): a CaptureService or VpnService line
       #   containing "establish" with a non-null/success result, OR
       #   sTunnelEstablished-related output near the test timestamp.
