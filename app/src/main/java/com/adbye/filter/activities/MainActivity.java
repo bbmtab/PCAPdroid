@@ -722,6 +722,27 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         mPcapExecutor = null;
     }
 
+    // TEMP stopgap (2026-07-17, pending constraint #8 sign-off): hasSeenDumpExtensions()
+    // has no native implementation on this branch (todo.md "orphaned native decls" /
+    // fixed.md sibling-audit finding) and throws UnsatisfiedLinkError unconditionally,
+    // crashing MainActivity on the main thread the first time a user opens any saved
+    // capture file with >=1 connection. This wrapper only stops the crash; it does not
+    // restore the feature. Fix options (restore native impl vs. formally retire it) are
+    // still open per todo.md.
+    private boolean hasSeenDumpExtensionsSafe() {
+        try {
+            return CaptureService.hasSeenDumpExtensions();
+        } catch (UnsatisfiedLinkError e) {
+            // com.adbye.filter.Log has no Throwable-accepting overload (verified against
+            // Log.java source) -- go through the 2-arg wrapper so this still lands in
+            // pcapdroid.log, not just logcat. UnsatisfiedLinkError's message is JVM-generated
+            // for the missing-symbol case, so it's reliably present; toString() is a fallback.
+            String reason = (e.getMessage() != null) ? e.getMessage() : e.toString();
+            Log.w(TAG, "hasSeenDumpExtensions() has no native impl; skipping dump-extensions notice (" + reason + ")");
+            return true; // degrade to "already seen" so the notice is silently skipped
+        }
+    }
+
     private void checkLoadedPcap() {
         dismissPcapLoadDialog();
 
@@ -730,7 +751,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             ConnectionsRegister reg = CaptureService.getConnsRegister();
 
             if((reg != null) && (reg.getConnCount() > 0)
-                    && !CaptureService.hasSeenDumpExtensions()
+                    && !hasSeenDumpExtensionsSafe()
                     && !mExtensionsNoticeShown
             ) {
                 new AlertDialog.Builder(this)
@@ -1186,8 +1207,25 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             mPcapExecutor.execute(() -> {
                 File out = getKeylogPath();
                 out.deleteOnExit();
-                CaptureService.extractKeylogFromPcapng(pcap_path, out.getAbsolutePath());
-                boolean hasKeylog = out.exists() && (out.length() > 0);
+                try {
+                    CaptureService.extractKeylogFromPcapng(pcap_path, out.getAbsolutePath());
+                } catch (UnsatisfiedLinkError e) {
+                    // TEMP stopgap (2026-07-17): extractKeylogFromPcapng() has no native
+                    // implementation on this branch (todo.md "orphaned native decls"),
+                    // throws unconditionally before writing anything to `out`. The
+                    // hasKeylog check below (out.exists()) naturally evaluates false in
+                    // that case, so no separate degrade-flag is needed here -- this also
+                    // sidesteps a real javac error: assigning a boolean in both the try
+                    // and catch blocks makes it not effectively-final for the
+                    // runOnUiThread lambda below (verified against javac 17: "local
+                    // variables referenced from a lambda expression must be final or
+                    // effectively final"). Also avoids crashing the executor thread
+                    // (Android kills the process on any uncaught Throwable, not just
+                    // main-thread ones).
+                    String reason = (e.getMessage() != null) ? e.getMessage() : e.toString();
+                    Log.w(TAG, "extractKeylogFromPcapng() has no native impl; skipping keylog extraction (" + reason + ")");
+                }
+                final boolean hasKeylog = out.exists() && (out.length() > 0);
 
                 runOnUiThread(() -> {
                     if (mPcapLoadDialog == null)
