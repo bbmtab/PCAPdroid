@@ -650,7 +650,6 @@ public class CaptureService extends VpnService implements Runnable {
     @Override
     public void onDestroy() {
         Log.d(CaptureService.TAG, "onDestroy");
-        Log.d(TAG, "[TEMP-DIAG run-teardown] onDestroy (mCaptureThread != null? " + (mCaptureThread != null) + ", isCaptureEngineReady=" + isCaptureEngineReady() + ")");
 
         // Do not nullify INSTANCE to allow its settings and the connections register to be accessible
         // after the capture is stopped
@@ -1349,13 +1348,10 @@ public class CaptureService extends VpnService implements Runnable {
         }
 
         // After the capture is stopped
-        Log.d(TAG, "[TEMP-DIAG run-teardown] post-capture reached (runPacketLoop returned)");
         if(mMalwareDetectionEnabled)
             mBlacklists.save();
-        Log.d(TAG, "[TEMP-DIAG run-teardown] after mBlacklists.save (mMalwareDetectionEnabled=" + mMalwareDetectionEnabled + ")");
 
         // Important: the fd must be closed to properly terminate the VPN
-        Log.d(TAG, "[TEMP-DIAG run-teardown] before fd close (mPfd != null? " + (mParcelFileDescriptor != null) + ")");
         if(mParcelFileDescriptor != null) {
             try {
                 mParcelFileDescriptor.close();
@@ -1364,21 +1360,15 @@ public class CaptureService extends VpnService implements Runnable {
             }
             mParcelFileDescriptor = null;
             sTunnelEstablished = false;
-            Log.d(TAG, "[TEMP-DIAG run-teardown] sTunnelEstablished=false set");
         }
 
         // NOTE: join the threads here instead in onDestroy to avoid ANR
-        Log.d(TAG, "[TEMP-DIAG run-teardown] stopAndJoinThreads enter");
         stopAndJoinThreads();
-        Log.d(TAG, "[TEMP-DIAG run-teardown] stopAndJoinThreads exit");
 
-        Log.d(TAG, "[TEMP-DIAG run-teardown] before stopService");
         stopService();
-        Log.d(TAG, "[TEMP-DIAG run-teardown] stopService returned");
 
         mLock.lock();
         mCaptureThread = null;
-        Log.d(TAG, "[TEMP-DIAG run-teardown] mCaptureThread=null (isServiceActive() will now return false)");
         mCaptureStopped.signalAll();
         mLock.unlock();
 

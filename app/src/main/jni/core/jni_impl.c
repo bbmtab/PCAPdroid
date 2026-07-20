@@ -525,15 +525,6 @@ static void getSocks5ProxyAuth(pcapdroid_t *pd) {
 }
 
 static void init_jni(JNIEnv *env) {
-    // TEMP-DIAG init-jni-lookup — stamp entry + per-phase boundaries + mid-methods.
-    // REVERT in same packaging as the 8d722388 → 071129e6 revert pair. See
-    // fixed.md `2cfba946` follow-up entry for the diagnostic question.
-    struct timespec _ts;
-    long long _entry_us = 0, _now_us = 0;
-    if (clock_gettime(CLOCK_MONOTONIC_COARSE, &_ts) == 0)
-        _entry_us = (long long)_ts.tv_sec * 1000000 + _ts.tv_nsec / 1000;
-    log_d("[TEMP-DIAG init-jni-lookup] init_jni_entry");
-
     // NOTE: these are bound to this specific env
 
     /* Classes */
@@ -548,21 +539,7 @@ static void init_jni(JNIEnv *env) {
     cls.arraylist = jniFindClass(env, "java/util/ArrayList");
     cls.payload_chunk = jniFindClass(env, "com/adbye/filter/model/PayloadChunk");
 
-    // TEMP-DIAG init-jni-lookup — classes phase done; stamp delta from entry.
-    if (clock_gettime(CLOCK_MONOTONIC_COARSE, &_ts) == 0) {
-        _now_us = (long long)_ts.tv_sec * 1000000 + _ts.tv_nsec / 1000;
-        log_d("[TEMP-DIAG init-jni-lookup] classes_done delta_us=%lld", _now_us - _entry_us);
-    } else { log_d("[TEMP-DIAG init-jni-lookup] classes_done clock_gettime_failed"); }
-
     /* Methods */
-    // TEMP-DIAG init-jni-lookup — methods phase START. This phase is the ~50
-    // jniGetMethodID calls bound for jni_impl.c:552-580 — the user's sharpening
-    // target. mid-methods stamp below locates whether the tail sits in a
-    // specific cluster or distributes across the cluster.
-    if (clock_gettime(CLOCK_MONOTONIC_COARSE, &_ts) == 0) {
-        _now_us = (long long)_ts.tv_sec * 1000000 + _ts.tv_nsec / 1000;
-        log_d("[TEMP-DIAG init-jni-lookup] methods_start delta_us=%lld", _now_us - _entry_us);
-    } else { log_d("[TEMP-DIAG init-jni-lookup] methods_start clock_gettime_failed"); }
     mids.reportError = jniGetMethodID(env, cls.vpn_service, "reportError", "(Ljava/lang/String;)V");
     mids.getApplicationByUid = jniGetMethodID(env, cls.vpn_service, "getApplicationByUid", "(I)Ljava/lang/String;"),
     mids.getPackageNameByUid = jniGetMethodID(env, cls.vpn_service, "getPackageNameByUid", "(I)Ljava/lang/String;"),
@@ -578,12 +555,6 @@ static void init_jni(JNIEnv *env) {
     mids.getLibprogPath = jniGetMethodID(env, cls.vpn_service, "getLibprogPath", "(Ljava/lang/String;)Ljava/lang/String;");
     mids.notifyBlacklistsLoaded = jniGetMethodID(env, cls.vpn_service, "notifyBlacklistsLoaded", "([Lcom/adbye/filter/Blacklists$NativeBlacklistStatus;)V");
     mids.getBlacklistsInfo = jniGetMethodID(env, cls.vpn_service, "getBlacklistsInfo", "()[Lcom/adbye/filter/model/BlacklistDescriptor;");
-    // TEMP-DIAG init-jni-lookup — methods phase MID. After ~15 of 29 lookups. Helps
-    // disambiguate a uniformly-slow phase from a single-call hotspot.
-    if (clock_gettime(CLOCK_MONOTONIC_COARSE, &_ts) == 0) {
-        _now_us = (long long)_ts.tv_sec * 1000000 + _ts.tv_nsec / 1000;
-        log_d("[TEMP-DIAG init-jni-lookup] methods_mid delta_us=%lld", _now_us - _entry_us);
-    } else { log_d("[TEMP-DIAG init-jni-lookup] methods_mid clock_gettime_failed"); }
     mids.connInit = jniGetMethodID(env, cls.conn, "<init>", "(IIILjava/lang/String;Ljava/lang/String;Ljava/lang/String;IIIIIZJ)V");
     mids.connProcessUpdate = jniGetMethodID(env, cls.conn, "processUpdate", "(Lcom/adbye/filter/model/ConnectionUpdate;)V");
     mids.connUpdateInit = jniGetMethodID(env, cls.conn_update, "<init>", "(I)V");
@@ -599,12 +570,6 @@ static void init_jni(JNIEnv *env) {
     mids.arraylistAdd = jniGetMethodID(env, cls.arraylist, "add", "(Ljava/lang/Object;)Z");
     mids.payloadChunkInit = jniGetMethodID(env, cls.payload_chunk, "<init>", "([BLcom/adbye/filter/model/PayloadChunk$ChunkType;ZJI)V");
 
-    // TEMP-DIAG init-jni-lookup — methods phase DONE.
-    if (clock_gettime(CLOCK_MONOTONIC_COARSE, &_ts) == 0) {
-        _now_us = (long long)_ts.tv_sec * 1000000 + _ts.tv_nsec / 1000;
-        log_d("[TEMP-DIAG init-jni-lookup] methods_done delta_us=%lld", _now_us - _entry_us);
-    } else { log_d("[TEMP-DIAG init-jni-lookup] methods_done clock_gettime_failed"); }
-
     /* Fields */
     fields.bldescr_fname = jniFieldID(env, cls.blacklist_descriptor, "fname", "Ljava/lang/String;");
     fields.bldescr_type = jniFieldID(env, cls.blacklist_descriptor, "type", "Lcom/adbye/filter/model/BlacklistDescriptor$Type;");
@@ -615,22 +580,10 @@ static void init_jni(JNIEnv *env) {
     fields.ld_uid = jniFieldID(env, cls.matchlist_descriptor, "uid", "I");
     fields.ld_allowlists = jniFieldID(env, cls.matchlist_descriptor, "allowlists", "Ljava/util/List;");
 
-    // TEMP-DIAG init-jni-lookup — fields phase DONE.
-    if (clock_gettime(CLOCK_MONOTONIC_COARSE, &_ts) == 0) {
-        _now_us = (long long)_ts.tv_sec * 1000000 + _ts.tv_nsec / 1000;
-        log_d("[TEMP-DIAG init-jni-lookup] fields_done delta_us=%lld", _now_us - _entry_us);
-    } else { log_d("[TEMP-DIAG init-jni-lookup] fields_done clock_gettime_failed"); }
-
     /* Enums */
     enums.bltype_ip = jniEnumVal(env, "com/adbye/filter/model/BlacklistDescriptor$Type", "IP_BLACKLIST");
     enums.chunktype_raw = jniEnumVal(env, "com/adbye/filter/model/PayloadChunk$ChunkType", "RAW");
     enums.chunktype_http = jniEnumVal(env, "com/adbye/filter/model/PayloadChunk$ChunkType", "HTTP");
-
-    // TEMP-DIAG init-jni-lookup — init_jni RETURN (whole sequence done).
-    if (clock_gettime(CLOCK_MONOTONIC_COARSE, &_ts) == 0) {
-        _now_us = (long long)_ts.tv_sec * 1000000 + _ts.tv_nsec / 1000;
-        log_d("[TEMP-DIAG init-jni-lookup] enums_done delta_us=%lld (init_jni RETURN at this point)", _now_us - _entry_us);
-    } else { log_d("[TEMP-DIAG init-jni-lookup] enums_done clock_gettime_failed"); }
 }
 
 /* ******************************************************* */
@@ -647,8 +600,6 @@ Java_com_adbye_filter_CaptureService_runPacketLoop(JNIEnv *env, jclass type, jin
         pd_ndpi_malloc, pd_ndpi_free);
 #endif
 
-    // TEMP-DIAG init-jni-lookup — runPacketLoop ref point (whole init sequence ref).
-    log_d("[TEMP-DIAG init-jni-lookup] runPacketLoop before init_jni(env)");
     init_jni(env);
 
     pcapdroid_t pd = {
@@ -722,9 +673,6 @@ Java_com_adbye_filter_CaptureService_runPacketLoop(JNIEnv *env, jclass type, jin
     pd.filesdir_len = strlen(pd.filesdir);
 
     global_pd = &pd;
-    // TEMP-DIAG init-jni-lookup — capture engine READY (isCaptureEngineReady()
-    // returns true from this line onward). Anchor for the dual-poll harness.
-    log_d("[TEMP-DIAG init-jni-lookup] global_pd_assigned (engine ready)");
     jni_thread = pthread_self();
     logcallback = log_callback;
     signal(SIGPIPE, SIG_IGN);

@@ -233,7 +233,7 @@ jobs:
             # path -- attributed to the specific attempt by the `modeB` logcat anchors
             # (`adb shell log -t modeB "attempt N start ..."`) below, which the widened
             # logcat filter (modeB:*) captures into the artifact.
-            FORCE_ALL='${{ inputs.force-all-attempts }}'; ok=0; for i in 1 2 3; do adb shell log -t modeB "attempt $i of 3 start force_all=$FORCE_ALL"; oki=0; for k in 1 2 3; do GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx2g" ./gradlew :app:installStandardDebug --no-daemon && { oki=1; break; }; sleep 10; done; if [ $oki -eq 1 ]; then adb shell appops set com.adbye.filter.debug ACTIVATE_VPN allow; if GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx2g" ./gradlew :app:connectedStandardDebugAndroidTest --no-daemon; then ok=1; if [ "$FORCE_ALL" = true ]; then continue; else break; fi; else echo "Test attempt $i of 3 failed, sleeping 30s..."; sleep 30; adb wait-for-device; fi; else echo "Install attempt $i of 3 failed after 3 tries, sleeping 30s..."; sleep 30; adb wait-for-device; fi; done; adb logcat -d -s CaptureService:* VpnService:* AndroidRuntime:* System.err:* ActivityManager:* pcapdroid-native:* modeB:* > "$GITHUB_WORKSPACE/logcat-e2e.txt" 2>&1 || echo "WARN: adb logcat -d failed but continuing"; [ $ok -eq 1 ]
+            FORCE_ALL='${{ inputs.force-all-attempts }}'; ok=0; for i in 1 2 3; do adb shell log -t modeB "attempt $i of 3 start force_all=$FORCE_ALL"; oki=0; for k in 1 2 3; do GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx2g" ./gradlew :app:installStandardDebug --no-daemon && { oki=1; break; }; sleep 10; done; if [ $oki -eq 1 ]; then adb shell appops set com.adbye.filter.debug ACTIVATE_VPN allow; if GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx2g" ./gradlew :app:connectedStandardDebugAndroidTest --no-daemon; then ok=1; if [ "$FORCE_ALL" = true ]; then continue; else break; fi; else echo "Test attempt $i of 3 failed, sleeping 30s..."; sleep 30; adb wait-for-device; fi; else echo "Install attempt $i of 3 failed after 3 tries, sleeping 30s..."; sleep 30; adb wait-for-device; fi; done; adb logcat -d -s CaptureService:* VpnService:* AndroidRuntime:* System.err:* ActivityManager:* modeB:* > "$GITHUB_WORKSPACE/logcat-e2e.txt" 2>&1 || echo "WARN: adb logcat -d failed but continuing"; [ $ok -eq 1 ]
           emulator-boot-timeout: 1200
 
       # Always-stream device logcat from the e2e run, FILTERED to the 6 tags
@@ -252,11 +252,6 @@ jobs:
       #     block line, the marker that went missing from the unfiltered dump.
       #   ActivityManager:*    — confirms/denies OS recognized the service as
       #     starting/bound.
-      #   pcapdroid-native:*   — TEMP-DIAG (2026-07-13, reverts in next
-      #     commit): TEMP-DIAG init-jni-lookup stamps emitted by Phase 1.b
-      #     diagnostic instrumentation in jni_impl.c. Without this tag,
-      #     init_jni phases are invisible in the artifact. Reverted when
-      #     the init-tail-latency investigation closes.
       #   modeB:*              — MODE B fix (2026-07-16): attempt-boundary anchors
       #     (`adb shell log -t modeB "attempt N of 3 start force_all=..."`) emitted
       #     at the top of each connectedAndroidTest retry. They let the per-attempt
