@@ -1164,6 +1164,28 @@ public class CaptureService extends VpnService implements Runnable {
     }
 
     /**
+     * Test-only reload-generation probe. Returns the monotonic counter bumped
+     * by {@code pd_housekeeping} after each {@code pd->adblock.new_list ->
+     * pd->adblock.list} swap (pcapdroid.c), or 0 if the engine is not alive yet.
+     * E2E tests capture a baseline, call {@link #reloadAdblockRules(String)},
+     * then poll this until it advances — a deterministic "rules loaded" event
+     * replacing the {@code Thread.sleep(500)} placeholder (plan.md "Phase 1.b
+     * Status" -> "SNI reload signal pending"). Same constraint-#8 visible-for-test
+     * packaging as {@link #isCaptureEngineReady()}; no production caller.
+     *
+     * @see jni_impl.c::Java_..._nativeGetAdblockListVersion
+     */
+    @androidx.annotation.VisibleForTesting
+    public static int getAdblockListVersion() {
+        try {
+            return nativeGetAdblockListVersion();
+        } catch (UnsatisfiedLinkError e) {
+            // Pre-JNI-load invocations (earlier unit tests) — engine not loaded.
+            return 0;
+        }
+    }
+
+    /**
      * Test-only hook: reset the readiness flag back to {@code false} between
      * E2E test runs. Does NOT close the actual TUN — capture still owns that.
      * Use only in {@code @After} of instrumented tests in the
@@ -1960,6 +1982,7 @@ public class CaptureService extends VpnService implements Runnable {
     private static native boolean reloadDecryptionList(MatchList.ListDescriptor whitelist);
     private static native boolean reloadAdblockList(String path);
     @androidx.annotation.VisibleForTesting private static native boolean nativeIsCaptureEngineReady();
+    @androidx.annotation.VisibleForTesting private static native int nativeGetAdblockListVersion();
     public static native void askStatsDump();
     public static native byte[] getPcapHeader();
     public static native void nativeSetFirewallEnabled(boolean enabled);

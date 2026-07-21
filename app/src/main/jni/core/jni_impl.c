@@ -831,6 +831,21 @@ Java_com_adbye_filter_CaptureService_nativeIsCaptureEngineReady(JNIEnv *env, jcl
     return (global_pd != NULL) ? JNI_TRUE : JNI_FALSE;
 }
 
+/* Test-only reload-generation probe (mirrors nativeIsCaptureEngineReady above).
+ * Returns pd->adblock.list_version (bumped by pd_housekeeping after each
+ * new_list -> list swap, pcapdroid.c), or 0 if the engine is not alive yet.
+ * The E2E harness captures a baseline, calls reloadAdblockRules, then polls
+ * this until it advances — a deterministic event replacing the Thread.sleep(500)
+ * "housekeeping swap cadence" placeholder (plan.md "Phase 1.b Status" -> "SNI
+ * reload signal pending"). No production caller; constraint-#8 visible-for-test
+ * packaging.
+ */
+JNIEXPORT jint JNICALL
+Java_com_adbye_filter_CaptureService_nativeGetAdblockListVersion(JNIEnv *env, jclass clazz) {
+    (void)env; (void)clazz;
+    return (global_pd != NULL) ? (jint) global_pd->adblock.list_version : 0;
+}
+
 /* ******************************************************* */
 
 JNIEXPORT void JNICALL

@@ -21,6 +21,7 @@
 #define __PCAPDROID_H__
 
 #include <stdbool.h>
+#include <stdint.h>
 #include "zdtun.h"
 #include "ip_lru.h"
 #include "blacklist.h"
@@ -311,6 +312,14 @@ typedef struct pcapdroid {
         bool enabled;
         blacklist_t *list;   // SNI blocklist (ADBye filter lists)
         blacklist_t *new_list;
+        // Monotonic generation bumped by pd_housekeeping (pcapdroid.c) after each
+        // new_list -> list swap. Polled via JNI (nativeGetAdblockListVersion) by
+        // the E2E harness to wait deterministically for a reload to land —
+        // replaces the Thread.sleep(500) "housekeeping swap cadence" placeholder
+        // (plan.md "Phase 1.b Status" -> "SNI reload signal pending"). Same
+        // constraint-#8 visible-for-test packaging as nativeIsCaptureEngineReady;
+        // no production reader.
+        uint32_t list_version;
     } adblock;
 
     struct {

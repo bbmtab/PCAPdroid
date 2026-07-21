@@ -1231,6 +1231,11 @@ void pd_housekeeping(pcapdroid_t *pd) {
             blacklist_destroy(pd->adblock.list);
         pd->adblock.list = pd->adblock.new_list;
         pd->adblock.new_list = NULL;
+        // Advance the reload-generation so the E2E harness's
+        // waitForAdblockReloadDone (polling nativeGetAdblockListVersion) observes
+        // the swap as an event instead of fixed-delay sleeping. Visible-for-test
+        // only; no production reader.
+        pd->adblock.list_version++;
     }
 }
 
