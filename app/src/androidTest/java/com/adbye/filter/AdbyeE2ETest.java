@@ -116,6 +116,19 @@ public class AdbyeE2ETest {
     // indistinguishable 60s timeout. See fixed.md "407df190 Path C RESOLUTION".
     private static final long ZOMBIE_TEARDOWN_TIMEOUT_MS = 15_000;
     private static final long ZOMBIE_TEARDOWN_POLL_MS = 100;
+    // Bound for waiting on the deterministic adblock-reload event. The harness
+    // captures a baseline CaptureService.getAdblockListVersion() (the monotonic
+    // counter bumped by pd_housekeeping after each new_list -> list swap,
+    // pcapdroid.c — exposed by d006872a), calls reloadAdblockRules, then polls
+    // until the version ADVANCES past the baseline — the "rules I handed the
+    // engine have been swapped into pd->adblock.list" event replacing the old
+    // Thread.sleep(500) placeholder (plan.md "Phase 1.b Status" ->
+    // "SNI reload signal pending"). 5s is generous: the swap runs on
+    // pd_housekeeping's ~250ms cadence (SELECT_TIMEOUT_MS), so one swap lands
+    // well inside the bound; a timeout here means the reload was REFUSED by the
+    // jni_impl.c no-pd / pending-new_list guards — a real failure, not flake.
+    private static final long RELOAD_DONE_TIMEOUT_MS = 5_000;
+    private static final long RELOAD_DONE_POLL_MS = 100;
 
     /**
      * Poll {@link com.adbye.filter.CaptureService#isTunnelEstablished()} until
@@ -173,6 +186,54 @@ public class AdbyeE2ETest {
                         + " — the app's CaptureService likely never started before this "
                         + "test, establish() threw and was swallowed, or runPacketLoop "
                         + "failed to assign global_pd before the timeout.");
+    }
+
+    /**
+     * Wait for the native adblock reload swap to complete.
+     *
+     * <p>Captures a baseline {@link com.adbye.filter.CaptureService#getAdblockListVersion()}
+     * (the monotonic counter bumped by pd_housekeeping after each
+     * {@code new_list} to {@code list} swap at pcapdroid.c:1234-1238),
+     * calls {@link com.adbye.filter.CaptureService#reloadAdblockRules(String)},
+     * then polls until the version ADVANCES past the baseline -- the
+     * deterministic "rules I handed the engine have been swapped into
+     * pd.adblock.list" event replacing the old {@code Thread.sleep(500)}
+     * placeholder (plan.md "Phase 1.b Status" -> "SNI reload signal pending").
+     *
+     * <p>Timeout (5s) is generous: the swap runs on pd_housekeeping's ~250ms
+     * cadence (SELECT_TIMEOUT_MS), so one swap lands well inside the bound;
+     * a timeout here means the reload was REFUSED by the jni_impl.c no-pd /
+     * pending-new_list guards -- a real failure, not flake.
+     *
+     * @param mergedFilePath absolute path to the merged rules file (output of
+     *     {@link FilterListManager#getMergedRulesFile()})
+     * @throws AssertionError if the version does not advance within
+     *     {@link #RELOAD_DONE_TIMEOUT_MS}
+     */
+    private void waitForAdblockReloadDone(String mergedFilePath) {
+        int baselineVersion = com.adbye.filter.CaptureService.getAdblockListVersion();
+        com.adbye.filter.CaptureService.reloadAdblockRules(mergedFilePath);
+
+        long deadline = SystemClock.elapsedRealtime() + RELOAD_DONE_TIMEOUT_MS;
+        while (SystemClock.elapsedRealtime() < deadline) {
+            int currentVersion = com.adbye.filter.CaptureService.getAdblockListVersion();
+            if (currentVersion > baselineVersion) {
+                return;
+            }
+            try {
+                Thread.sleep(RELOAD_DONE_POLL_MS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                throw new AssertionError("interrupted while waiting for adblock reload", e);
+            }
+        }
+        int finalVersion = com.adbye.filter.CaptureService.getAdblockListVersion();
+        throw new AssertionError(
+                "Adblock reload did not complete within " + RELOAD_DONE_TIMEOUT_MS + "ms "
+                + "(polled every " + RELOAD_DONE_POLL_MS + "ms). "
+                + "Baseline version=" + baselineVersion + ", final version=" + finalVersion
+                + " -- reloadAdblockRules was likely refused by the JNI no-pd / "
+                + "pending-new_list guards (jni_impl.c), not a flaky timeout.");
     }
 
     /**
@@ -845,36 +906,36 @@ public class AdbyeE2ETest {
      * Enables Ad Blocking, merges a test list with a known ad domain,
      * then verifies the request is blocked (connection refused/timeout).
      *
-     * Note: This requires the native FilterEngine to be loaded and using the merged rules.
-     * In CI, we test the mergeEnabled a test list with a known ad pattern.
+     * <p>Gate ARMED (dfec7066), parser + HTTP-Host routing (c56a1c1f) ship.
+     * Anchor test testAdblockGateArmedFiresOnEarlyDrop proves the armed
+     * gate early-drops a matching HTTP Host on this emulator.
+     *
+     * <p>This body was @Ignored because it called mergeEnabledLists +
+     * Thread.sleep(500) but NEVER called reloadAdblockRules, so the
+     * merged file never reached pd->adblock.list. Now uses
+     * waitForAdblockReloadDone (deterministic list_version poll) +
+     * baseline reachability probe (reachable->blocked differential)
+     * to avoid the DNS/egress/cleartext false-positive trap.
      */
-    @Ignore("Gate ARMED (dfec7066: pd->adblock.enabled seeds true at boot via "
-            + "getIntPref->adblockEnabled() [CaptureService.java:480 / Prefs.isProtectAdblock "
-            + "default true] + live nativeSetAdblockEnabled; parser + HTTP-Host routing shipped "
-            + "c56a1c1f). Anchor test testAdblockGateArmedFiresOnEarlyDrop proves the armed gate "
-            + "early-drops a matching HTTP Host on this same emulator. THIS body is still "
-            + "@Ignored for a different reason: it calls mergeEnabledLists + Thread.sleep(500) "
-            + "but NEVER calls CaptureService.reloadAdblockRules &mdash; the merged file is "
-            + "written but never handed to the native engine (reloadAdblockList -> "
-            + "pd->adblock.new_list -> pd_housekeeping swap at pcapdroid.c:1213-1218), so "
-            + "pd->adblock.list stays empty for this test's rule and nothing would block. "
-            + "Un-@Ignore once this body gains the reloadAdblockRules call + the deterministic "
-            + "rules-loaded signal (plan.md 'Phase 1.b Status' -> 'SNI reload signal pending', "
-            + "the sBlReloadDone flag, same constraint-#8 packaging as sTunnelEstablished) &mdash; "
-            + "see plan.md 'Phase 1.b Status' -> 'Dead adblock gate' (now RESOLVED by "
-            + "dfec7066) for the armed-gate reference. Without the reload call a bare "
-            + "responseCode==-1||>=400 assertion would also be satisfied by DNS / egress / "
-            + "cleartext failure (the testSecurityBlockingViaVpn false-positive trap shape).")
     @Test
     public void testAdBlockingViaVpn() throws Exception {
+        /*
+         * Ad Blocking E2E test -- ad domain early-drop through the VPN.
+         *
+         * Gate ARMED (dfec7066), parser + HTTP-Host routing (c56a1c1f) ship.
+         * Anchor test testAdblockGateArmedFiresOnEarlyDrop proves the armed
+         * gate early-drops a matching HTTP Host on this emulator.
+         *
+         * This body was @Ignored because it called mergeEnabledLists +
+         * Thread.sleep(500) but NEVER called reloadAdblockRules, so the
+         * merged file never reached pd->adblock.list. Now uses
+         * waitForAdblockReloadDone (deterministic list_version poll) +
+         * baseline reachability probe (reachable->blocked differential)
+         * to avoid the DNS/egress/cleartext false-positive trap.
+         */
         SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx);
 
-        // Phase 1.b path-A rewire (Commit B narrative): drive the VPN tunnel up via the
-        // production-shape helper shared with testVpnConnectivity and testToggle...WithoutRestart.
-        // The Phase 1.b probe2 differential (de6ede46 silent-null establish() vs 161bba62+62484400
-        // tunnel-up; the only differing line was prepare(ctx)) proved this invocation brings the
-        // tunnel up — recorded in plan.md "Phase 1.b Status" -> "probe2 CONFIRMED". Replaces the
-        // prior Thread.sleep(2000) "native engine pick-up" wait that masked VPN-readiness flake.
+        // Phase 1.b path-A rewire: shared production-shape start (see testVpnConnectivity).
         startVpnForTest(prefs);
         waitForVpnTunnelEstablished();
 
@@ -896,53 +957,75 @@ public class AdbyeE2ETest {
         int lines = filterMgr.mergeEnabledLists(EnumSet.allOf(FilterListManager.Category.class));
         assertTrue("Should have loaded ad blocking rules", lines > 0);
 
-        // Tighter-than-before wait for the native engine to hot-reload the merged rules file.
-        // The previous 2000ms was masking VPN-readiness flake; the startVpnForTest+
-        // waitForVpnTunnelEstablished above now handles THAT concern. This 500ms is the remaining
-        // "engine reload" wait — there's no rules-loaded signal in production yet (gate not
-        // armed). See plan.md 'Phase 1.b Status' -> 'SNI reload signal pending'.
-        Thread.sleep(500);
+        // Baseline positive control: prove the target host is REACHABLE through
+        // the tunnel BEFORE the rule is loaded. Without this, a DNS / egress /
+        // cleartext failure would mimic a block (the testSecurityBlockingViaVpn
+        // false-positive trap shape this rewrite avoids).
+        final String blockedHost = "http://googleads.g.doubleclick.net"; // resolves, so 200 expected at baseline
+        final int probeTimeoutMs = 8000;
+        int baseline = getResponseOrTimeout(
+            makeHttpRequestAsync(blockedHost, probeTimeoutMs), 15, TimeUnit.SECONDS);
+        assertTrue("Baseline: " + blockedHost + " must be reachable through the VPN before arming "
+                + "(got " + baseline + ") -- otherwise the drop probe cannot prove the gate "
+                + "fired (could be DNS / egress / cleartext failure)",
+            baseline >= 200 && baseline < 400);
 
-        // Try to reach a known ad domain - should be blocked (timeout or connection refused)
-        // Note: In a real scenario, the DNS resolution will fail or connection will be dropped
-        // We use a short timeout because blocked connections may hang
-        Future<Integer> future = makeHttpRequestAsync("http://googleads.g.doubleclick.net", 5000);
-        int responseCode;
-        try {
-            responseCode = future.get(10, TimeUnit.SECONDS);
-        } catch (java.util.concurrent.TimeoutException e) {
-            // Timeout is expected for blocked connections
-            responseCode = -1;
-            future.cancel(true);
-        }
+        // Arm the gate + deterministic reload-wait (replaces Thread.sleep(500))
+        com.adbye.filter.CaptureService.setAdblockEnabled(true);
+        java.io.File mergedFile = filterMgr.getMergedRulesFile();
+        assertTrue("Merged file must contain the ||doubleclick.net^ rule before reload",
+            new String(java.nio.file.Files.readAllBytes(mergedFile.toPath()),
+                java.nio.charset.StandardCharsets.UTF_8).contains("||doubleclick.net^"));
+        waitForAdblockReloadDone(mergedFile.getAbsolutePath());
 
-        // Blocked connections should fail (-1) or return non-200
-        // The exact behavior depends on how the native engine handles blocked connections
-        // (could be connection reset, timeout, or redirected)
-        assertTrue("Ad domain googleads.g.doubleclick.net should be blocked (got " + responseCode + ")",
-            responseCode == -1 || responseCode >= 400);
+        // Drop probe: same host, now blocked. HTTP-Host routing (case
+        // NDPI_PROTOCOL_HTTP) routes the plaintext Host through
+        // check_adblock_sni_rules -- the SAME matcher TLS SNI uses.
+        int dropped = getResponseOrTimeout(
+            makeHttpRequestAsync(blockedHost, probeTimeoutMs), 15, TimeUnit.SECONDS);
+        assertTrue("Drop probe: " + blockedHost + " should be early-dropped after rule + "
+                + "reload (baseline was " + baseline + ", drop got " + dropped + ") -- "
+                + "reachable-then-blocked on the SAME host is the gate firing; a 200 "
+                + "here means the gate did NOT fire (rule not loaded / parser broken / "
+                + "gate disarmed)",
+            dropped == -1 || dropped >= 400);
+
+        // Control probe: a DIFFERENT host must STILL be reachable. This
+        // discriminates a gate-specific drop from a global egress blip.
+        // google-analytics.com is NOT matched by ||doubleclick.net^ and NOT in
+        // the bypass allowlist; served over cleartext on this debug build.
+        int control = getResponseOrTimeout(
+            makeHttpRequestAsync("http://www.google-analytics.com/collect", probeTimeoutMs), 15, TimeUnit.SECONDS);
+        assertTrue("Control probe: google-analytics.com must still be reachable (gate blocks "
+                + "doubleclick.net specifically, not all egress; baseline=" + baseline
+                + ", drop=" + dropped + ", control=" + control + ") -- a global egress "
+                + "blip would make both drop and control -1 (honest fail), not a false pass)",
+            control >= 200 && control < 400);
+
+        // Tunnel-still-alive guard: the early-drop blocks one CONNECTION, not
+        // the whole VPN.
+        assertTrue("Tunnel must still be established after the drop probe (a tunnel "
+                + "death would make the drop probe's -1 a false positive, not a "
+                + "gate-fire; baseline=" + baseline + ", drop=" + dropped + ")",
+            com.adbye.filter.CaptureService.isTunnelEstablished());
     }
 
     /**
      * Test 8: Real HTTP request - tracking domain should be blocked when Tracking Protection is ON
      */
-    @Ignore("Gate ARMED (dfec7066) + parser/HTTP-Host routing shipped (c56a1c1f) &mdash; "
-            + "verified by anchor test testAdblockGateArmedFiresOnEarlyDrop early-"
-            + "dropping a matching HTTP Host. Same remaining gap as testAdBlockingViaVpn: "
-            + "this body calls mergeEnabledLists + Thread.sleep(500) but NEVER calls "
-            + "CaptureService.reloadAdblockRules, so the merged file (FilterListManager "
-            + "merges the PRIVACY category into the same adblock_rules.txt, one file for "
-            + "ALL categories) never reaches pd->adblock.list and nothing would block. "
-            + "Un-@Ignore once this body gains the reloadAdblockRules call + the deterministic "
-            + "rules-loaded signal (plan.md 'Phase 1.b Status' -> 'SNI reload signal pending') "
-            + "&mdash; see plan.md 'Phase 1.b Status' -> 'Dead adblock gate' (RESOLVED by "
-            + "dfec7066) for the armed-gate reference. Bare responseCode==-1||>=400 would "
-            + "also be satisfied by DNS / egress / cleartext failure (false-positive trap).")
     @Test
     public void testTrackingBlockingViaVpn() throws Exception {
+        /*
+         * Tracking Protection E2E test -- tracking domain early-drop through the VPN.
+         *
+         * Gate ARMED (dfec7066), parser + HTTP-Host routing (c56a1c1f) ship.
+         * Same reload-join gap as testAdBlockingViaVpn: this body called
+         * mergeEnabledLists + Thread.sleep(500) but NEVER called reloadAdblockRules.
+         * Now uses waitForAdblockReloadDone + baseline reachability probe.
+         */
         SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx);
 
-        // Phase 1.b path-A rewire: shared production-shape start (see testAdBlockingViaVpn).
+        // Phase 1.b path-A rewire: shared production-shape start.
         startVpnForTest(prefs);
         waitForVpnTunnelEstablished();
 
@@ -962,53 +1045,65 @@ public class AdbyeE2ETest {
         int lines = filterMgr.mergeEnabledLists(EnumSet.allOf(FilterListManager.Category.class));
         assertTrue("Should have loaded tracking rules", lines > 0);
 
-        // Engine-reload wait (no rules-loaded signal in production yet — see plan.md 'Phase 1.b
-        // Status' -> 'SNI reload signal pending'). VPN readiness is now via the startVpnForTest
-        // helpers above, not this sleep.
-        Thread.sleep(500);
+        // Baseline positive control: prove the target host is REACHABLE through
+        // the tunnel BEFORE the rule is loaded (same honesty pattern as the
+        // ad-blocking test -- avoids the false-positive trap).
+        final String blockedHost = "http://www.google-analytics.com/collect";
+        final int probeTimeoutMs = 8000;
+        int baseline = getResponseOrTimeout(
+            makeHttpRequestAsync(blockedHost, probeTimeoutMs), 15, TimeUnit.SECONDS);
+        assertTrue("Baseline: " + blockedHost + " must be reachable through the VPN before arming "
+                + "(got " + baseline + ") -- otherwise the drop probe cannot prove the gate fired",
+            baseline >= 200 && baseline < 400);
 
-        // Try to reach a tracking endpoint
-        Future<Integer> future = makeHttpRequestAsync("http://www.google-analytics.com/collect", 5000);
-        int responseCode;
-        try {
-            responseCode = future.get(10, TimeUnit.SECONDS);
-        } catch (java.util.concurrent.TimeoutException e) {
-            responseCode = -1;
-            future.cancel(true);
-        }
+        // Arm the gate + deterministic reload-wait
+        com.adbye.filter.CaptureService.setAdblockEnabled(true);
+        java.io.File mergedFile = filterMgr.getMergedRulesFile();
+        assertTrue("Merged file must contain the ||google-analytics.com^ rule before reload",
+            new String(java.nio.file.Files.readAllBytes(mergedFile.toPath()),
+                java.nio.charset.StandardCharsets.UTF_8).contains("||google-analytics.com^"));
+        waitForAdblockReloadDone(mergedFile.getAbsolutePath());
 
-        assertTrue("Tracking domain google-analytics.com should be blocked (got " + responseCode + ")",
-            responseCode == -1 || responseCode >= 400);
+        // Drop probe: same host, now blocked
+        int dropped = getResponseOrTimeout(
+            makeHttpRequestAsync(blockedHost, probeTimeoutMs), 15, TimeUnit.SECONDS);
+        assertTrue("Drop probe: " + blockedHost + " should be early-dropped after rule + "
+                + "reload (baseline was " + baseline + ", drop got " + dropped + ") -- "
+                + "reachable-then-blocked on the SAME host is the gate firing",
+            dropped == -1 || dropped >= 400);
+
+        // Control probe: a DIFFERENT host must STILL be reachable
+        int control = getResponseOrTimeout(
+            makeHttpRequestAsync("http://connect.facebook.net/somepath", probeTimeoutMs), 15, TimeUnit.SECONDS);
+        assertTrue("Control probe: connect.facebook.net must still be reachable (gate blocks "
+                + "google-analytics.com specifically, not all egress; baseline=" + baseline
+                + ", drop=" + dropped + ", control=" + control + ")",
+            control >= 200 && control < 400);
+
+        // Tunnel-still-alive guard
+        assertTrue("Tunnel must still be established after the drop probe",
+            com.adbye.filter.CaptureService.isTunnelEstablished());
     }
 
     /**
      * Test 9: Real HTTP request - malware/security domain should be blocked when Security is ON
      */
-    @Ignore("Gate ARMED (dfec7066) + parser/HTTP-Host routing shipped (c56a1c1f) &mdash; "
-            + "verified by anchor test testAdblockGateArmedFiresOnEarlyDrop. Prior message "
-            + "claimed SECURITY rules route ONLY to pd->malware_detection.bl and never "
-            + "pd->adblock.list; that is INACCURATE &mdash; FilterListManager.java:95 merges "
-            + "ALL categories (SECURITY included) into the single adblock_rules.txt, and "
-            + "reloadAdblockRules loads that whole file into pd->adblock.list, so a "
-            + "Category.SECURITY ||example.com^ rule DOES reach check_adblock_sni_rules "
-            + "once the gate is armed. (malware_detection is a SEPARATE native module for "
-            + "PCAPdroid's upstream malware feed, not this test's path.) The real remaining "
-            + "gap is shared with the other two blocking tests: this body calls "
-            + "mergeEnabledLists + Thread.sleep(500) but NEVER calls "
-            + "CaptureService.reloadAdblockRules, so the merged file never reaches "
-            + "pd->adblock.list. Un-@Ignore once this body gains the reloadAdblockRules call "
-            + "+ the deterministic rules-loaded signal (plan.md 'Phase 1.b Status' -> "
-            + "'SNI reload signal pending') &mdash; see plan.md 'Phase 1.b Status' -> "
-            + "'Dead adblock gate' (RESOLVED by dfec7066). Bare responseCode==-1||>=400 would "
-            + "also be satisfied by DNS / egress / cleartext failure (the false-positive "
-            + "trap that the earlier malware.test.example.com target hit, which does not "
-            + "resolve; example.com does resolve, which is why a passing assertion could "
-            + "only come from the gate firing).")
     @Test
     public void testSecurityBlockingViaVpn() throws Exception {
+        /*
+         * Security (Browsing Security) E2E test -- security domain early-drop through the VPN.
+         *
+         * Gate ARMED (dfec7066), parser + HTTP-Host routing (c56a1c1f) ship.
+         * FilterListManager merges SECURITY into the single adblock_rules.txt (line 95),
+         * so SECURITY rules DO reach check_adblock_sni_rules once the gate is armed.
+         * Same reload-join gap as the other two: Thread.sleep(500) without reloadAdblockRules.
+         * Now uses waitForAdblockReloadDone + baseline reachability probe.
+         * Target is example.com (resolves -- prior malware.test.example.com false
+         * positive from DNS failure is gone; honesty first).
+         */
         SharedPreferences prefs = androidx.preference.PreferenceManager.getDefaultSharedPreferences(ctx);
 
-        // Phase 1.b path-A rewire: shared production-shape start (see testAdBlockingViaVpn).
+        // Phase 1.b path-A rewire: shared production-shape start.
         startVpnForTest(prefs);
         waitForVpnTunnelEstablished();
 
@@ -1018,7 +1113,7 @@ public class AdbyeE2ETest {
 
         // Add a test list with a malware-style rule targeting a real-resolving domain.
         // The previous malware.test.example.com false positive (passed via DNS failure, not
-        // filtering) is gone — example.com resolves. Honesty first.
+        // filtering) is gone -- example.com resolves. Honesty first.
         filterMgr.addPredefined("TestSecurityList", FilterListManager.Category.SECURITY, "test_security.txt",
                 "https://example.com/test_security.txt", true);
         java.io.File listFile = filterMgr.getListFile(filterMgr.findByFname("test_security.txt"));
@@ -1029,22 +1124,44 @@ public class AdbyeE2ETest {
         int lines = filterMgr.mergeEnabledLists(EnumSet.allOf(FilterListManager.Category.class));
         assertTrue("Should have loaded security rules", lines > 0);
 
-        // Engine-reload wait (no rules-loaded signal in production yet — see plan.md 'Phase 1.b
-        // Status' -> 'SNI reload signal pending'). VPN readiness is via startVpnForTest above.
-        Thread.sleep(500);
+        // Baseline positive control (honesty first: example.com resolves, so
+        // a non-block pass gives 200 -- the prior malware.test.example.com DNS
+        // failure false-positive trap is gone).
+        final String blockedHost = "http://example.com";
+        final int probeTimeoutMs = 8000;
+        int baseline = getResponseOrTimeout(
+            makeHttpRequestAsync(blockedHost, probeTimeoutMs), 15, TimeUnit.SECONDS);
+        assertTrue("Baseline: " + blockedHost + " must be reachable through the VPN before arming "
+                + "(got " + baseline + ") -- otherwise the drop probe cannot prove the gate fired",
+            baseline >= 200 && baseline < 400);
 
-        // Try to reach the test domain (resolves, so a non-block pass would give 200)
-        Future<Integer> future = makeHttpRequestAsync("http://example.com", 5000);
-        int responseCode;
-        try {
-            responseCode = future.get(10, TimeUnit.SECONDS);
-        } catch (java.util.concurrent.TimeoutException e) {
-            responseCode = -1;
-            future.cancel(true);
-        }
+        // Arm the gate + deterministic reload-wait
+        com.adbye.filter.CaptureService.setAdblockEnabled(true);
+        java.io.File mergedFile = filterMgr.getMergedRulesFile();
+        assertTrue("Merged file must contain the ||example.com^ rule before reload",
+            new String(java.nio.file.Files.readAllBytes(mergedFile.toPath()),
+                java.nio.charset.StandardCharsets.UTF_8).contains("||example.com^"));
+        waitForAdblockReloadDone(mergedFile.getAbsolutePath());
 
-        assertTrue("Security rule should block example.com (got " + responseCode + ")",
-            responseCode == -1 || responseCode >= 400);
+        // Drop probe: same host, now blocked
+        int dropped = getResponseOrTimeout(
+            makeHttpRequestAsync(blockedHost, probeTimeoutMs), 15, TimeUnit.SECONDS);
+        assertTrue("Drop probe: " + blockedHost + " should be early-dropped after rule + "
+                + "reload (baseline was " + baseline + ", drop got " + dropped + ") -- "
+                + "reachable-then-blocked on the SAME host is the gate firing",
+            dropped == -1 || dropped >= 400);
+
+        // Control probe: a DIFFERENT host must STILL be reachable
+        int control = getResponseOrTimeout(
+            makeHttpRequestAsync("http://example.org", probeTimeoutMs), 15, TimeUnit.SECONDS);
+        assertTrue("Control probe: example.org must still be reachable (gate blocks "
+                + "example.com specifically, not all egress; baseline=" + baseline
+                + ", drop=" + dropped + ", control=" + control + ")",
+            control >= 200 && control < 400);
+
+        // Tunnel-still-alive guard
+        assertTrue("Tunnel must still be established after the drop probe",
+            com.adbye.filter.CaptureService.isTunnelEstablished());
     }
 
     /**
