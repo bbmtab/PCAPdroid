@@ -301,3 +301,34 @@ Next Step (2026-07-09 historical planning note, **SUPERSEDED** by the 2026-07-12
    - `CaptureSettings.dump_mode` (raw pcap file / HTTP server / UDP / TCP export) MUST remain defaulted to `NONE`. No phase may silently change this default; any change requires updating this constraint explicitly.
    - Per-packet stats accounting and connection-lifecycle tracking stay active — they are load-bearing for Phase 2 (Resource Protection UID/domain bypass) and Phase 3 (SNI matching), not optional "capture bloat" to strip out.
    - **Open decision, not yet made:** what happens to the inherited "Connections" tab UI (PCAPdroid's live traffic list)? Options: (a) keep as an advanced/debug view, (b) hide behind a developer-options flag, (c) remove from user-facing nav entirely. Whichever agent picks this up MUST NOT decide silently — per constraint #8's decision categories, this is a release-visible UI surface change and requires explicit user sign-off, not "proceed + flag for review."
+
+10. **Restart-on-tunnel-construction-change.** Any setting that changes how
+   the VPN tunnel itself is BUILT (vs settings that operate within a
+   running tunnel) MUST be picked up automatically by an Android-driven
+   stop+start of `CaptureService`. The user MUST NOT be required to
+   manually stop and start the VPN for such a setting to take effect.
+   This includes — but is not limited to — DNS server (v4/v6, system- vs
+   user-set), routing / IP mode (IPV4_ONLY / IPV6_ONLY / BOTH), app
+   filter (uid list + enabled switch), capture mode (VPN service vs root
+   vs pcap-read), capture interface, dump configuration (mode + collector
+   host/port + http_server port), dump extensions (trailer), PCAPNG
+   format, snaplen / max_pkts_per_flow / max_dump_size, BLOCK QUIC mode,
+   full payload mode, SOCKS5 (enabled + host + port + auth + user +
+   pass), private-DNS auto-block, MITM addon, TLS decryption enabled.
+   (The Protection-tab master switches covered by constraint #7 do NOT
+   trigger a restart — they are the hot-reload path.) When this auto-
+   restart fires, the app MUST display a user-visible toast containing
+   the exact text **"Protection is restarting to apply change"** —
+   fired at the change-detection moment, BEFORE invoking
+   `stopService()`, so the brief VPN reconnect reads as an intentional
+   system response to the user's setting change and not a silent
+   failure. The change detector (e.g. `OnSharedPreferenceChangeListener`)
+   must invoke `INSTANCE.stopService()` followed by a fresh
+   `startForegroundService(..., new CaptureSettings(ctx, prefs))` so the
+   new value is baked into `pcapdroid_t` at start. **Distinct from the
+   constraint-#8 reload-via-NULL-pd gap** (held per the `2cfba946`
+   follow-up, still its own commit): that one is a hot-reload call
+   silently dropped in the init race; this one is a setting outside the
+   hot-reload path needing a restart driver. Same constraint-#8
+   packaging (release-visible production scheduler change) when this
+   lands.
