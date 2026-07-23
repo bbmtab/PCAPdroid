@@ -108,6 +108,20 @@ public class CaptureService extends VpnService implements Runnable {
     private static final String NOTIFY_CHAN_MALWARE_DETECTION = "Malware detection";
     private static final String NOTIFY_CHAN_OTHER = "Other";
     private static final int VPN_MTU = 10000;
+
+    // Timeout for waiting on isCaptureEngineReady() before proceeding
+    // with adblock reload / enable-toggle calls. Mirrors the E2E harness
+    // VPN_READY_TIMEOUT_MS; 60 s is generous even for the CI emulator
+    // (~1-4.8 s gap observed, Path C data).
+    private static final long ENGINE_READY_TIMEOUT_MS = 60_000;
+    private static final long ENGINE_READY_POLL_MS = 50;
+
+    // Timeout for waiting on getAdblockListVersion() to advance after
+    // handing new rules to the engine. 5 s is generous: pd_housekeeping
+    // swaps on a ~250 ms cadence (SELECT_TIMEOUT_MS); a timeout here
+    // means the reload was REFUSED by the JNI guards, not flake.
+    private static final long RELOAD_DONE_TIMEOUT_MS = 5_000;
+    private static final long RELOAD_DONE_POLL_MS = 100;
     public static final int NOTIFY_ID_VPNSERVICE = 1;
     public static final int NOTIFY_ID_LOW_MEMORY = 2;
     public static final int NOTIFY_ID_APP_BLOCKED = 3;
@@ -1164,18 +1178,16 @@ public class CaptureService extends VpnService implements Runnable {
     }
 
     /**
-     * Test-only reload-generation probe. Returns the monotonic counter bumped
-     * by {@code pd_housekeeping} after each {@code pd->adblock.new_list ->
-     * pd->adblock.list} swap (pcapdroid.c), or 0 if the engine is not alive yet.
-     * E2E tests capture a baseline, call {@link #reloadAdblockRules(String)},
-     * then poll this until it advances — a deterministic "rules loaded" event
-     * replacing the {@code Thread.sleep(500)} placeholder (plan.md "Phase 1.b
-     * Status" -> "SNI reload signal pending"). Same constraint-#8 visible-for-test
-     * packaging as {@link #isCaptureEngineReady()}; no production caller.
+     * Monotonic counter bumped by {@code pd_housekeeping} after each
+     * {@code pd->adblock.new_list -> pd->adblock.list} swap (pcapdroid.c),
+     * or 0 if the engine is not alive yet.
+     *
+     * <p>Production callers (e.g. {@link #reloadAdblockRules(String)})
+     * capture a baseline, call the reload, then poll this until it advances —
+     * a deterministic "rules loaded" signal replacing blind sleep.
      *
      * @see jni_impl.c::Java_..._nativeGetAdblockListVersion
      */
-    @androidx.annotation.VisibleForTesting
     public static int getAdblockListVersion() {
         try {
             return nativeGetAdblockListVersion();
@@ -1183,6 +1195,85 @@ public class CaptureService extends VpnService implements Runnable {
             // Pre-JNI-load invocations (earlier unit tests) — engine not loaded.
             return 0;
         }
+    }
+
+    /**
+     * Poll {@link #isCaptureEngineReady()} until the native capture engine
+     * ({@code global_pd != NULL}) is alive — or give up after
+     * {@link #ENGINE_READY_TIMEOUT_MS}. Production counterpart to the
+     * E2E harness {@code waitForVpnTunnelEstablished}.
+     *
+     * <p>Closes the ~150-250ms (real device) / ~1-4.8s (CI emulator) gap
+     * between VPN tunnel establishment ({@code sTunnelEstablished=true})
+     * and {@code global_pd = &pd} in {@code runPacketLoop}. Without this
+     * gate, {@link #reloadAdblockRules(String)} and
+     * {@link #setAdblockEnabled(boolean)} land on the JNI's
+     * {@code if(!pd) return false;} guard and silently no-op (constraint #7).
+     *
+     * @return {@code true} if the engine became ready within the timeout;
+     *         {@code false} if the timeout expired or the wait was interrupted.
+     */
+    private static boolean waitForEngineReady() {
+        if (isCaptureEngineReady()) {
+            return true;
+        }
+        long deadline = SystemClock.elapsedRealtime() + ENGINE_READY_TIMEOUT_MS;
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (isCaptureEngineReady()) {
+                return true;
+            }
+            try {
+                Thread.sleep(ENGINE_READY_POLL_MS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                Log.w(TAG, "interrupted while waiting for capture engine ready: " + e);
+                return false;
+            }
+        }
+        Log.w(TAG, "capture engine not ready within " + ENGINE_READY_TIMEOUT_MS + "ms "
+                + "(polled every " + ENGINE_READY_POLL_MS + "ms)");
+        return false;
+    }
+
+    /**
+     * Poll {@link #getAdblockListVersion()} after handing new rules to the
+     * engine until the monotonic counter advances past the baseline captured
+     * before the call — confirming the engine has actually swapped the new
+     * rules into {@code pd->adblock.list}. Production counterpart to the
+     * E2E harness {@code waitForAdblockReloadDone}.
+     *
+     * <p>The swap runs on {@code pd_housekeeping}'s ~250ms cadence
+     * ({@code SELECT_TIMEOUT_MS}), so one swap lands well inside
+     * {@link #RELOAD_DONE_TIMEOUT_MS}; a timeout means the reload was
+     * refused by the JNI guards (c.f. constraint #7), not a polling race.
+     *
+     * @param path absolute path to the merged rules file
+     * @return {@code true} if the version advanced within the timeout;
+     *         {@code false} if the timeout expired or the wait was interrupted.
+     */
+    private static boolean waitForAdblockReloadDone(String path) {
+        int baselineVersion = getAdblockListVersion();
+        reloadAdblockList(path);
+
+        long deadline = SystemClock.elapsedRealtime() + RELOAD_DONE_TIMEOUT_MS;
+        while (SystemClock.elapsedRealtime() < deadline) {
+            int currentVersion = getAdblockListVersion();
+            if (currentVersion > baselineVersion) {
+                return true;
+            }
+            try {
+                Thread.sleep(RELOAD_DONE_POLL_MS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                Log.w(TAG, "interrupted while waiting for adblock reload: " + e);
+                return false;
+            }
+        }
+        int finalVersion = getAdblockListVersion();
+        Log.w(TAG, "adblock reload did not complete within " + RELOAD_DONE_TIMEOUT_MS + "ms "
+                + "(polled every " + RELOAD_DONE_POLL_MS + "ms). "
+                + "Baseline version=" + baselineVersion + ", final version=" + finalVersion);
+        return false;
     }
 
     /**
@@ -1896,8 +1987,16 @@ public class CaptureService extends VpnService implements Runnable {
         if((INSTANCE == null) || (path == null))
             return;
 
+        if (!waitForEngineReady()) {
+            Log.w(TAG, "skipping adblock reload: capture engine not ready within "
+                    + ENGINE_READY_TIMEOUT_MS + "ms");
+            return;
+        }
+
         Log.i(TAG, "reloading adblock list from " + path);
-        reloadAdblockList(path);
+        if (!waitForAdblockReloadDone(path)) {
+            Log.w(TAG, "adblock reload may not have landed: list_version did not advance");
+        }
     }
 
     public static void setFirewallEnabled(boolean enabled) {
@@ -1921,6 +2020,12 @@ public class CaptureService extends VpnService implements Runnable {
     public static void setAdblockEnabled(boolean enabled) {
         if(INSTANCE == null)
             return;
+
+        if (!waitForEngineReady()) {
+            Log.w(TAG, "skipping adblock enable toggle: capture engine not ready within "
+                    + ENGINE_READY_TIMEOUT_MS + "ms");
+            return;
+        }
 
         INSTANCE.mAdblockEnabled = enabled;
         nativeSetAdblockEnabled(enabled);
