@@ -1074,8 +1074,8 @@ public class AdbyeE2ETest {
 
         // Control probe: a DIFFERENT host must STILL be reachable
         int control = getResponseOrTimeout(
-            makeHttpRequestAsync("http://connect.facebook.net/somepath", probeTimeoutMs), 15, TimeUnit.SECONDS);
-        assertTrue("Control probe: connect.facebook.net must still be reachable (gate blocks "
+            makeHttpRequestAsync("http://example.org", probeTimeoutMs), 15, TimeUnit.SECONDS);
+        assertTrue("Control probe: example.org must still be reachable (gate blocks "
                 + "google-analytics.com specifically, not all egress; baseline=" + baseline
                 + ", drop=" + dropped + ", control=" + control + ")",
             control >= 200 && control < 400);
