@@ -297,8 +297,6 @@ static bool firewall_app_allowlisted(pcapdroid_t *pd, const zdtun_5tuple_t *tupl
            (data->info && data->info[0] && blacklist_match_domain(allowlist, data->info));
 }
 
-/* ******************************************************* */
-
 static void check_domain_block_rules(pcapdroid_t *pd, pd_conn_t *data, const zdtun_5tuple_t *tuple) {
     if(data->info && data->info[0]) {
         if(pd->malware_detection.bl && !data->blacklisted_domain && !data->whitelisted_app) {
@@ -342,6 +340,23 @@ static void check_domain_block_rules(pcapdroid_t *pd, pd_conn_t *data, const zdt
                 }
             }
         }
+
+        // ADBye adblock is INTENTIONALLY NOT consulted here at SYN, unlike
+        // malware/firewall above. data->info is an IP-keyed DNS-LRU hostname
+        // (set by ip_lru_find in pd_new_connection) that may mismatch a
+        // shared CDN IP's real SNI; capture_vpn.c drops the outbound SYN
+        // synchronously on to_block right after zdtun_lookup, so a wrong
+        // SYN-time block would be final before the real SNI is observed —
+        // and check_adblock_sni_rules is the only @@-exemption path
+        // (gated by !data->to_block), so a consult + block at SYN cannot
+        // be corrected by the post-parse gate. recompute_conn_block_cb does
+        // reset to_block in housekeeping, but blacklisted_domain has no
+        // adblock-side clear path (only the malware whitelist-reload
+        // handler clears it), so for an adblock-flagged connection the
+        // reset preserves to_block=true. Net effect: a stale-LRU block
+        // violates constraint #2 Resource Protection — adblock stays
+        // post-parse-only (the surviving consults are process_ndpi_data's
+        // TLS/HTTP host_server_name branches).
     }
 }
 
@@ -545,23 +560,26 @@ static bool is_numeric_host(const char *host) {
 }
 
 static void check_adblock_sni_rules(pcapdroid_t *pd, pd_conn_t *data, const zdtun_5tuple_t *tuple, const char *sni) {
-    // Check ADBye SNI blocklist (early-drop on ClientHello)
+    // ADBye adblock gate (Phase 1.b Path B Commit B): early-drop on TLS
+    // ClientHello SNI and on plaintext HTTP Host. The system @@ bypass
+    // allowlist — populated at reload time from the merged rules file's
+    // @@||domain^ exception rules (BypassManager.domainAllowlist: media CDNs,
+    // Play Store, etc.) — is consulted BEFORE the blocklist so a bypassed host
+    // is never adblock-blocked even if a filter list also matches it
+    // (constraint #2 Resource Protection).
     if(pd->adblock.enabled && pd->adblock.list && !data->to_block) {
+        // 1. System bypass allowlist (@@ rules from the merged rules file)
+        if(blacklist_match_sni_allowlist(pd->adblock.list, sni))
+            return;  // protected by the bypass — do not block
+
+        // 2. Blocklist match — then defer to the per-UID allowlist
         if(blacklist_match_sni(pd->adblock.list, sni)) {
-            // Check per-app allowlist first
             blacklist_t *allowlist = blacklist_get_app_allowlist(pd->adblock.list, data->uid);
             if(!(allowlist && blacklist_match_domain(allowlist, sni))) {
-                // Check BypassManager hardcoded exceptions (Resource Protection)
-                // Note: UID bypass is checked via BypassManager in Java, here we only have domain/port
-                // The hardcoded domain allowlist is exported as exception rules in the merged file
-                // so if it was loaded, it would already be an exception rule (@@||domain^)
-                // For now, we also check against the known domains that should be bypassed
-                // (these match the domains in BypassManager.domainAllowlist)
-
                 char appbuf[64];
                 char buf[512];
                 get_appname_by_uid(pd, data->uid, appbuf, sizeof(appbuf));
-                log_w("ADBye SNI early-drop [%s]: %s [%s]", sni,
+                log_w("ADBye early-drop [%s]: %s [%s]", sni,
                       zdtun_5tuple2str(tuple, buf, sizeof(buf)), appbuf);
                 data->blacklisted_domain = true;
                 data->to_block = true;
@@ -569,7 +587,7 @@ static void check_adblock_sni_rules(pcapdroid_t *pd, pd_conn_t *data, const zdtu
                 char appbuf[64];
                 char buf[512];
                 get_appname_by_uid(pd, data->uid, appbuf, sizeof(appbuf));
-                log_d("ADBye SNI allowlist exempted [%s]: %s [%s]", sni,
+                log_d("ADBye early-drop per-uid exempted [%s]: %s [%s]", sni,
                       zdtun_5tuple2str(tuple, buf, sizeof(buf)), appbuf);
             }
         }
@@ -610,8 +628,20 @@ static void process_ndpi_data(pcapdroid_t *pd, const zdtun_5tuple_t *tuple, pd_c
             break;
         case NDPI_PROTOCOL_HTTP:
             if(data->ndpi_flow->host_server_name[0] &&
-               !is_numeric_host((char*)data->ndpi_flow->host_server_name))
+               !is_numeric_host((char*)data->ndpi_flow->host_server_name)) {
                 found_info = (char*)data->ndpi_flow->host_server_name;
+
+                // ADBye HTTP-Host adblock gate (Phase 1.b Path B Commit B):
+                // route the plaintext HTTP Host header through the same
+                // bypass / block gate as TLS so ||domain^ and @@||domain^ rules
+                // take effect for unencrypted HTTP. TLS and HTTP are
+                // mutually exclusive l7proto cases for a single connection
+                // (no double-fire), and check_adblock_sni_rules is idempotent
+                // under the !to_block guard, so the same function can run in
+                // both branches without compounding.
+                if(!data->to_block)
+                    check_adblock_sni_rules(pd, data, tuple, (char*)data->ndpi_flow->host_server_name);
+            }
 
             if(!data->url && data->ndpi_flow->http.url) {
                 data->url = pd_strndup(data->ndpi_flow->http.url, 256);
@@ -1201,6 +1231,11 @@ void pd_housekeeping(pcapdroid_t *pd) {
             blacklist_destroy(pd->adblock.list);
         pd->adblock.list = pd->adblock.new_list;
         pd->adblock.new_list = NULL;
+        // Advance the reload-generation so the E2E harness's
+        // waitForAdblockReloadDone (polling nativeGetAdblockListVersion) observes
+        // the swap as an event instead of fixed-delay sleeping. Visible-for-test
+        // only; no production reader.
+        pd->adblock.list_version++;
     }
 }
 

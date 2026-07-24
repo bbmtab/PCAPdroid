@@ -25,6 +25,9 @@ import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
 
+import java.io.File;
+import java.util.EnumSet;
+
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
@@ -32,12 +35,14 @@ import androidx.preference.PreferenceManager;
 import androidx.viewpager2.adapter.FragmentStateAdapter;
 import androidx.viewpager2.widget.ViewPager2;
 
+import com.adbye.filter.CaptureService;
 import com.adbye.filter.Log;
 import com.adbye.filter.R;
 import com.adbye.filter.Utils;
 import com.adbye.filter.fragments.EditListFragment;
 import com.adbye.filter.fragments.FirewallStatus;
 import com.adbye.filter.fragments.ProtectionFragment;
+import com.adbye.filter.filterlists.FilterListManager;
 import com.adbye.filter.model.ListInfo;
 import com.adbye.filter.model.Prefs;
 import com.google.android.material.tabs.TabLayout;
@@ -114,12 +119,56 @@ public class FirewallActivity extends BaseActivity {
     }
 
     /**
-     * Toggled by {@link ProtectionFragment.Callback}; for now we just log.
-     * Engine hooks (FilterListManager.mergeEnabledLists / CaptureService reloads) are
-     * wired in the next phase â€” see plan.md Phase 1 â†’ Phase 4 handoff.
+     * Toggled by {@link ProtectionFragment.Callback}. Plan.md Phase 1 + constraint #7
+     * (Hot-reload): re-merge filter lists on every master-switch flip and push the
+     * regenerated {@code adblock_rules.txt} into the running native engine without
+     * restarting {@link CaptureService}.
+     *
+     * <p>{@link FilterListManager#mergeEnabledLists} is {@code @WorkerThread}-only, so
+     * the disk write runs on a short-lived worker; thereafter
+     * {@link CaptureService#reloadAdblockRules(String)} hot-swaps the new list into the
+     * engine. If {@code CaptureService.INSTANCE == null} the reload is a no-op (logged)
+     * and the fresh file is picked up at the next VPN start.
+     *
+     * <p>Category-aware filtering (plan.md Phase 1 Integration Test):
+     * only the four Protection master switches bound to filter-merge
+     * (AD_BLOCKING / PRIVACY / ANNOYANCE / SECURITY) gate which lists are
+     * written; the other two (DNS / Firewall) operate at the VPN routing
+     * layer and are not consulted here. Toggling "Ad blocking" OFF therefore
+     * produces a fresh {@code adblock_rules.txt} that excludes
+     * {@code AD_BLOCKING}-categorized entries.
      */
     private void onProtectionChanged(String prefKey, boolean enabled) {
         Log.d(TAG, "Protection changed: " + prefKey + "=" + enabled);
+
+        // Keep the native adblock gate (pd->adblock.enabled) synced with the
+        // "Ad blocking" master switch. Pref-driven variant: mirrors the firewall
+        // precedent (FirewallStatus -> CaptureService.setFirewallEnabled). The
+        // merge+reload below regenerates adblock_rules.txt; this flips the gate
+        // that decides whether the freshly reloaded list is consulted at all.
+        // (Phase 1.b Path B Commit A — see plan.md "Phase 1.b Status".)
+        if(Prefs.PREF_PROTECT_ADBLOCK.equals(prefKey)) {
+            CaptureService.setAdblockEnabled(enabled);
+        }
+
+        new Thread(() -> {
+            try {
+                EnumSet<FilterListManager.Category> cats = FilterListManager.enabledCategories(
+                        Prefs.isProtectAdblock(mPrefs),
+                        Prefs.isProtectTracking(mPrefs),
+                        Prefs.isProtectAnnoyance(mPrefs),
+                        Prefs.isProtectSecurity(mPrefs));
+                Log.d(TAG, "Master switches -> enabled categories: " + cats);
+
+                FilterListManager mgr = new FilterListManager(this);
+                int n = mgr.mergeEnabledLists(cats);
+                File merged = mgr.getMergedRulesFile();
+                Log.d(TAG, "mergeEnabledLists wrote " + n + " user lines -> " + merged);
+                CaptureService.reloadAdblockRules(merged.getAbsolutePath());
+            } catch (java.io.IOException e) {
+                Log.e(TAG, "mergeEnabledLists failed for " + prefKey + ": " + e);
+            }
+        }, "AdbyeHotReload").start();
     }
 
     @SuppressLint("NotifyDataSetChanged")

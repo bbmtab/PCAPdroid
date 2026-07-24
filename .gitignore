@@ -30,3 +30,34 @@ progress.md
 todo.md
 fixed.md
 session-*.md
+
+# Private layout docs/drafts — the fork (bbmtab/PCAPdroid) is a PUBLIC repo.
+# These work-in-progress UI specs (and the layout buildprint image) stay
+# local; do not commit/upload them. The *_v2 drafts below are untracked; the
+# v1 names were previously committed and have been `git rm --cached`'d
+# (kept in history, recoverable via git log) — listing them here prevents
+# them from being re-added.
+UNIFIED_UI_ARCHITECTURE.md
+protection_layout.md
+protection_layout_v2.md
+Network_layout_tab.md
+Network_layout_tab_v2.md
+app_managemen_tab_layout_blueprint.md
+app_managemen_tab_layout_blueprint_v2.md
+firewall_blocking_tab.md
+icon_bluprint.md
+filter_list_plan.md
+blocklist layout.md
+block_list-Layout_buildprint.jpeg
+
+# Private infra / CI-debug scratch — never upload to the public repo.
+#   "ssh admin@10.148.0.2" leaks an internal host in its filename.
+#   curl.exe / *.log / logcat-e2e-* are run artifacts downloaded during CI triage.
+ssh admin@*
+curl.exe
+job_log.txt
+job_log_full.txt
+logcat-e2e-*.txt
+run_*.log
+e2e-logcat/
+/*claudeci*.json
