@@ -58,8 +58,8 @@ public class FirewallActivity extends BaseActivity {
 
     private static final int POS_STATUS = 0;
     private static final int POS_BLOCKLIST = 1;
-    private static final int POS_WHITELIST = 2;
-    private static final int POS_PROTECTION = 3;
+    private static final int POS_PROTECTION = 2;
+    private static final int POS_WHITELIST = 3;
     private static final int POS_APPMGMT = 4;
     private static final int BASE_TOTAL_COUNT = 3;
     private static final int TOTAL_COUNT = 5;
