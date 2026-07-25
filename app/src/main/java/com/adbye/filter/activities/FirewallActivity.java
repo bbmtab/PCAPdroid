@@ -42,6 +42,7 @@ import com.adbye.filter.Utils;
 import com.adbye.filter.fragments.EditListFragment;
 import com.adbye.filter.fragments.FirewallStatus;
 import com.adbye.filter.fragments.ProtectionFragment;
+import com.adbye.filter.fragments.AppManagementFragment;
 import com.adbye.filter.filterlists.FilterListManager;
 import com.adbye.filter.model.ListInfo;
 import com.adbye.filter.model.Prefs;
@@ -59,8 +60,9 @@ public class FirewallActivity extends BaseActivity {
     private static final int POS_BLOCKLIST = 1;
     private static final int POS_WHITELIST = 2;
     private static final int POS_PROTECTION = 3;
+    private static final int POS_APPMGMT = 4;
     private static final int BASE_TOTAL_COUNT = 3;
-    private static final int TOTAL_COUNT = 4;
+    private static final int TOTAL_COUNT = 5;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,6 +83,9 @@ public class FirewallActivity extends BaseActivity {
         @Override
         public Fragment createFragment(int position) {
             Log.d(TAG, "createFragment");
+
+            if (position == getItemCount() - 1)
+                return new AppManagementFragment();
 
             switch (position) {
                 default: // Deliberate fall-through to status tab
@@ -104,6 +109,10 @@ public class FirewallActivity extends BaseActivity {
         }
 
         public int getPageTitle(final int position) {
+            // APPMGMT tab is always the last tab position.
+            if (position == getItemCount() - 1)
+                return R.string.apps;
+
             switch (position) {
                 default: // Deliberate fall-through to status tab
                 case POS_STATUS:
@@ -220,6 +229,8 @@ public class FirewallActivity extends BaseActivity {
                     focusOverride = findViewById(R.id.listview);
                 else if (pos == POS_PROTECTION)
                     focusOverride = findViewById(R.id.protection_list);
+                else if (pos == mPagerAdapter.getItemCount() - 1)
+                    focusOverride = findViewById(R.id.app_management_list);
 
                 if (focusOverride != null) {
                     focusOverride.requestFocus();

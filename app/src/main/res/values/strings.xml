@@ -400,6 +400,27 @@
     <string name="firewall_is_disabled">Firewall is disabled</string>
     <string name="firewall_is_enabled">Firewall is enabled</string>
     <string name="app_info">App info</string>
+
+    <!-- App Management fragment (shell-only) -->
+    <string name="app_mgmt_blocked_state">Blocked</string>
+    <string name="app_mgmt_allowed_state">Allowed</string>
+    <string name="app_mgmt_blocked_conns_badge">%1$d blocked</string>
+    <string name="app_mgmt_allowlist_count">%1$d allowed host(s)</string>
+    <string name="app_mgmt_allowlist_empty">No hosts allowed for this app</string>
+    <string name="app_mgmt_add_allowed_host">Edit allowed hosts</string>
+    <string name="app_mgmt_add_host_hint">Host or IP address</string>
+    <string name="app_mgmt_block_action">Block this app</string>
+    <string name="app_mgmt_unblock_action">Unblock this app</string>
+    <string name="app_mgmt_unblock_warning">Unblocking %1$s will also remove its per-app allowlist (%2$d allowed host(s)). Remove the block and the allowlist?</string>
+    <string name="app_mgmt_launch">Launch</string>
+    <string name="app_mgmt_remove">Remove</string>
+    <string name="app_mgmt_sort_by">Sort by</string>
+    <string name="app_mgmt_sort_by_name">Name</string>
+    <string name="app_mgmt_sort_by_uid">UID</string>
+    <string name="app_mgmt_no_apps_match">No apps match your search</string>
+    <string name="app_mgmt_block_failed">Could not update this rule</string>
+    <string name="app_mgmt_host_exists">This entry is already in the allowlist</string>
+    <string name="app_mgmt_invalid_host">Enter a valid host or IP address</string>
     <string name="action_block">Block</string>
     <string name="action_unblock">Unblock</string>
     <string name="netd_block_missed">This connection was initiated by netd so it could not be blocked</string>

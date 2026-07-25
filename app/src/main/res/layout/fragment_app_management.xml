@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  App Management fragment layout (shell-only).
+
+  Layout:
+    - header (horizontal: SearchView + sort ImageButton)
+    - show_system_apps checkbox (mirrors apps_selector.xml idiom)
+    - Body (FrameLayout: RecyclerView app_management_list + empty-state TextView)
+
+  Search is via SearchView.OnQueryTextListener (hand-rolled; matches
+  AppsListView idiom — the project has no Filterable precedent).
+  IDs:
+    app_mgmt_search       — SearchView (filter input)
+    app_mgmt_sort_btn     — ImageButton, opens a PopupMenu (Name / UID)
+    show_system_apps      — CheckBox (reuse settings row)
+    app_management_list   — RecyclerView (the per-app grid)
+    app_mgmt_empty        — TextView, TODO-type empty-state copy
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp">
+
+        <androidx.appcompat.widget.SearchView
+            android:id="@+id/app_mgmt_search"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            app:iconifiedByDefault="false"
+            app:queryHint="@string/search_apps" />
+
+        <ImageButton
+            android:id="@+id/app_mgmt_sort_btn"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="8dp"
+            android:src="@drawable/ic_sort"
+            app:tint="?attr/colorPrimary"
+            android:background="?attr/selectableItemBackground"
+            android:contentDescription="@string/app_mgmt_sort_by"
+            android:focusable="true"
+            android:clickable="true" />
+   </LinearLayout>
+
+    <CheckBox
+        android:id="@+id/show_system_apps"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:text="@string/show_system_apps" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/app_management_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingBottom="16dp"
+            android:clipToPadding="false"
+            android:scrollbars="vertical" />
+
+        <TextView
+            android:id="@+id/app_mgmt_empty"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_horizontal"
+            android:layout_marginTop="20dp"
+            android:layout_marginBottom="40dp"
+            android:textStyle="italic"
+            android:textSize="15sp"
+            android:text="@string/no_apps"
+            android:visibility="gone" />
+   </FrameLayout>
+</LinearLayout>
