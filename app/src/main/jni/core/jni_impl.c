@@ -1544,4 +1544,39 @@ Java_com_adbye_filter_CaptureService_reloadAdblockList(JNIEnv *env, jclass clazz
 }
 
 /* ******************************************************* */
+
+// extractKeylogFromPcapng -- RESTORE (constraint #8 sign-off, 2026-07-26).
+// 08ca34c2 removed the original JNI bridge during the package rename; the
+// underlying reader pcapng_to_keylog() (pcap_reader.c) was never removed and
+// is fully implemented: opens the pcapng, walks its blocks, writes the DSB
+// TLS session secrets to out_path. Self-contained reader path -- own
+// fopen/fclose, no interaction with global_pd or the connections/route state,
+// so it is safe to call regardless of whether a capture is running. The
+// try/catch guard at the Java call site (MainActivity.prepareKeylogAndStart,
+// added by 119baba0) is intentionally kept: if native ever fails to link in
+// some build config, it degrades to encrypted-only (no crash), same as today.
+JNIEXPORT jboolean JNICALL
+Java_com_adbye_filter_CaptureService_extractKeylogFromPcapng(JNIEnv *env, jclass clazz,
+        jstring pcapng_path, jstring out_path) {
+    const char *pcapng_s = (*env)->GetStringUTFChars(env, pcapng_path, NULL);
+    if(!pcapng_s) {
+        log_e("extractKeylogFromPcapng: invalid pcapng_path");
+        return false;
+    }
+
+    const char *out_s = (*env)->GetStringUTFChars(env, out_path, NULL);
+    if(!out_s) {
+        (*env)->ReleaseStringUTFChars(env, pcapng_path, pcapng_s);
+        log_e("extractKeylogFromPcapng: invalid out_path");
+        return false;
+    }
+
+    bool rv = pcapng_to_keylog(pcapng_s, out_s);
+
+    (*env)->ReleaseStringUTFChars(env, out_path, out_s);
+    (*env)->ReleaseStringUTFChars(env, pcapng_path, pcapng_s);
+    return rv;
+}
+
+/* ******************************************************* */
 #endif // ANDROID
