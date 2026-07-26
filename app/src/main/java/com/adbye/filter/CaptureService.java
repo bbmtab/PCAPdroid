@@ -142,6 +142,26 @@ public class CaptureService extends VpnService implements Runnable {
     private boolean mRevoked;
     private SharedPreferences mPrefs;
     private CaptureSettings mSettings;
+    // Constraint #10 (Restart-on-tunnel-construction-change): keys whose
+    // changes require a CaptureService stop+start to take effect (baked into
+    // pcapdroid_t at start). Constraint-#7 Protection masters (pref_protect_*)
+    // and `firewall` are intentionally EXCLUDED -- they use the hot-reload path
+    // (FirewallActivity.onProtectionChanged -> setAdblockEnabled/reloadAdblockRules).
+    private static final Set<String> TUNNEL_CONFIG_PREF_KEYS = new java.util.HashSet<>(java.util.Arrays.asList(
+            Prefs.PREF_PCAP_DUMP_MODE, Prefs.PREF_COLLECTOR_HOST_KEY, Prefs.PREF_COLLECTOR_PORT_KEY,
+            Prefs.PREF_HTTP_SERVER_PORT, Prefs.PREF_SOCKS5_ENABLED_KEY, Prefs.PREF_SOCKS5_PROXY_HOST_KEY,
+            Prefs.PREF_SOCKS5_PROXY_PORT_KEY, Prefs.PREF_SOCKS5_AUTH_ENABLED_KEY, Prefs.PREF_SOCKS5_USERNAME_KEY,
+            Prefs.PREF_SOCKS5_PASSWORD_KEY, Prefs.PREF_IP_MODE, Prefs.PREF_APP_FILTER, Prefs.PREF_APP_FILTER_ENABLED,
+            Prefs.PREF_ROOT_CAPTURE, Prefs.PREF_DUMP_EXTENSIONS, Prefs.PREF_CAPTURE_INTERFACE,
+            Prefs.PREF_TLS_DECRYPTION_KEY, Prefs.PREF_FULL_PAYLOAD, Prefs.PREF_BLOCK_QUIC,
+            Prefs.PREF_AUTO_BLOCK_PRIVATE_DNS, Prefs.PREF_MITMPROXY_OPTS, Prefs.PREF_PCAPNG_ENABLED,
+            Prefs.PREF_DNS_SERVER_V4, Prefs.PREF_DNS_SERVER_V6, Prefs.PREF_USE_SYSTEM_DNS,
+            Prefs.PREF_SNAPLEN, Prefs.PREF_MAX_PKTS_PER_FLOW, Prefs.PREF_MAX_DUMP_SIZE
+    ));
+    private static final long TUNNEL_CONFIG_RESTART_DEBOUNCE_MS = 400;
+    private SharedPreferences.OnSharedPreferenceChangeListener mTunnelConfigListener;
+    private final Handler mTunnelConfigRestartHandler = new Handler(Looper.getMainLooper());
+    private boolean mTunnelConfigRestartPending = false;
     private Billing mBilling;
     private Handler mHandler;
     private Thread mCaptureThread;
@@ -239,6 +259,41 @@ public class CaptureService extends VpnService implements Runnable {
 
         INSTANCE = this;
         super.onCreate();
+
+        // Constraint #10: react to tunnel-construction pref changes while the
+        // VPN is running by stop+start so the new value bakes at restart.
+        // Registered once per instance (lifetime = VPN lifetime); unregistered
+        // in onDestroy. Fires only on persisted, validated changes (the per-
+        // Preference validators reject bad values before commit).
+        mTunnelConfigListener = (prefs, key) -> {
+            if (key != null && TUNNEL_CONFIG_PREF_KEYS.contains(key))
+                scheduleTunnelConfigRestart();
+        };
+        mPrefs.registerOnSharedPreferenceChangeListener(mTunnelConfigListener);
+    }
+
+    // Constraint #10: toast fires at the change-detection moment (BEFORE
+    // stopService); the stop+start runs at the trailing edge of the debounce
+    // window to coalesce multi-field bursts (e.g. several Socks5 fields).
+    private void scheduleTunnelConfigRestart() {
+        if (!mTunnelConfigRestartPending) {
+            Utils.showToastLong(this, R.string.protection_restart_toast);
+            mTunnelConfigRestartPending = true;
+        } else {
+            mTunnelConfigRestartHandler.removeCallbacksAndMessages(null);
+        }
+        mTunnelConfigRestartHandler.postDelayed(this::runTunnelConfigRestart,
+                TUNNEL_CONFIG_RESTART_DEBOUNCE_MS);
+    }
+
+    private void runTunnelConfigRestart() {
+        mTunnelConfigRestartPending = false;
+        if (!isServiceActive())
+            return; // VPN stopped since the change; next start bakes the pref.
+        stopService();
+        Intent intent = new Intent(this, CaptureService.class);
+        intent.putExtra("settings", new CaptureSettings(this, mPrefs));
+        ContextCompat.startForegroundService(this, intent);
     }
 
     private int abortStart() {
@@ -668,6 +723,12 @@ public class CaptureService extends VpnService implements Runnable {
         // Do not nullify INSTANCE to allow its settings and the connections register to be accessible
         // after the capture is stopped
         //INSTANCE = null;
+
+        if (mTunnelConfigListener != null) {
+            mPrefs.unregisterOnSharedPreferenceChangeListener(mTunnelConfigListener);
+            mTunnelConfigListener = null;
+        }
+        mTunnelConfigRestartHandler.removeCallbacksAndMessages(null);
 
         unregisterNetworkCallbacks();
 

@@ -320,6 +320,9 @@
     <string name="tls_decryption">TLS decryption</string>
     <string name="tls_decryption_summary">Decrypt the SSL/TLS traffic by performing mitm. This may now work with some apps, check out the user guide</string>
     <string name="traffic_inspection">Traffic inspection</string>
+    <!-- Constraint #10: shown before an Android-driven CaptureService stop+start
+         so a tunnel-construction setting change reads as intentional. -->
+    <string name="protection_restart_toast">Protection is restarting to apply change</string>
     <string name="mitm_start_failed">Could not start the mitm service. Try to open the mitm addon app manually and retry</string>
     <string name="mitm_setup_wizard">Mitm setup wizard</string>
     <string name="install_action">Install</string>
