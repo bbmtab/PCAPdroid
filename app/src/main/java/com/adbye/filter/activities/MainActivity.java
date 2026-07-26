@@ -722,25 +722,15 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         mPcapExecutor = null;
     }
 
-    // TEMP stopgap (2026-07-17, pending constraint #8 sign-off): hasSeenDumpExtensions()
-    // has no native implementation on this branch (todo.md "orphaned native decls" /
-    // fixed.md sibling-audit finding) and throws UnsatisfiedLinkError unconditionally,
-    // crashing MainActivity on the main thread the first time a user opens any saved
-    // capture file with >=1 connection. This wrapper only stops the crash; it does not
-    // restore the feature. Fix options (restore native impl vs. formally retire it) are
-    // still open per todo.md.
+    // Retired 2026-07-26 (constraint #8 sign-off): CaptureService.hasSeenDumpExtensions()
+    // had no JNI implementation on this branch (orphaned native decl, todo.md "orphaned
+    // native decls" / fixed.md sibling-audit finding). The dump-extensions advisory notice
+    // it gated is retired rather than restored: the underlying reader flag
+    // (pd_reader_t::has_seen_dump_extensions, pcap_reader.c) is per-file and locally scoped
+    // with no global accessor, so restoring would need C-side global caching for a low-value
+    // tooltip. Returns true so the notice in checkLoadedPcap() is permanently skipped.
     private boolean hasSeenDumpExtensionsSafe() {
-        try {
-            return CaptureService.hasSeenDumpExtensions();
-        } catch (UnsatisfiedLinkError e) {
-            // com.adbye.filter.Log has no Throwable-accepting overload (verified against
-            // Log.java source) -- go through the 2-arg wrapper so this still lands in
-            // pcapdroid.log, not just logcat. UnsatisfiedLinkError's message is JVM-generated
-            // for the missing-symbol case, so it's reliably present; toString() is a fallback.
-            String reason = (e.getMessage() != null) ? e.getMessage() : e.toString();
-            Log.w(TAG, "hasSeenDumpExtensions() has no native impl; skipping dump-extensions notice (" + reason + ")");
-            return true; // degrade to "already seen" so the notice is silently skipped
-        }
+        return true;
     }
 
     private void checkLoadedPcap() {
@@ -1210,20 +1200,19 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
                 try {
                     CaptureService.extractKeylogFromPcapng(pcap_path, out.getAbsolutePath());
                 } catch (UnsatisfiedLinkError e) {
-                    // TEMP stopgap (2026-07-17): extractKeylogFromPcapng() has no native
-                    // implementation on this branch (todo.md "orphaned native decls"),
-                    // throws unconditionally before writing anything to `out`. The
-                    // hasKeylog check below (out.exists()) naturally evaluates false in
-                    // that case, so no separate degrade-flag is needed here -- this also
-                    // sidesteps a real javac error: assigning a boolean in both the try
-                    // and catch blocks makes it not effectively-final for the
-                    // runOnUiThread lambda below (verified against javac 17: "local
+                    // Resilience guard (post-restore 2026-07-26): extractKeylogFromPcapng()
+                    // now has a native impl (jni_impl.c bridge -> pcapng_to_keylog); this
+                    // catch fires only if native fails to link in some build config, before
+                    // writing anything to `out`. The hasKeylog check below (out.exists())
+                    // naturally evaluates false in that case, so no separate degrade-flag is
+                    // needed here -- this also sidesteps a real javac error: assigning a
+                    // boolean in both the try and catch blocks makes it not effectively-final
+                    // for the runOnUiThread lambda below (verified against javac 17: "local
                     // variables referenced from a lambda expression must be final or
-                    // effectively final"). Also avoids crashing the executor thread
-                    // (Android kills the process on any uncaught Throwable, not just
-                    // main-thread ones).
+                    // effectively final"). Also avoids crashing the executor thread (Android
+                    // kills the process on any uncaught Throwable, not just main-thread ones).
                     String reason = (e.getMessage() != null) ? e.getMessage() : e.toString();
-                    Log.w(TAG, "extractKeylogFromPcapng() has no native impl; skipping keylog extraction (" + reason + ")");
+                    Log.w(TAG, "extractKeylogFromPcapng() native call failed; skipping keylog extraction (" + reason + ")");
                 }
                 final boolean hasKeylog = out.exists() && (out.length() > 0);
 
