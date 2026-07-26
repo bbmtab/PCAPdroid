@@ -1039,7 +1039,6 @@ public class AdbyeE2ETest {
         java.io.File listFile = filterMgr.getListFile(filterMgr.findByFname("test_tracking.txt"));
         try (java.io.FileWriter w = new java.io.FileWriter(listFile)) {
             w.write("||google-analytics.com^\n");
-            w.write("||connect.facebook.net^\n");
         }
 
         int lines = filterMgr.mergeEnabledLists(EnumSet.allOf(FilterListManager.Category.class));
