@@ -234,6 +234,7 @@ The fix reuses `check_adblock_sni_rules` (the `@@`-allowlist-first ORDER is pres
 - [ ] Ensure `FilterListManager` passes the absolute path of `adblock_rules.txt` via IPC.
 - [ ] (Cross-repo) Add parsing for AdGuard syntax, CSS injection, and Scriptlets in the `PCAPdroid-mitm` codebase.
 - [ ] Gate the "HTTPS filtering" UI toggle behind `MitmAddon.needsSetup()` (require CA install).
+- **Design note (2026-07-28, not yet actionable - Phase 4 hasn't started):** AdGuard's own apps (Mac/Windows/Linux confirmed via changelog issue #1997 "Use CRLite as alternative of OCSP"; Android confirmed via the same fix landing in AdGuard for Android 4.14 nightly changelogs) have moved certificate-revocation checking from OCSP to Mozilla's CRLite - a locally-queried, privacy-preserving compressed revocation filter, replacing per-connection OCSP round-trips. When Phase 4 scoping begins, this is worth weighing as a design input for the PCAPdroid-mitm addon's own certificate handling (if/when it performs revocation checking at all) - not a decision made here, just a reference point from the closest architectural comparable.
 - [ ] **⚙️ Testing Gate:**
   * *E2E Test:* Install both ADBye and the modified MITM addon. Enable HTTPS filtering.
   * *Browser Test:* Visit `adblock-tester.com` or `d3ward.github.io/toolz/adblock`. Verify cosmetic rules (hiding empty ad containers) and scriptlets are successfully executed inside the page HTML.
