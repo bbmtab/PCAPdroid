@@ -328,6 +328,8 @@ public class CaptureService extends VpnService implements Runnable {
 
         // startForeground must always be called since the Service is being started with
         // ContextCompat.startForegroundService.
+        // Initialize conn_reg before startForeground to avoid NPE in getStatusNotification
+        conn_reg = new ConnectionsRegister(this, Prefs.getConnectionsLogSize(mPrefs));
         // NOTE: since Android 12, startForeground cannot be called when the app is in background
         // (unless invoked via an Intent).
         setupNotifications();
@@ -447,7 +449,6 @@ public class CaptureService extends VpnService implements Runnable {
         mCaptureStartTimeMonotonic = SystemClock.elapsedRealtime();
         last_connections = 0;
         mLowMemory = false;
-        conn_reg = new ConnectionsRegister(this, Prefs.getConnectionsLogSize(mPrefs));
         mHttpLog = mSettings.full_payload ? new HttpLog() : null;
         mDumper = null;
         mDumpQueue = null;
@@ -793,8 +794,8 @@ public class CaptureService extends VpnService implements Runnable {
     }
 
     private Notification getStatusNotification() {
-        String msg = String.format(getString(R.string.notification_msg),
-                Utils.formatBytes(last_bytes), Utils.formatNumber(this, last_connections));
+        int blocked = conn_reg.getNumBlockedConnections();
+        String msg = String.format("%s ads blocked", Utils.formatNumber(this, blocked));
 
         mStatusBuilder.setContentText(msg);
 
