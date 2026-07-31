@@ -157,7 +157,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.main_activity);
-        setTitle("PCAPdroid");
+        setTitle("ADBye");
         mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 
         int appver = Prefs.getAppVersion(mPrefs);

@@ -3,7 +3,7 @@
     <string name="all_interfaces">Tüm arayüzler</string>
     <string name="hidden_connections_rules">Gizli bağlantı kuralları</string>
     <string name="billing_connecting">Google Play bağlantısı devam ediyor, lütfen biraz sonra tekrar deneyin</string>
-    <string name="private_dns_message_notice">Gizli DNS, PCAPdroid\'in DNS trafiğini denetlemesini engeller. Bunu Android ağ ayarlarından kapatabilirsiniz</string>
+    <string name="private_dns_message_notice">Gizli DNS, ADBye\'in DNS trafiğini denetlemesini engeller. Bunu Android ağ ayarlarından kapatabilirsiniz</string>
     <string name="firewall_rules">Güvenlik duvarı kuralları</string>
     <string name="blocked_pkts">Engellendi</string>
     <string name="learn_more">Daha fazla bilgi edin</string>
@@ -58,7 +58,7 @@
     <string name="unknown_app">Bilinmeyen</string>
     <string name="other_prefs">Diğer</string>
     <string name="app_language">Uygulama dili</string>
-    <string name="root_capture_summary">PCAPdroid\'in diğer VPN uygulamalarıyla çalışmasına izin verir</string>
+    <string name="root_capture_summary">ADBye\'in diğer VPN uygulamalarıyla çalışmasına izin verir</string>
     <string name="donate">Bağış yap</string>
     <string name="search">Ara…</string>
     <string name="app_val">Uygulama: %1$s</string>
@@ -79,9 +79,9 @@
 \nEmin değilseniz reddedin</string>
     <string name="deny">Reddet</string>
     <string name="allow">İzin ver</string>
-    <string name="ctrl_consent_title">PCAPdroid denetim isteği</string>
-    <string name="ctrl_consent_denied">PCAPdroid: denetim isteği reddedildi</string>
-    <string name="ctrl_consent_allowed">PCAPdroid: denetim isteğine izin verildi</string>
+    <string name="ctrl_consent_title">ADBye denetim isteği</string>
+    <string name="ctrl_consent_denied">ADBye: denetim isteği reddedildi</string>
+    <string name="ctrl_consent_allowed">ADBye: denetim isteğine izin verildi</string>
     <string name="capture_interface">Yakalama arayüzü</string>
     <string name="internet">İnternet</string>
     <string name="edit_filter">Filtreyi düzenle</string>
@@ -101,7 +101,7 @@
     <string name="once">Bir kere</string>
     <string name="forever">Sonsuza kadar</string>
     <string name="control_permissions">Denetim izinleri</string>
-    <string name="control_permissions_summary">Hangi uygulamaların PCAPdroid yakalamasını denetlemesine izin verildiğine göz atın</string>
+    <string name="control_permissions_summary">Hangi uygulamaların ADBye yakalamasını denetlemesine izin verildiğine göz atın</string>
     <string name="control_permissions_item">%1$s: %2$s</string>
     <string name="country">Ülke</string>
     <string name="asn">ASN</string>
@@ -182,7 +182,7 @@
     <string name="pcap_file">PCAP dosyası</string>
     <string name="delete">Sil</string>
     <string name="save_to_file">Dosyaya kaydet</string>
-    <string name="about_text">PCAPdroid, root ayrıcalıkları olmadan çalışan açık kaynaklı bir ağ yakalama ve izleme aracıdır</string>
+    <string name="about_text">ADBye, root ayrıcalıkları olmadan çalışan açık kaynaklı bir ağ yakalama ve izleme aracıdır</string>
     <string name="get_app">Edin:</string>
     <string name="error">Hata</string>
     <string name="no_activity_file_selection">Dosya seçimini yapacak uygulama bulunamadı</string>
@@ -208,15 +208,15 @@
     <string name="tls_decryption">TLS şifre çözme</string>
     <string name="mitm_setup_wizard">Ortadaki adam kurulum sihirbazı</string>
     <string name="install_action">Kur</string>
-    <string name="export_ca_certificate">PCAPdroid CA sertifikasını dışa aktarın, ardından Android \"Şifreleme ve Kimlik Bilgileri\" ayarlarını açın ve \"CA sertifikası\" olarak kurmayı seçin</string>
+    <string name="export_ca_certificate">ADBye CA sertifikasını dışa aktarın, ardından Android \"Şifreleme ve Kimlik Bilgileri\" ayarlarını açın ve \"CA sertifikası\" olarak kurmayı seçin</string>
     <string name="checking_the_certificate">Sertifika denetleniyor…</string>
     <string name="cert_exported_now_installed">Sertifika dışa aktarıldı, şimdi Android ayarlarından onu kurun</string>
     <string name="cert_installed_correctly">CA sertifikası kuruldu</string>
-    <string name="mitm_addon_bad_version">Hatalı PCAPdroid ortadaki adam eklentisi sürümü. Lütfen %1$s sürümünü yükleyin ve tekrar deneyin</string>
-    <string name="mitm_addon_new_version">PCAPdroid ortadaki adam eklentisi güncellenmelidir</string>
+    <string name="mitm_addon_bad_version">Hatalı ADBye ortadaki adam eklentisi sürümü. Lütfen %1$s sürümünü yükleyin ve tekrar deneyin</string>
+    <string name="mitm_addon_new_version">ADBye ortadaki adam eklentisi güncellenmelidir</string>
     <string name="request">İstek</string>
     <string name="overview">Genel bakış</string>
-    <string name="payload_truncated">Yükün bir kısmı gösteriliyor. Tam olarak göstermek için yakalamayı durdurun ve PCAPdroid ayarlarından \"%1$s\" seçeneğini etkinleştirin</string>
+    <string name="payload_truncated">Yükün bir kısmı gösteriliyor. Tam olarak göstermek için yakalamayı durdurun ve ADBye ayarlarından \"%1$s\" seçeneğini etkinleştirin</string>
     <string name="http">HTTP</string>
     <string name="payload">Yük</string>
     <string name="tx_direction">Gönder (TX)</string>
@@ -226,7 +226,7 @@
     <string name="not_decryptable">Şifresi çözülemiyor</string>
     <string name="decrypted">Şifresi çözüldü</string>
     <string name="decryption">Şifre çözme</string>
-    <string name="connection_start_not_seen">PCAPdroid bu bağlantının başlangıcını görmedi. Bazı bilgiler eksik olabilir</string>
+    <string name="connection_start_not_seen">ADBye bu bağlantının başlangıcını görmedi. Bazı bilgiler eksik olabilir</string>
     <string name="warn_no_app_data">Hiçbir uygulama verisi alınıp gönderilmedi</string>
     <string name="waiting_application_data">Veri bekleniyor</string>
     <string name="hexdump">Onaltılık sayı dökümü</string>
@@ -245,7 +245,7 @@
     <string name="phone_app">Telefon</string>
     <string name="socks5_proxy">SOCKS5</string>
     <string name="phone_app_info">Telefon hizmetleri</string>
-    <string name="install_ca_certificate">\"VPN ve uygulamalar\" seçeneğini seçerek PCAPdroid CA sertifikasını kurun. Android, kilit ekranınızı veya parolanızı soracak</string>
+    <string name="install_ca_certificate">\"VPN ve uygulamalar\" seçeneğini seçerek ADBye CA sertifikasını kurun. Android, kilit ekranınızı veya parolanızı soracak</string>
     <string name="tls_decryption_summary">Ortadaki adam gerçekleştirerek SSL/TLS trafiğinin şifresini çöz. Bu artık bazı uygulamalarla çalışabilir, kullanım kılavuzuna bakın</string>
     <string name="traffic_inspection">Trafik denetimi</string>
     <string name="export_action">Dışa aktar</string>
@@ -270,7 +270,7 @@
     <string name="app_info">Uygulama bilgisi</string>
     <string name="geo_db_delete">Veri tabanını silmek ve yerden tasarruf etmek için dokunun</string>
     <string name="download">İndir</string>
-    <string name="connection_blocked">Bu bağlantı PCAPdroid tarafından engellendi</string>
+    <string name="connection_blocked">Bu bağlantı ADBye tarafından engellendi</string>
     <string name="invalid_backup">Geçersiz yedekleme biçimi</string>
     <string name="rules_import_success">%1$d kural içe aktarıldı</string>
     <string name="no_rules_to_export">Dışa aktarılacak kural yok</string>
@@ -283,34 +283,34 @@
     <string name="firewall_summary">Uygulamalara internet erişimini engelleyin, belirli etki alanları ve IP adresleri için kurallar yapılandırın. Yalnızca root olmayan yakalama ile çalışır</string>
     <string name="block_quick">QUIC\'i engelle</string>
     <string name="block_private_dns_summary">DNS trafiğini incelemek için özel DNS\'yi algılayın ve muhtemelen engelleyin. Bunu devre dışı bırakmak trafik incelemesini engelleyebilir</string>
-    <string name="mitm_setup_wizard_done">PCAPdroid artık TLS trafiğinin şifresini çözmeye hazır
+    <string name="mitm_setup_wizard_done">ADBye artık TLS trafiğinin şifresini çözmeye hazır
 \n
 \nŞifre çözmeyi engelleyebilecek güvenlik önlemleri ve bunların nasıl aşılacağı hakkında daha fazla bilgi edinmek için <a href="%1$s">kullanıcı kılavuzuna</a> göz atın</string>
-    <string name="welcome_to_pcapdroid">PCAPdroid\'e hoş geldiniz</string>
+    <string name="welcome_to_pcapdroid">ADBye\'e hoş geldiniz</string>
     <string name="app_intro_next_button">İleri</string>
     <string name="app_intro_skip_button">Atla</string>
     <string name="privacy_first">Önce gizlilik</string>
-    <string name="vpn_setup_msg">PCAPdroid, ağ trafiğini root olmadan yakalamak için bir VPN gibi davranır.
+    <string name="vpn_setup_msg">ADBye, ağ trafiğini root olmadan yakalamak için bir VPN gibi davranır.
 \n
 \nYakalamayı başlatmak için, bir sonraki ekranda VPN isteğini kabul etmeniz gerekir.
 \n
 \n<b>NOT:</b> Devam etmek için, Android ayarlarından yapılandırılmış her zaman açık VPN\'lerin tümünü devre dışı bırakın</string>
     <string name="app_intro_firewall_msg">Tümleşik <a href="%1$s">güvenlik duvarı</a> ile tek tek uygulamalara, etki alanlarına ve ülkelere internet erişimini kolayca engelleyebilirsiniz \n \nBunu yerleşik trafik görünürlüğü ile birleştirerek gizliliğinizi korumak için en iyi aracı elde edin</string>
-    <string name="app_intro_traffic_dump">PCAPdroid, daha fazla inceleme için trafiği standart PCAP biçiminde dökmek için <a href="%1$s">birden fazla seçenek</a> sunar \n \n<a href="%2$s">İzleme seçeneği</a> aracılığıyla paketlere uygulama adları ekleyebilir ve bunları Wireshark\'ta görüntüleyebilirsiniz</string>
-    <string name="mitm_setup_wizard_intro">Bu sihirbaz, <a href="%1$s">TLS şifre çözme</a> işlemini gerçekleştirmek için gerekli olan PCAPdroid ortadaki adam eklentisinin ve sertifika yetkilisinin kurulumunda size rehberlik edecektir</string>
+    <string name="app_intro_traffic_dump">ADBye, daha fazla inceleme için trafiği standart PCAP biçiminde dökmek için <a href="%1$s">birden fazla seçenek</a> sunar \n \n<a href="%2$s">İzleme seçeneği</a> aracılığıyla paketlere uygulama adları ekleyebilir ve bunları Wireshark\'ta görüntüleyebilirsiniz</string>
+    <string name="mitm_setup_wizard_intro">Bu sihirbaz, <a href="%1$s">TLS şifre çözme</a> işlemini gerçekleştirmek için gerekli olan ADBye ortadaki adam eklentisinin ve sertifika yetkilisinin kurulumunda size rehberlik edecektir</string>
     <string name="app_intro_back_button">Geri</string>
     <string name="netd_block_missed">Bu bağlantı netd tarafından başlatıldığı için engellenemedi</string>
     <string name="ca_cert_export_failed">CA sertifikası dışa aktarılırken bir hata oluştu
 \n
-\nAygıtınız, arka plan hizmetlerinin yürütülmesini sınırlamak için Autostart veya benzeri bir yazılım kullanıyorsa, <a href="%1$s">PCAPdroid\'i beyaz listeye eklediğinizden</a> emin olun</string>
+\nAygıtınız, arka plan hizmetlerinin yürütülmesini sınırlamak için Autostart veya benzeri bir yazılım kullanıyorsa, <a href="%1$s">ADBye\'i beyaz listeye eklediğinizden</a> emin olun</string>
     <string name="no_root_firewall">Rootsuz güvenlik duvarı</string>
     <string name="block_private_dns">Özel DNS\'yi engelle</string>
     <string name="app_intro_done_button">Bitti</string>
-    <string name="app_intro_welcome_msg">PCAPdroid, aygıtınızdaki uygulamalar tarafından yapılan bağlantıları izlemenizi ve incelemenizi sağlayan gizlilik dostu bir uygulamadır
+    <string name="app_intro_welcome_msg">ADBye, aygıtınızdaki uygulamalar tarafından yapılan bağlantıları izlemenizi ve incelemenizi sağlayan gizlilik dostu bir uygulamadır
 \n
 \nAyrıca, trafiğin PCAP dökümünü dışa aktarmanıza, üst verileri çıkarmanıza ve çok daha fazlasına olanak tanır!</string>
     <string name="country_and_asn">Ülke ve ASN</string>
-    <string name="app_intro_geolocation_msg">PCAPdroid, uzak bir sunucunun ülkesini belirlemek için yerel bir veri tabanını sorgulayabilir
+    <string name="app_intro_geolocation_msg">ADBye, uzak bir sunucunun ülkesini belirlemek için yerel bir veri tabanını sorgulayabilir
 \n
 \nÖnce uygulama ayarlarından coğrafi konum veri tabanını indirmelisiniz</string>
     <string name="app_intro_privacy_msg">Uygulama herhangi bir izleme, analiz veya belirli bir yere bağlanma karşıt özellikleri kullanmaz
@@ -333,7 +333,7 @@
     <string name="low_memory_info">Uygulamanın belleği tükeniyor, çökmeler bekleniyor</string>
     <string name="capture_stopped_low_memory">Yakalama durduruldu</string>
     <string name="full_payload_disabled">Tam yük seçeneği devre dışı bırakıldı</string>
-    <string name="vpn_lockdown_notice">PCAPdroid çalışmıyorken (örneğin yeniden başlattıktan sonra) uygulamaların internete erişmesini önlemek için PCAPdroid\'i kilitleme modunda her zaman açık bir VPN olarak ayarlayabilirsiniz.
+    <string name="vpn_lockdown_notice">ADBye çalışmıyorken (örneğin yeniden başlattıktan sonra) uygulamaların internete erişmesini önlemek için ADBye\'i kilitleme modunda her zaman açık bir VPN olarak ayarlayabilirsiniz.
 \n
 \nŞimdi VPN ayarlarını açmak istiyor musunuz\?</string>
     <string name="ip_mode">VPN IP adresleri</string>
@@ -357,7 +357,7 @@
     <string name="payload_scams_notice">Bu görünüm, parolalarınız ve erişim belirteçleriniz gibi hassas bilgiler içerebilir.
 \n
 \nBu bilgileri asla kimseye vermeyin, bu bir dolandırıcılık girişimi olabilir</string>
-    <string name="remote_collector_notice">PCAPdroid\'i uzak bir sunucuya trafik gönderecek şekilde yapılandırdınız. Sunucu hassas bilgilerinize erişebilecek.
+    <string name="remote_collector_notice">ADBye\'i uzak bir sunucuya trafik gönderecek şekilde yapılandırdınız. Sunucu hassas bilgilerinize erişebilecek.
 \n
 \nEğer birisi sizden bunu yapmanızı istediyse, bu muhtemelen bir dolandırıcılık girişimidir</string>
     <string name="app_unblocked">%1$s uygulamasının engellemesi kaldırıldı</string>
@@ -365,10 +365,10 @@
     <string name="unblock_for_n_minutes">%1$d dakika için engellemeyi kaldır</string>
     <string name="warning">Uyarı</string>
     <string name="paid_features_unlocked">Ücretli özelliklerin kilidi açıldı. Çalışıyorsa yakalamayı yeniden başlatın</string>
-    <string name="install_the_mitm_addon">PCAPdroid <a href="%1$s">ortadaki adam eklentisini</a> kurun</string>
-    <string name="tls_decryption_with_root_msg">TLS şifre çözme işlemini root ile çalıştırma yeteneği deneysel bir özelliktir. Bilinen hataların bir listesi şöyledir: \n \n - PCAPdroid\'de trafiği orijinal uygulama yerine ortadaki adam eklentisi uygulamasından oluşturulduğu şekilde göreceksiniz \n - SSL keylog dökümü desteklenmez\n - bir uygulama filtresi ayarlandığında, şifre çözme yalnızca hedef uygulama için gerçekleşecektir, ancak PCAPdroid diğer uygulamaların trafiğini göstermeye devam edecektir \n - yakalama başlatılamazsa, iptables komutunu gerçekten root olarak çalıştırabildiğinizden emin olun (örneğin termux aracılığıyla) \n - bu, Android 12 ve sonraki sürümlerde çalışmayabilir \n - Bir VPN uygulaması çalışıyorsa, şifre çözme için belirli bir uygulamayı hedeflemeli veya PCAPdroid ortadaki adam eklentisini VPN\'den hariç tutmalısınız, aksi takdirde trafik bir döngüye girecektir</string>
+    <string name="install_the_mitm_addon">ADBye <a href="%1$s">ortadaki adam eklentisini</a> kurun</string>
+    <string name="tls_decryption_with_root_msg">TLS şifre çözme işlemini root ile çalıştırma yeteneği deneysel bir özelliktir. Bilinen hataların bir listesi şöyledir: \n \n - ADBye\'de trafiği orijinal uygulama yerine ortadaki adam eklentisi uygulamasından oluşturulduğu şekilde göreceksiniz \n - SSL keylog dökümü desteklenmez\n - bir uygulama filtresi ayarlandığında, şifre çözme yalnızca hedef uygulama için gerçekleşecektir, ancak ADBye diğer uygulamaların trafiğini göstermeye devam edecektir \n - yakalama başlatılamazsa, iptables komutunu gerçekten root olarak çalıştırabildiğinizden emin olun (örneğin termux aracılığıyla) \n - bu, Android 12 ve sonraki sürümlerde çalışmayabilir \n - Bir VPN uygulaması çalışıyorsa, şifre çözme için belirli bir uygulamayı hedeflemeli veya ADBye ortadaki adam eklentisini VPN\'den hariç tutmalısınız, aksi takdirde trafik bir döngüye girecektir</string>
     <string name="unlock_token_summary">Uygulamanın Google-Play dışı sürümlerinde (örn. F-Droid/Github) ücretli özelliklerin kilidini açmak için kullanılabilecek bir belirteç</string>
-    <string name="license_service_unavailable">PCAPdroid lisans hizmeti şu anda kullanılamıyor. Lütfen birkaç dakika içinde yeniden deneyin</string>
+    <string name="license_service_unavailable">ADBye lisans hizmeti şu anda kullanılamıyor. Lütfen birkaç dakika içinde yeniden deneyin</string>
     <string name="access_paid_features_msg">Ücretli özelliklere nasıl erişeceğinizi öğrenmek için <a href="%1$s">kullanıcı kılavuzuna</a> göz atın</string>
     <string name="unlock_token_error">Kilit açma belirteci istenemedi [%1$d]: %2$s</string>
     <string name="requesting_unlock_token">Kilit açma belirteci isteniyor, lütfen bekleyin</string>
@@ -418,14 +418,14 @@
     <string name="socks5_summary">SOCKS5 vekiline yönlendirmeyi yapılandırın</string>
     <string name="socks5_auth">SOCKS5 kimlik doğrulaması</string>
     <string name="username">Kullanıcı adı</string>
-    <string name="mitm_addon_autostart_workaround">Ortadaki adam eklentisine bağlantı başarısız oldu. Geçici bir çözüm olarak, ortadaki adam eklenti uygulamasını açmayı ve ardından kapatmadan PCAPdroid\'e geri dönmeyi deneyebilirsiniz. Şimdi açmak istiyor musunuz\?</string>
+    <string name="mitm_addon_autostart_workaround">Ortadaki adam eklentisine bağlantı başarısız oldu. Geçici bir çözüm olarak, ortadaki adam eklenti uygulamasını açmayı ve ardından kapatmadan ADBye\'e geri dönmeyi deneyebilirsiniz. Şimdi açmak istiyor musunuz\?</string>
     <string name="socks5_auth_summary">Kullanıcı adı ve parola ile vekilde kimlik doğrulaması yapın</string>
     <string name="socks5_redirection">SOCKS5 yönlendirmesi</string>
     <string name="password">Parola</string>
     <string name="connection_error">Bağlantı hatası: %1$s</string>
     <string name="activate_via_qr_code">QR kodu ile etkinleştir</string>
     <string name="qr_code_expired">QR kodunun süresi doldu. Yeni bir QR kodu oluşturun ve yeniden deneyin</string>
-    <string name="qr_info_text">Google Play\'den PCAPdroid\'i kurun ve bu QR kodunu tarayın</string>
+    <string name="qr_info_text">Google Play\'den ADBye\'i kurun ve bu QR kodunu tarayın</string>
     <string name="qr_purchase_required">QR kodu ile etkinleştirmeye devam etmek için bir kilit açma belirteci satın alın</string>
     <string name="license_error">Lisans oluşturma hatası [%1$d]: %2$s</string>
     <string name="requesting_license">Lisans kodu isteniyor, lütfen bekleyin</string>
@@ -455,11 +455,11 @@
     <string name="pcapdroid_trailer_notice">\"%1$s\" yerine gerçek uygulamaları göstermek için, PCAP dosyasını dışa aktarmadan önce \"%2$s\" seçeneğini etkinleştirdiğinizden emin olun</string>
     <string name="copy_error">Dosya yazılamadı</string>
     <string name="open_pcap_file">PCAP dosyasını aç…</string>
-    <string name="root_capture_pcapd_start_failure">Yakalama başlatma hatası. PCAPdroid\'e root erişimi verdiğinizden emin olun</string>
+    <string name="root_capture_pcapd_start_failure">Yakalama başlatma hatası. ADBye\'e root erişimi verdiğinizden emin olun</string>
     <string name="invalid_pcap_file">Geçersiz PCAP dosyası</string>
     <string name="proxy_host">Vekil sunucu</string>
     <string name="capture_interface_open_error">Yakalama arayüzü açılamadı</string>
-    <string name="dnscrypt_how_to">PCAPdroid ile DoH / DNSCrypt nasıl kullanılır</string>
+    <string name="dnscrypt_how_to">ADBye ile DoH / DNSCrypt nasıl kullanılır</string>
     <string name="never">Hiçbir zaman</string>
     <string name="always">Her zaman</string>
     <string name="for_connections_to_decrypt">Yalnızca şifresi çözülecek bağlantılar için</string>
@@ -469,7 +469,7 @@
     <string name="redirected">yönlendirildi</string>
     <string name="connection_redirected_port_map">Bu bağlantı bir bağlantı noktası eşleme kuralı nedeniyle yönlendirildi</string>
     <string name="both">Her ikisi de</string>
-    <string name="decrypt_quic_notice">QUIC şifresinin çözülmesi şu anda desteklenmiyor. Geçici bir çözüm olarak, yakalamayı durdurun ve PCAPdroid ayarlarında QUIC engelleme seçeneğini seçin</string>
+    <string name="decrypt_quic_notice">QUIC şifresinin çözülmesi şu anda desteklenmiyor. Geçici bir çözüm olarak, yakalamayı durdurun ve ADBye ayarlarında QUIC engelleme seçeneğini seçin</string>
     <string name="target_apps">Hedef uygulamalar</string>
     <string name="target_apps_help">Yakalanacak uygulamaları seçin</string>
     <string name="headers">Başlıklar</string>
@@ -491,13 +491,13 @@
     <string name="errno_econnaborted">Bağlantı iptal edildi</string>
     <string name="errno_etimedout_msg">Sunucunun, büyük olasılıkla ağ gecikmeleri veya meşgul bir sunucu nedeniyle yanıt vermesi çok uzun sürdü</string>
     <string name="errno_econnrefused">Bağlantı reddedildi</string>
-    <string name="tls_conn_info">TLS/HTTPS trafiği şifrelenir. Bu trafiği incelemek için şifresini çözmeniz gerekir. Ayrıntılar için PCAPdroid <a href="%1$s"> kullanıcı kılavuzuna göz atın</a></string>
-    <string name="dump_extensions">PCAPdroid eklentileri</string>
-    <string name="dump_extensions_how_to">Wireshark\'ta PCAPdroid döküm uzantıları nasıl görüntülenir</string>
+    <string name="tls_conn_info">TLS/HTTPS trafiği şifrelenir. Bu trafiği incelemek için şifresini çözmeniz gerekir. Ayrıntılar için ADBye <a href="%1$s"> kullanıcı kılavuzuna göz atın</a></string>
+    <string name="dump_extensions">ADBye eklentileri</string>
+    <string name="dump_extensions_how_to">Wireshark\'ta ADBye döküm uzantıları nasıl görüntülenir</string>
     <string name="malicious_connections_notice">Kara listeler yanlış pozitifler içerebilir. IP adresini/alan adı itibarını çevrimiçi olarak iki kez kontrol ettiğinizden emin olun. Kötü amaçlı yazılım beyaz listesi aracılığıyla yanlış pozitifleri hariç tutabilirsiniz</string>
     <string name="geo_db_missing">Coğrafi konum veritabanı eksik</string>
     <string name="malicious_connection_description">\"%1$s\" uygulamasından gelen bir bağlantı, kötü amaçlı yazılım algılama kuralını (%2$s) tetikledi</string>
-    <string name="country_rules_warning">Ülke tabanlı güvenlik duvarı kurallarını kullanmak için PCAPdroid ayarlarından coğrafi konum veritabanını indirin, aksi takdirde ülke tabanlı kurallar etkisiz olacaktır</string>
+    <string name="country_rules_warning">Ülke tabanlı güvenlik duvarı kurallarını kullanmak için ADBye ayarlarından coğrafi konum veritabanını indirin, aksi takdirde ülke tabanlı kurallar etkisiz olacaktır</string>
     <string name="bytes_threshold">Bayt eşiği</string>
     <string name="error_code_with_text">%1$s (hata %2$d)</string>
     <string name="errno_epipe">Kırık boru</string>
@@ -521,14 +521,14 @@
     <string name="tcp_udp_exporter">TCP/UDP dışa aktarıcı</string>
     <string name="tcp_exporter_info">PCAP dökümünü uzak bir TCP alıcısına gönder (pcap-over-ip)</string>
     <string name="cidr_val">CIDR: %1$s</string>
-    <string name="no_permissions_set_info">İzin ayarlanmadı. İzin istemini görüntülemek için StartActivityForResult aracılığıyla PCAPdroid\'i başlatın</string>
+    <string name="no_permissions_set_info">İzin ayarlanmadı. İzin istemini görüntülemek için StartActivityForResult aracılığıyla ADBye\'i başlatın</string>
     <string name="generate_api_key">API anahtarı oluştur</string>
     <string name="show_api_key">API anahtarını göster</string>
     <string name="api_key">API anahtarı</string>
     <string name="api_key_discard_confirm">Geçerli API anahtarını gerçekten silmek ve yeni bir tane oluşturmak istiyor musunuz?</string>
     <string name="ip_address_or_cidr">IP adresi / CIDR</string>
     <string name="filename_prefix">Dosya adı ön eki</string>
-    <string name="filename_prefix_description">PCAPdroid tarafından dışa aktarılan dosyalar (örneğin PCAP dosyaları) için ön ek ayarlayın</string>
+    <string name="filename_prefix_description">ADBye tarafından dışa aktarılan dosyalar (örneğin PCAP dosyaları) için ön ek ayarlayın</string>
     <string name="select">Seç</string>
     <string name="request_method">İstek yöntemi</string>
     <string name="content_type">İçerik türü</string>

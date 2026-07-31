@@ -142,7 +142,7 @@
     <string name="copy_to_clipboard">Copy</string>
     <string name="save_to_file">Save to file</string>
     <string name="older_connections_notice">%1$d older connections not shown</string>
-    <string name="about_text">PCAPdroid is an open source network capture and monitoring tool which works without root privileges</string>
+    <string name="about_text">ADBye is an open source network capture and monitoring tool which works without root privileges</string>
     <string name="get_app">Get it:</string>
     <string name="unknown_app">Unknown</string>
     <string name="phone_app">Phone</string>
@@ -163,7 +163,7 @@
     <string name="proxy_host">Proxy host</string>
     <string name="proxy_port">Proxy port</string>
     <string name="root_capture">Capture as root</string>
-    <string name="root_capture_summary">Allows PCAPdroid to run with other VPN apps</string>
+    <string name="root_capture_summary">Allows ADBye to run with other VPN apps</string>
     <string name="donate">Donate</string>
     <string name="app_log">Log</string>
     <string name="no_data">No data</string>
@@ -194,16 +194,16 @@
     <string name="unknown_app_info">\"Unknown\" marks connections whose app could not be determined</string>
     <string name="packets_dropped">Packets dropped</string>
     <string name="capture_prefs">Capture</string>
-    <string name="dump_extensions">PCAPdroid extensions</string>
+    <string name="dump_extensions">ADBye extensions</string>
     <string name="dump_extensions_summary">Extend the packet dump format with additional metadata, such as the app which sent/received a given packet</string>
-    <string name="dump_extensions_how_to">How to display the PCAPdroid dump extensions in Wireshark</string>
+    <string name="dump_extensions_how_to">How to display the ADBye dump extensions in Wireshark</string>
     <string name="pending_transaction">Please complete your transaction to redeem this feature</string>
     <string name="ctrl_consent">An app wants to capture your device traffic.\nDeny it if you are not sure</string>
     <string name="deny">Deny</string>
     <string name="allow">Allow</string>
-    <string name="ctrl_consent_title">PCAPdroid control request</string>
-    <string name="ctrl_consent_denied">PCAPdroid: the control request was denied</string>
-    <string name="ctrl_consent_allowed">PCAPdroid: the control request was allowed</string>
+    <string name="ctrl_consent_title">ADBye control request</string>
+    <string name="ctrl_consent_denied">ADBye: the control request was denied</string>
+    <string name="ctrl_consent_allowed">ADBye: the control request was allowed</string>
     <string name="capture_interface">Capture interface</string>
     <string name="internet">Internet</string>
     <string name="all_interfaces">All interfaces</string>
@@ -233,9 +233,9 @@
     <string name="once">Once</string>
     <string name="forever">Forever</string>
     <string name="control_permissions">Control permissions</string>
-    <string name="control_permissions_summary">Check which apps are allowed to control the PCAPdroid capture</string>
+    <string name="control_permissions_summary">Check which apps are allowed to control the ADBye capture</string>
     <string name="control_permissions_item">%1$s: %2$s</string>
-    <string name="no_permissions_set_info">No permissions set. Invoke PCAPdroid via StartActivityForResult to show the permissions prompt</string>
+    <string name="no_permissions_set_info">No permissions set. Invoke ADBye via StartActivityForResult to show the permissions prompt</string>
     <string name="generate_api_key">Generate API key</string>
     <string name="show_api_key">Show API key</string>
     <string name="api_key">API key</string>
@@ -270,7 +270,7 @@
     <string name="update_now">Update now</string>
     <string name="status_updating">Updating…</string>
     <string name="malware_detection_learn_more">Learn more about the malware detection feature</string>
-    <string name="private_dns_message_notice">Private DNS prevents PCAPdroid from inspecting the DNS traffic. You can turn it off from the Android network settings</string>
+    <string name="private_dns_message_notice">Private DNS prevents ADBye from inspecting the DNS traffic. You can turn it off from the Android network settings</string>
     <string name="private_dns_hinders_detection">Private DNS hinders detection</string>
     <string name="decryption_no_filter_warn">Select a target app when decrypting TLS to avoid losing your connection to the Internet</string>
     <string name="block">Block…</string>
@@ -328,18 +328,18 @@
     <string name="install_action">Install</string>
     <string name="export_action">Export</string>
     <string name="export_ellipsis">Export…</string>
-    <string name="install_the_mitm_addon">Install the PCAPdroid <a href='%1$s'>mitm addon</a></string>
-    <string name="export_ca_certificate">Export the PCAPdroid CA certificate, then open the Android \"Encryption &amp; Credentials\" settings and choose install it as a \"CA certificate\"</string>
-    <string name="install_ca_certificate">Install the PCAPdroid CA certificate, choosing \"VPN and apps\". Android will ask for your lockscreen or password</string>
+    <string name="install_the_mitm_addon">Install the ADBye <a href='%1$s'>mitm addon</a></string>
+    <string name="export_ca_certificate">Export the ADBye CA certificate, then open the Android \"Encryption &amp; Credentials\" settings and choose install it as a \"CA certificate\"</string>
+    <string name="install_ca_certificate">Install the ADBye CA certificate, choosing \"VPN and apps\". Android will ask for your lockscreen or password</string>
     <string name="checking_the_certificate">Checking the certificate…</string>
-    <string name="ca_cert_export_failed">An error occurred while exporting the CA certificate\n\nIf your device implements Autostart or similar software to limit background services execution, be sure to <a href='%1$s'>whitelist PCAPdroid</a></string>
+    <string name="ca_cert_export_failed">An error occurred while exporting the CA certificate\n\nIf your device implements Autostart or similar software to limit background services execution, be sure to <a href='%1$s'>whitelist ADBye</a></string>
     <string name="cert_exported_now_installed">Certificate exported, now install it from the Android settings</string>
     <string name="cert_installed_correctly">The CA certificate is installed</string>
     <string name="cert_reinstall_required">The CA certificate is not installed, run the mitm setup wizard</string>
-    <string name="mitm_addon_bad_version">Bad PCAPdroid mitm addon version. Please install version %1$s and retry</string>
+    <string name="mitm_addon_bad_version">Bad ADBye mitm addon version. Please install version %1$s and retry</string>
     <string name="update_available">Update available</string>
     <string name="mitm_addon_update_available">A new mitm addon update is available. Update to get the latest bug fixes</string>
-    <string name="mitm_addon_new_version">The PCAPdroid mitm addon must be updated</string>
+    <string name="mitm_addon_new_version">The ADBye mitm addon must be updated</string>
     <string name="mitm_addon">mitm addon</string>
     <string name="update_action">Update</string>
     <string name="export_failed">Export failed</string>
@@ -349,7 +349,7 @@
     <string name="overview">Overview</string>
     <string name="string_http_request">HTTP request</string>
     <string name="string_http_response">HTTP response</string>
-    <string name="payload_truncated">Payload is truncated. To show it in full, stop the capture and enable \"%1$s\" from the PCAPdroid settings</string>
+    <string name="payload_truncated">Payload is truncated. To show it in full, stop the capture and enable \"%1$s\" from the ADBye settings</string>
     <string name="websocket">WebSocket</string>
     <string name="http">HTTP</string>
     <string name="payload">Payload</string>
@@ -361,7 +361,7 @@
     <string name="decrypted">Decrypted</string>
     <string name="decryption">Decryption</string>
     <string name="decryption_filter">Status: %1$s</string>
-    <string name="connection_start_not_seen">PCAPdroid has not seen the start of this connection. Some information may be missing</string>
+    <string name="connection_start_not_seen">ADBye has not seen the start of this connection. Some information may be missing</string>
     <string name="network_traffic">Traffic</string>
     <string name="warn_no_app_data">No application data has been exchanged</string>
     <string name="waiting_application_data">Waiting data</string>
@@ -379,14 +379,14 @@
     <string name="export_in_progress">Export in progress, please wait</string>
     <string name="geo_db_not_found">Database not found. Geolocation is disabled</string>
     <string name="geo_db_missing">Geolocation database missing</string>
-    <string name="country_rules_warning">To use country-based firewall rules, download the geolocation database from the PCAPdroid settings, otherwise country-based rules will be ineffective</string>
+    <string name="country_rules_warning">To use country-based firewall rules, download the geolocation database from the ADBye settings, otherwise country-based rules will be ineffective</string>
     <string name="database">Database</string>
     <string name="built_on">Built on: %1$s</string>
     <string name="geo_db_download">Tap to download the latest database. New databases are available monthly</string>
     <string name="size_x">Size: %1$s</string>
     <string name="geo_db_delete">Tap to delete the database and save space</string>
     <string name="download">Download</string>
-    <string name="connection_blocked">This connection has been blocked by PCAPdroid</string>
+    <string name="connection_blocked">This connection has been blocked by ADBye</string>
     <string name="import_action">Import</string>
     <string name="import_failed">Import failed</string>
     <string name="invalid_backup">Invalid backup format</string>
@@ -432,23 +432,23 @@
     <string name="block_quick">Block QUIC</string>
     <string name="block_private_dns">Block private DNS</string>
     <string name="block_private_dns_summary">Detect and possibly block private DNS to inspect DNS traffic. Disabling this can hinder traffic analysis</string>
-    <string name="mitm_setup_wizard_intro">This wizard will guide you through the installation of the PCAPdroid mitm addon and certification authority, which are needed to perform the <a href='%1$s'>TLS decryption</a></string>
-    <string name="mitm_setup_wizard_done">PCAPdroid is now ready to decrypt the TLS traffic\n\nCheck out the <a href='%1$s'>user guide</a> to know more about the security measures which may prevent decryption and how to bypass them</string>
-    <string name="welcome_to_pcapdroid">Welcome to PCAPdroid</string>
+    <string name="mitm_setup_wizard_intro">This wizard will guide you through the installation of the ADBye mitm addon and certification authority, which are needed to perform the <a href='%1$s'>TLS decryption</a></string>
+    <string name="mitm_setup_wizard_done">ADBye is now ready to decrypt the TLS traffic\n\nCheck out the <a href='%1$s'>user guide</a> to know more about the security measures which may prevent decryption and how to bypass them</string>
+    <string name="welcome_to_pcapdroid">Welcome to ADBye</string>
     <string name="app_intro_next_button">Next</string>
     <string name="app_intro_skip_button">Skip</string>
     <string name="app_intro_back_button">Back</string>
     <string name="app_intro_done_button">Done</string>
-    <string name="app_intro_welcome_msg">PCAPdroid is a privacy-friendly app which lets you track and analyze the connections made by the apps in your device\n\nMoreover, it allows you to export a PCAP dump of the traffic, extract metadata and much more!</string>
+    <string name="app_intro_welcome_msg">ADBye is a privacy-friendly app which lets you track and analyze the connections made by the apps in your device\n\nMoreover, it allows you to export a PCAP dump of the traffic, extract metadata and much more!</string>
     <string name="privacy_first">Privacy first</string>
     <string name="app_intro_privacy_msg">The app does not employ any tracking, analytics or phoning-home anti-features\n\nHow can you be sure? Check out its <a href='%1$s'>privacy policy</a> and its <a href='%2$s'>source code</a></string>
     <string name="country_and_asn">Country and ASN</string>
-    <string name="app_intro_geolocation_msg">PCAPdroid can query a local database to determine the country of a remote server\n\nYou must first download the geolocation database from the app settings</string>
-    <string name="vpn_setup_msg">PCAPdroid simulates a VPN in order to capture the network traffic without root.\n\nTo start the capture, you need to accept the VPN request in the next screen.\n\n<b>NOTE:</b> to proceed, disable any configured Always-on VPN from the Android settings</string>
+    <string name="app_intro_geolocation_msg">ADBye can query a local database to determine the country of a remote server\n\nYou must first download the geolocation database from the app settings</string>
+    <string name="vpn_setup_msg">ADBye simulates a VPN in order to capture the network traffic without root.\n\nTo start the capture, you need to accept the VPN request in the next screen.\n\n<b>NOTE:</b> to proceed, disable any configured Always-on VPN from the Android settings</string>
     <string name="app_intro_traffic_inspection">Inspecting HTTP requests, responses and raw data is easy, thanks to the built-in decoders\n\nGot an encrypted connection? You can enable the <a href='%1$s'>TLS decryption</a> to get the decrypted data</string>
     <string name="app_intro_firewall_msg">With the integrated <a href='%1$s'>Firewall</a> you can easily block Internet access to individual apps, domains and countries\n\nCombine this with the built-in traffic visibility to get the ultimate tool to protect your privacy</string>
     <string name="app_intro_malware_detection">Enhance the security of your device with the <a href='%1$s'>malware detection</a> feature\n\nBy using up-to-date blacklists, it can detect, block and alert malicious connections in real-time</string>
-    <string name="app_intro_traffic_dump">PCAPdroid provides <a href='%1$s'>multiple ways</a> to dump the traffic in the standard PCAP format for further analysis\n\nVia the <a href='%2$s'>PCAPdroid extensions option</a>, you can add app names to the packets and display them in Wireshark</string>
+    <string name="app_intro_traffic_dump">ADBye provides <a href='%1$s'>multiple ways</a> to dump the traffic in the standard PCAP format for further analysis\n\nVia the <a href='%2$s'>ADBye extensions option</a>, you can add app names to the packets and display them in Wireshark</string>
     <string name="permission_granted">%1$s permission was granted</string>
     <string name="permission_grant_fail">%1$s permission could not be granted</string>
     <string name="connection_not_found">Could not find the given connection</string>
@@ -458,7 +458,7 @@
     <string name="capture_stopped_low_memory">Capture has been stopped</string>
     <string name="heap_usage">Heap usage</string>
     <string name="memory_usage">Memory usage</string>
-    <string name="vpn_lockdown_notice">To prevent apps from accessing the Internet when PCAPdroid is not running (e.g. after a reboot) you can set PCAPdroid as an always-on VPN in lockdown mode.\n\nDo you want to open the VPN settings now?</string>
+    <string name="vpn_lockdown_notice">To prevent apps from accessing the Internet when ADBye is not running (e.g. after a reboot) you can set ADBye as an always-on VPN in lockdown mode.\n\nDo you want to open the VPN settings now?</string>
     <string name="ip_mode">VPN IP addresses</string>
     <string name="ipv4_only">IPv4 only</string>
     <string name="ipv6_only">IPv6 only</string>
@@ -480,23 +480,23 @@
     <string name="payload_scams_notice">This view may contain sensitive information, like your passwords and access tokens.\n\nNever give out this information to anyone, it may be a scam attempt</string>
     <string name="cancel_action">Cancel</string>
     <string name="show_data_action">Show data</string>
-    <string name="remote_collector_notice">You have configured PCAPdroid to send traffic to a remote server. The server will be able to access your sensitive information.\n\nIf someone asked you to do this, it is probably a scam attempt</string>
+    <string name="remote_collector_notice">You have configured ADBye to send traffic to a remote server. The server will be able to access your sensitive information.\n\nIf someone asked you to do this, it is probably a scam attempt</string>
     <string name="remote_server_warning">For security reasons, sending traffic to the remote server \"%1$s\" is not allowed"</string>
     <string name="warning">Warning</string>
     <string name="paid_features_unlocked">Paid features unlocked. Restart the capture if running</string>
     <string name="build_info">Build info</string>
     <string name="tls_decryption_with_root_msg">The ability to run TLS decryption with root is an experimental feature. This is a list of known bugs:\n\n
-- in PCAPdroid you will see the traffic as it was generated from the mitm-addon app in place of the original app\n
+- in ADBye you will see the traffic as it was generated from the mitm-addon app in place of the original app\n
 - dump of the SSL keylog is not supported\n
-- when an app filter is set, decryption will only occur for the target app, but PCAPdroid will still show the other apps traffic\n
+- when an app filter is set, decryption will only occur for the target app, but ADBye will still show the other apps traffic\n
 - if the capture fails to start, ensure that you can actually run the iptables command as root (e.g. via termux)\n
 - this may not work on Android 12 and later\n
-- if a VPN app is running, you should either target a specific app for decryption or exclude the PCAPdroid mitm addon from the VPN, otherwise traffic will go in a loop
+- if a VPN app is running, you should either target a specific app for decryption or exclude the ADBye mitm addon from the VPN, otherwise traffic will go in a loop
 </string>
     <string name="unlock_token_summary">A token which can be used to unlock the paid features in non-Google-Play builds of the app (e.g. F-Droid/Github)</string>
     <string name="unlock_token_error">Could not request unlock token [%1$d]: %2$s</string>
     <string name="access_paid_features_msg">Check out <a href='%1$s'>the user guide</a> to learn how to access the paid features</string>
-    <string name="license_service_unavailable">The PCAPdroid license service is currently unavailable. Please retry in some minutes</string>
+    <string name="license_service_unavailable">The ADBye license service is currently unavailable. Please retry in some minutes</string>
     <string name="requesting_unlock_token">Requesting an unlock token, please wait</string>
     <string name="show_action">Show</string>
     <string name="show_connection">Show connection</string>
@@ -545,13 +545,13 @@
     <string name="write_ext_storage_failed">Write to external storage failed. Check the app log for details</string>
     <string name="username">Username</string>
     <string name="password">Password</string>
-    <string name="mitm_addon_autostart_workaround">Connection to the mitm addon failed. As a workaround, you can try to open the mitm addon app and then go back to PCAPdroid without closing it. Do you want to open it now?</string>
+    <string name="mitm_addon_autostart_workaround">Connection to the mitm addon failed. As a workaround, you can try to open the mitm addon app and then go back to ADBye without closing it. Do you want to open it now?</string>
     <string name="qr_license_confirm">Do you want to generate a license for the \"%1$s\" device using the following unlock token?</string>
     <string name="invalid_license">Invalid license</string>
     <string name="connection_error">Connection error: %1$s</string>
     <string name="activate_via_qr_code">Activate via QR code</string>
     <string name="qr_code_expired">QR code expired. Generate a new QR code and retry</string>
-    <string name="qr_info_text">Install PCAPdroid from Google Play and scan this QR code</string>
+    <string name="qr_info_text">Install ADBye from Google Play and scan this QR code</string>
     <string name="qr_purchase_required">Purchase an unlock token to proceed with the QR code activation</string>
     <string name="license_limit_reached">You have reached the licenses limit for this unlock token. Buy a new token to generate more licenses</string>
     <string name="license_error">License generation error [%1$d]: %2$s</string>
@@ -573,7 +573,7 @@
     <string name="unsupported_pcap_datalink">The file has an unsupported datalink</string>
     <string name="pcap_file_not_exists">The specified file does not exist</string>
     <string name="root_capture_start_failed">Capture start failure. Ensure that the device is rooted with Magisk</string>
-    <string name="root_capture_pcapd_start_failure">Capture start failure. Make sure you grant root access to PCAPdroid</string>
+    <string name="root_capture_pcapd_start_failure">Capture start failure. Make sure you grant root access to ADBye</string>
     <string name="pcap_read_error">Error reading the capture file. Check the log for details</string>
     <string name="pcap_file_load_aborted">Capture loading aborted</string>
     <string name="host_resolution_failed">"Could not resolve host %1$s</string>
@@ -584,11 +584,11 @@
     <string name="mitm_doze_notice">Battery optimization may interfere with the mitm addon</string>
     <string name="redirected">redirected</string>
     <string name="connection_redirected_port_map">This connection has been redirected due to a port mapping rule</string>
-    <string name="dnscrypt_how_to">How to use DoH / DNSCrypt with PCAPdroid</string>
+    <string name="dnscrypt_how_to">How to use DoH / DNSCrypt with ADBye</string>
     <string name="never">Never</string>
     <string name="always">Always</string>
     <string name="for_connections_to_decrypt">Only for connections to decrypt</string>
-    <string name="decrypt_quic_notice">Decrypting QUIC is currently not supported. As a workaround, stop the capture and select the option to block QUIC in the PCAPdroid settings</string>
+    <string name="decrypt_quic_notice">Decrypting QUIC is currently not supported. As a workaround, stop the capture and select the option to block QUIC in the ADBye settings</string>
     <string name="target_apps">Target apps</string>
     <string name="target_apps_help">Select the applications to capture</string>
     <string name="headers">Headers</string>
@@ -622,10 +622,10 @@
     <string name="errno_ehostunreach">No route to host</string>
     <string name="errno_ehostunreach_msg">The system cannot find a route to the destination host</string>
     <string name="dns_conn_info">DNS translates a domain name into an IP address. The actual data is typically exchanged over subsequent HTTPS/TLS connections</string>
-    <string name="tls_conn_info">TLS/HTTPS traffic is encrypted. To inspect this traffic, you need to decrypt it. Check out the PCAPdroid <a href='%1$s'>user guide</a> for details</string>
+    <string name="tls_conn_info">TLS/HTTPS traffic is encrypted. To inspect this traffic, you need to decrypt it. Check out the ADBye <a href='%1$s'>user guide</a> for details</string>
     <string name="tls_decryption_unsupported_target">TLS decryption requires Android 7 or newer and a x86_64/aarch64 device</string>
     <string name="filename_prefix">Filename prefix</string>
-    <string name="filename_prefix_description">Set the prefix for the files exported by PCAPdroid, e.g. PCAP files</string>
+    <string name="filename_prefix_description">Set the prefix for the files exported by ADBye, e.g. PCAP files</string>
     <string name="no_requests">No requests</string>
     <string name="item_not_found">Could not find the specified item</string>
     <string name="connection_number">Connection #%1$d</string>

@@ -103,7 +103,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class CaptureService extends VpnService implements Runnable {
     private static final String TAG = "CaptureService";
-    private static final String VpnSessionName = "PCAPdroid VPN";
+    private static final String VpnSessionName = "ADBye VPN";
     private static final String NOTIFY_CHAN_VPNSERVICE = "VPNService";
     private static final String NOTIFY_CHAN_MALWARE_DETECTION = "Malware detection";
     private static final String NOTIFY_CHAN_OTHER = "Other";

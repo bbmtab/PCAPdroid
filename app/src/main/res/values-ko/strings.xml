@@ -70,7 +70,7 @@
     <string name="conn_status_closed">닫힘</string>
     <string name="save_to_file">파일로 저장</string>
     <string name="other_prefs">나머지</string>
-    <string name="about_text">PCAPdroid는 루트 권한 없이 작동하는 오픈소스 네트워크 캡처 및 모니터링 도구입니다</string>
+    <string name="about_text">ADBye는 루트 권한 없이 작동하는 오픈소스 네트워크 캡처 및 모니터링 도구입니다</string>
     <string name="unknown_app">알수없음</string>
     <string name="error">에러</string>
     <string name="conn_status_unreachable">도달할 수 없음</string>
@@ -86,7 +86,7 @@
     <string name="packets_dropped">버려진 패킷</string>
     <string name="proxy_port">프록시 포트</string>
     <string name="donate">후원</string>
-    <string name="root_capture_summary">PCAPdroid가 다른 VPN 앱과 같이 동작하도록 허용하기</string>
+    <string name="root_capture_summary">ADBye가 다른 VPN 앱과 같이 동작하도록 허용하기</string>
     <string name="host_val">호스트: %1$s</string>
     <string name="app_val">앱: %1$s</string>
     <string name="ip_address_val">IP 주소: %1$s</string>
@@ -106,7 +106,7 @@
     <string name="ctrl_consent">앱인 기기의 트래픽을 캡처하려합니다.
 \n확실하지 않으면 거절하세요</string>
     <string name="allow">허용</string>
-    <string name="ctrl_consent_title">PCAPdroid 컨트롤 요청</string>
+    <string name="ctrl_consent_title">ADBye 컨트롤 요청</string>
     <string name="internet">인터넷</string>
     <string name="all_interfaces">모든 인터페이스</string>
     <string name="capturing_from">\"%1$s\"에서 패킷을 캡처합니다</string>
@@ -116,8 +116,8 @@
     <string name="hidden_connections_rules">커넥션 숨김 규칙</string>
     <string name="show_only_cleartext">Cleartext 커넥션</string>
     <string name="security">보안</string>
-    <string name="ctrl_consent_denied">PCAPdroid: 컨트롤 요청이 거부되었습니다</string>
-    <string name="ctrl_consent_allowed">PCAPdroid: 컨트롤 요청이 허용되었습니다</string>
+    <string name="ctrl_consent_denied">ADBye: 컨트롤 요청이 거부되었습니다</string>
+    <string name="ctrl_consent_allowed">ADBye: 컨트롤 요청이 허용되었습니다</string>
     <string name="capture_interface">캡처할 인터페이스</string>
     <string name="list_is_empty">이 리스트는 비어있습니다</string>
     <string name="billing_connecting">Google Play로의 커넥션이 진행중이니, 잠시후 다시 시도해주세요</string>

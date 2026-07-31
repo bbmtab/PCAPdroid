@@ -462,7 +462,7 @@ public class EditListFragment extends Fragment implements MatchList.ListChangeLi
 
     private String getExportName() {
         String fname = getString(mListInfo.getTitle()).toLowerCase().replaceAll(" ", "_");
-        String prefix = "PCAPdroid";
+        String prefix = "ADBye";
 
         if(mListInfo.getType() == ListInfo.Type.APP_ALLOWLIST) {
             AppDescriptor app = AppsResolver.resolveInstalledApp(requireContext().getPackageManager(), mListInfo.getAppPackage(), 0);

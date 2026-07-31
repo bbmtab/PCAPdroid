@@ -67,7 +67,7 @@
     <string name="copy_to_clipboard">Копировать</string>
     <string name="save_to_file">Сохранить в файл</string>
     <string name="older_connections_notice">%1$d старых соединений не показано</string>
-    <string name="about_text">PCAPdroid это свободный инструмент захвата и отслеживания сетевого трафика, который работает без привилегий суперпользователя</string>
+    <string name="about_text">ADBye это свободный инструмент захвата и отслеживания сетевого трафика, который работает без привилегий суперпользователя</string>
     <string name="get_app">Получить его:</string>
     <string name="unknown_app">Неизвестное</string>
     <string name="error">Ошибка</string>
@@ -104,12 +104,12 @@
     <string name="packets_dropped">Отброшенные пакеты</string>
     <string name="capture_prefs">Захват трафика</string>
     <string name="pending_transaction">Пожалуйста, завершите транзакцию для получения этой возможности</string>
-    <string name="ctrl_consent">Внешнее приложение хочет начать захват трафика посредством PCAPdroid.\nЕсли вы не уверены (или это не вы), то отклоните запрос</string>
+    <string name="ctrl_consent">Внешнее приложение хочет начать захват трафика посредством ADBye.\nЕсли вы не уверены (или это не вы), то отклоните запрос</string>
     <string name="deny">Отклонить</string>
     <string name="allow">Разрешить</string>
-    <string name="ctrl_consent_title">PCAPdroid Контрольный запрос</string>
-    <string name="ctrl_consent_denied">PCAPdroid: Запрос был отклонен</string>
-    <string name="ctrl_consent_allowed">PCAPdroid: Запрос был разрешен</string>
+    <string name="ctrl_consent_title">ADBye Контрольный запрос</string>
+    <string name="ctrl_consent_denied">ADBye: Запрос был отклонен</string>
+    <string name="ctrl_consent_allowed">ADBye: Запрос был разрешен</string>
     <string name="capture_interface">Интерфейс для захвата</string>
     <string name="internet">Интернет</string>
     <string name="all_interfaces">Все интерфейсы</string>
@@ -136,7 +136,7 @@
     <string name="once">Единожды</string>
     <string name="forever">Навсегда</string>
     <string name="control_permissions">Контроль разрешений</string>
-    <string name="control_permissions_summary">Проверьте каким приложениям разрешено контролировать захват трафика через PCAPdroid</string>
+    <string name="control_permissions_summary">Проверьте каким приложениям разрешено контролировать захват трафика через ADBye</string>
     <string name="control_permissions_item">%1$s: %2$s</string>
     <string name="country">Страна</string>
     <string name="asn">ASN</string>
@@ -165,7 +165,7 @@
     <string name="update_now">Обновить сейчас</string>
     <string name="status_updating">Обновление…</string>
     <string name="malware_detection_learn_more">Узнайте больше про возможность обнаружения вредоносных соединений</string>
-    <string name="private_dns_message_notice">Частный DNS препятствует наблюдению PCAPdroid за DNS трафиком. Вы можете выключить его в сетевый настройках ОС Android</string>
+    <string name="private_dns_message_notice">Частный DNS препятствует наблюдению ADBye за DNS трафиком. Вы можете выключить его в сетевый настройках ОС Android</string>
     <string name="private_dns_hinders_detection">Частный DNS препятствует обнаружению</string>
     <string name="firewall">Файрвол</string>
     <string name="paid_features">Платные возможности</string>
@@ -195,7 +195,7 @@
     <string name="start_capture_first">Сначала запустите захват потока данных</string>
     <string name="open_nav_drawer">Открыть боковое меню</string>
     <string name="close_nav_drawer">Закрыть боковое меню</string>
-    <string name="root_capture_summary">Позволяет PCAPdroid работать вместе с другими VPN приложениями</string>
+    <string name="root_capture_summary">Позволяет ADBye работать вместе с другими VPN приложениями</string>
     <string name="start_at_boot_summary">Автозапуск захвата после загрузки</string>
     <string name="can_use_purchased_feature">Теперь вы можете пользоваться приобретенными возможностями</string>
     <string name="capture_all_apps">Захватывать поток данных всех приложений</string>
@@ -215,7 +215,7 @@
     <string name="export_action">Экспорт</string>
     <string name="cert_exported_now_installed">Сертификат экспортирован, теперь установите его из настроек Android</string>
     <string name="cert_reinstall_required">Корневой сертификат не установлен, запустите мастер настройки mitm</string>
-    <string name="mitm_addon_new_version">PCAPdroid mitm-дополнение необходимо обновить</string>
+    <string name="mitm_addon_new_version">ADBye mitm-дополнение необходимо обновить</string>
     <string name="string_http_request">HTTP запрос</string>
     <string name="string_http_response">HTTP ответ</string>
     <string name="request">Запрос</string>
@@ -225,7 +225,7 @@
     <string name="http">HTTP</string>
     <string name="payload">Содержимое</string>
     <string name="decryption_filter">Статус: %1$s</string>
-    <string name="connection_start_not_seen">PCAPdroid не обнаружил начало этого соединения. Некоторая информация может быть потеряна</string>
+    <string name="connection_start_not_seen">ADBye не обнаружил начало этого соединения. Некоторая информация может быть потеряна</string>
     <string name="full_payload_summary">Отображать полное содержимое соединений (например полные HTTP запросы и ответы). Это требует много памяти, не используйте при продолжительных захватах</string>
     <string name="tx_direction">TX</string>
     <string name="rx_direction">RX</string>
@@ -243,7 +243,7 @@
     <string name="built_on">Дата сборки: %1$s</string>
     <string name="geo_db_delete">Нажмите чтобы удалить базу данных и освободить место</string>
     <string name="rules_import_success">Импортировано %1$d правил</string>
-    <string name="connection_blocked">Это соединение было заблокировано PCAPdroid</string>
+    <string name="connection_blocked">Это соединение было заблокировано ADBye</string>
     <string name="download">Скачать</string>
     <string name="no_rules_to_export">Нет правил для экспорта</string>
     <string name="rules_delete_confirm">Удалить выбранные правила\?</string>
@@ -257,17 +257,17 @@
     <string name="action_unblock">Разблокировать</string>
     <string name="action_block">Заблокировать</string>
     <string name="app_info">Информация о приложении</string>
-    <string name="export_ca_certificate">Экспортируйте корневой сертификат PCAPdroid, откройте в Android настройки \"Шифрование и учетные данные\" и выберите установку в качестве \"Сертификат ЦС\"</string>
+    <string name="export_ca_certificate">Экспортируйте корневой сертификат ADBye, откройте в Android настройки \"Шифрование и учетные данные\" и выберите установку в качестве \"Сертификат ЦС\"</string>
     <string name="socks5_info">SOCKS5 прокси: %1$s:%2$d</string>
     <string name="mitm_start_failed">Не удалось запустить mitm сервис. Попробуйте открыть вручную mitm дополнение и повторите попытку</string>
-    <string name="install_ca_certificate">Установите корневой сертификат PCAPdroid, выбрав \"VPN и приложения\". Android запросит ваш код или пароль блокировки экрана</string>
+    <string name="install_ca_certificate">Установите корневой сертификат ADBye, выбрав \"VPN и приложения\". Android запросит ваш код или пароль блокировки экрана</string>
     <string name="checking_the_certificate">Проверяем сертификат…</string>
     <string name="cert_installed_correctly">Корневой сертификат установлен</string>
-    <string name="mitm_addon_bad_version">Неподходящая версия PCAPdroid mitm дополнения. Пожалуйста, установите версию %1$s и попробуйте снова</string>
+    <string name="mitm_addon_bad_version">Неподходящая версия ADBye mitm дополнения. Пожалуйста, установите версию %1$s и попробуйте снова</string>
     <string name="conn_status_active">Активно</string>
     <string name="export_failed">Экспорт не удался</string>
     <string name="not_encrypted">Не зашифровано</string>
-    <string name="payload_truncated">Содержимое сокращено. Чтобы отобразить его полностью, остановите захват и включите %1$s в настройках PCAPdroid</string>
+    <string name="payload_truncated">Содержимое сокращено. Чтобы отобразить его полностью, остановите захват и включите %1$s в настройках ADBye</string>
     <string name="decrypted">Дешифровано</string>
     <string name="decryption">Дешифрование</string>
     <string name="waiting_application_data">Ожидаем данные</string>
@@ -282,32 +282,32 @@
     <string name="no_root_firewall">Файрвол не требующий root</string>
     <string name="block_quick">Блокировка QUIC</string>
     <string name="block_private_dns">Блокировка приватных DNS</string>
-    <string name="welcome_to_pcapdroid">Добро пожаловать в PCAPdroid</string>
+    <string name="welcome_to_pcapdroid">Добро пожаловать в ADBye</string>
     <string name="privacy_first">Конфиденциальность превыше всего</string>
     <string name="country_and_asn">Страна и ASN</string>
-    <string name="app_intro_traffic_dump">PCAPdroid предоставляет <a href="%1$s">несколько способов</a> получить запись потока данных в формате PCAP для дальнейшего анализа\n\nС помощью <a href="%2$s">опции расширений PCAPdroid</a>, вы можете добавить в дамп названия приложений, чтобы отобразить их в Wireshark</string>
+    <string name="app_intro_traffic_dump">ADBye предоставляет <a href="%1$s">несколько способов</a> получить запись потока данных в формате PCAP для дальнейшего анализа\n\nС помощью <a href="%2$s">опции расширений ADBye</a>, вы можете добавить в дамп названия приложений, чтобы отобразить их в Wireshark</string>
     <string name="app_intro_privacy_msg">Это приложение не содержит трекеры и аналитику, не собирает данные без вашего согласия.
 \n
 \nКак в этом убедиться\? Ознакомьтесь с <a href="%1$s">политикой конфиденциальности</a> и <a href="%2$s">исходным кодом</a></string>
     <string name="ca_cert_export_failed">При экспорте корневого сертификата возникла ошибка
 \n
-\nЕсли на вашем устройстве есть Autostart или похожие программы, ограничивающие активность фоновых процессов, убедитесь в том, что <a href="%1$s">разрешили все для PCAPdroid</a></string>
+\nЕсли на вашем устройстве есть Autostart или похожие программы, ограничивающие активность фоновых процессов, убедитесь в том, что <a href="%1$s">разрешили все для ADBye</a></string>
     <string name="netd_block_missed">Это соединение инициировано сервисом netd, поэтому оно не может быть заблокировано</string>
     <string name="firewall_summary">Блокируйте доступ в интернет для приложений, настраивайте правила для доменов и IP адресов. Работает только при захвате без root</string>
     <string name="app_intro_back_button">Назад</string>
     <string name="app_intro_done_button">Готово</string>
-    <string name="mitm_setup_wizard_intro">Этот мастер настройки проведет вас через установку дополнения PCAPdroid mitm и корневого сертификата, которые необходимы для проведения <a href="%1$s">дешифрования TLS</a></string>
+    <string name="mitm_setup_wizard_intro">Этот мастер настройки проведет вас через установку дополнения ADBye mitm и корневого сертификата, которые необходимы для проведения <a href="%1$s">дешифрования TLS</a></string>
     <string name="app_intro_next_button">Далее</string>
     <string name="app_intro_skip_button">Пропустить</string>
     <string name="block_private_dns_summary">Обнаруживать и по возможности блокировать использование приватных DNS, чтобы инспектировать поток данных DNS. Отключение этой опции может затруднить анализ потока данных</string>
-    <string name="mitm_setup_wizard_done">PCAPdroid теперь готов к расшифровыванию TLS потока данных\n\nОзнакомьтесь с <a href="%1$s">руководством пользователя</a> чтобы узнать больше о мерах безопасности, которые могут предотвратить расшифровыванию и как преодолеть их</string>
-    <string name="app_intro_welcome_msg">PCAPdroid это ориентированное на конфиденциальность приложение, которое позволяет вам отслеживать и анализировать соединения, производимые приложениями с вашего устройства\n \nБолее того, приложение позволяет вам экспортировать запись потока данных в виде PCAP, извлекать метаданные и многое другое!</string>
-    <string name="vpn_setup_msg">PCAPdroid симулирует VPN чтобы захватывать весь потока данных устройства без необходимости в суперпользователя root.\n\nЧтобы начать захват, вам необходимо принять запрос на включение VPN на следующем экране\n\n<b>ПРИМЕЧАНИЕ:</b> чтобы продолжить, отключите любой настроенный Постоянный VPN из настроек Android</string>
+    <string name="mitm_setup_wizard_done">ADBye теперь готов к расшифровыванию TLS потока данных\n\nОзнакомьтесь с <a href="%1$s">руководством пользователя</a> чтобы узнать больше о мерах безопасности, которые могут предотвратить расшифровыванию и как преодолеть их</string>
+    <string name="app_intro_welcome_msg">ADBye это ориентированное на конфиденциальность приложение, которое позволяет вам отслеживать и анализировать соединения, производимые приложениями с вашего устройства\n \nБолее того, приложение позволяет вам экспортировать запись потока данных в виде PCAP, извлекать метаданные и многое другое!</string>
+    <string name="vpn_setup_msg">ADBye симулирует VPN чтобы захватывать весь потока данных устройства без необходимости в суперпользователя root.\n\nЧтобы начать захват, вам необходимо принять запрос на включение VPN на следующем экране\n\n<b>ПРИМЕЧАНИЕ:</b> чтобы продолжить, отключите любой настроенный Постоянный VPN из настроек Android</string>
     <string name="app_intro_firewall_msg">Со встроенным <a href="%1$s">файрволом</a> вы можете легко заблокировать доступ в интернет отдельным приложениям, доменам, странам\n\nСкомбинируйте это со встроенной возможностью просматривать поток данных и получите идеальный инструмент для защиты своей конфиденциальности</string>
     <string name="app_intro_malware_detection">Повысьте безопасность своего устройства с функцией <a href="%1$s">обнаружения вредоносных соединений</a>
 \n
 \nИспользуя актуальные черные списки, эта функция может обнаруживать, блокировать и уведомлять о вредоносных соединениях в реальном времени</string>
-    <string name="app_intro_geolocation_msg">PCAPdroid может использовать локальную базу данных для определения страны, в которой находится удаленный сервер
+    <string name="app_intro_geolocation_msg">ADBye может использовать локальную базу данных для определения страны, в которой находится удаленный сервер
 \n
 \nВам необходимо сперва скачать базу данных геолокации из настроек приложения</string>
     <string name="app_intro_traffic_inspection">Просматривать HTTP запросы, ответы и необработанные данные легко, благодаря встроенным декодерам
@@ -337,7 +337,7 @@
     <string name="notifications_notice">Приложение использует уведомления для оповещения в случае аномальных событий. Предоставьте ему разрешение на отправку уведомлений на следующем экране</string>
     <string name="cancel_action">Отмена</string>
     <string name="show_data_action">Показать данные</string>
-    <string name="remote_collector_notice">Вы настроили PCAPdroid отправлять трафик на удаленный сервер. Сервер будет иметь доступ к вашей конфиденциальной информации.
+    <string name="remote_collector_notice">Вы настроили ADBye отправлять трафик на удаленный сервер. Сервер будет иметь доступ к вашей конфиденциальной информации.
 \n
 \nЕсли кто-то попросил вас сделать это, возможно это попытка мошенничества</string>
     <string name="payload_scams_notice">Это окно может содержать конфиденциальную информацию, например пароли или токены доступа.
@@ -345,7 +345,7 @@
 \nНикогда не передавайте эту информацию никому, это может быть попыткой мошенничества</string>
     <string name="remote_server_warning">Из соображений безопасности, отправка трафика на удаленный сервер \"%1$s\" не разрешена</string>
     <string name="heap_usage">Использование кучи</string>
-    <string name="vpn_lockdown_notice">Чтобы предотвратить доступ к интернету для приложений когда PCAPdroid не запущен (например после перезагрузки), вы можете настроить PCAPdroid для работы в качестве всегда активного VPN в режиме блокировки.
+    <string name="vpn_lockdown_notice">Чтобы предотвратить доступ к интернету для приложений когда ADBye не запущен (например после перезагрузки), вы можете настроить ADBye для работы в качестве всегда активного VPN в режиме блокировки.
 \n
 \nВы хотите открыть настройки VPN сейчас\?</string>
     <string name="ip_mode">IP адреса для VPN</string>
@@ -353,11 +353,11 @@
     <string name="ipv6_only">Только IPv6</string>
     <string name="warning">Предупреждение</string>
     <string name="build_info">Информация о сборке</string>
-    <string name="install_the_mitm_addon">Установить <a href="%1$s">mitm дополнение</a> PCAPdroid</string>
+    <string name="install_the_mitm_addon">Установить <a href="%1$s">mitm дополнение</a> ADBye</string>
     <string name="app_unblocked">Приложение %1$s было разблокировано</string>
     <string name="unblock_for_n_minutes">Разблокировать на %1$d мин</string>
     <string name="paid_features_unlocked">Платные функции разблокированы. Перезапустите захват пакетов, если он запущен</string>
-    <string name="tls_decryption_with_root_msg">Возможность запускать TLS дешифрование с использованием root является экспериментальной функцией. Cписок известных ошибок: \n \n - в PCAPdroid вы можете видеть трафик так, будто он был сгенерирован в приложении mitm-дополнением вместо оригинального приложения \n - дамп SSL keylog не поддерживается\n - когда в приложении установлен фильтр, дешифрование будет происходить только для целевого приложения, но PCAPdroid всё равно будет показывать трафик других приложений \n - если захват пакетов не может начаться, убедитесь, что вы можете запускать команду iptables от имени суперпользователя (например через termux) \n - функция может не работать на Android 12 и выше \n - если VPN приложение запущено, вы должны, либо указать целевое приложение для дешифрования, либо исключить PCAPdroid mitm-дополнение из VPN, иначе трафик будет закольцован</string>
+    <string name="tls_decryption_with_root_msg">Возможность запускать TLS дешифрование с использованием root является экспериментальной функцией. Cписок известных ошибок: \n \n - в ADBye вы можете видеть трафик так, будто он был сгенерирован в приложении mitm-дополнением вместо оригинального приложения \n - дамп SSL keylog не поддерживается\n - когда в приложении установлен фильтр, дешифрование будет происходить только для целевого приложения, но ADBye всё равно будет показывать трафик других приложений \n - если захват пакетов не может начаться, убедитесь, что вы можете запускать команду iptables от имени суперпользователя (например через termux) \n - функция может не работать на Android 12 и выше \n - если VPN приложение запущено, вы должны, либо указать целевое приложение для дешифрования, либо исключить ADBye mitm-дополнение из VPN, иначе трафик будет закольцован</string>
     <string name="paid_feature">Платная функция</string>
     <string name="unlock_token_summary">Токен, который может использоваться для разблокировки платных возможностей в версиях приложения не из Google Play (Github/F-Droid)</string>
     <string name="access_paid_features_msg">Ознакомьтесь <a href="%1$s">с инструкцией</a>, чтобы узнать, как получить доступ к платным функциям</string>
@@ -368,7 +368,7 @@
     <string name="firewall_purchase_msg">Приобретите функцию <i>%1$s</i>, чтобы начать блокировать соединения</string>
     <string name="unlock_token_error">Ошибка запроса unlock token [%1$d]: %2$s</string>
     <string name="unlock_token_msg1">Это ваш unlock token. Не потеряйте его, так как он используется для <a href="%1$s">генерации ваших лицензионных ключей</a></string>
-    <string name="license_service_unavailable">Сервис лицензирования PCAPdroid временно недоступен. Пожалуйста, повторите попытку позже</string>
+    <string name="license_service_unavailable">Сервис лицензирования ADBye временно недоступен. Пожалуйста, повторите попытку позже</string>
     <string name="app_log">Журнал</string>
     <string name="no_data">Нет данных</string>
     <string name="malware_whitelist_action">Белый список (вредонос)…</string>
@@ -411,8 +411,8 @@
     <string name="socks5_redirection">SOCKS5 перенаправление</string>
     <string name="username">Имя пользователя</string>
     <string name="password">Пароль</string>
-    <string name="mitm_addon_autostart_workaround">Соединение с mitm дополнением не удалось. Вы можете попробовать открыть приложение mitm дополнения и затем, не закрывая его, вернуться в PCAPdroid. Вы хотите открыть его сейчас\?</string>
-    <string name="qr_info_text">Установите PCAPdroid из Google Play и отсканируйте этот QR код</string>
+    <string name="mitm_addon_autostart_workaround">Соединение с mitm дополнением не удалось. Вы можете попробовать открыть приложение mitm дополнения и затем, не закрывая его, вернуться в ADBye. Вы хотите открыть его сейчас\?</string>
+    <string name="qr_info_text">Установите ADBye из Google Play и отсканируйте этот QR код</string>
     <string name="invalid_license">Некорректная лицензия</string>
     <string name="connection_error">Ошибка соединения: %1$s</string>
     <string name="qr_purchase_required">Приобретите unlock token, чтобы продолжить активацию QR кода</string>
@@ -433,7 +433,7 @@
     <string name="status_encrypted">Зашифровано</string>
     <string name="injected">Инжектировано</string>
     <string name="tls_decryption_no_rules_notice">Дешифрование TLS применяется только к соединениям, которые соответствуют настроенным правилам. Вы хотите создать правила дешифрования\?</string>
-    <string name="root_capture_pcapd_start_failure">Не удалось начать захват. Убедитесь, что вы разрешили root-доступ для PCAPdroid</string>
+    <string name="root_capture_pcapd_start_failure">Не удалось начать захват. Убедитесь, что вы разрешили root-доступ для ADBye</string>
     <string name="active_vpn_detected">Обнаружен активный VPN</string>
     <string name="copy_error">Не удаётся записать файл</string>
     <string name="proxy_host">Прокси хост</string>
@@ -457,11 +457,11 @@
     <string name="whats_new">Что нового</string>
     <string name="both">Обе части</string>
     <string name="redirected">перенаправлено</string>
-    <string name="dnscrypt_how_to">Как использовать DoH / DNSCrypt с PCAPdroid</string>
+    <string name="dnscrypt_how_to">Как использовать DoH / DNSCrypt с ADBye</string>
     <string name="always">Всегда</string>
     <string name="raw_bytes">Raw байты</string>
     <string name="mitm_doze_notice">Оптимизации батареи могут помешать работе mitm дополнения</string>
-    <string name="decrypt_quic_notice">Дешифрование QUIC в данный момент не поддерживается. В качестве временной меры, остановите захват и в настройках PCAPdroid включите опцию блокировки QUIC</string>
+    <string name="decrypt_quic_notice">Дешифрование QUIC в данный момент не поддерживается. В качестве временной меры, остановите захват и в настройках ADBye включите опцию блокировки QUIC</string>
     <string name="headers">Заголовки</string>
     <string name="body">Тело</string>
     <string name="unsupported_pcap_datalink">Файл содержит неподдерживаемый datalink</string>
@@ -478,7 +478,7 @@
     <string name="mitm_addon_update_available">Доступно свежее обновление для mitm-дополнения. Обновитесь для получения последних исправлений</string>
     <string name="update_action">Обновить</string>
     <string name="dump_extensions_summary">Расширяет формат дампа пакетов дополнительными метаданными, такими как название приложения, которое отправило/получило данный пакет</string>
-    <string name="dump_extensions_how_to">Как отобразить расширения дампа PCAPdroid в Wireshark</string>
+    <string name="dump_extensions_how_to">Как отобразить расширения дампа ADBye в Wireshark</string>
     <string name="cidr_val">CIDR: %1$s</string>
     <string name="malicious_connection_description">Соединение из приложения \"%1$s\" вызвало срабатывание правила обнаружения вредоносов (%2$s)</string>
     <string name="malicious_connections_notice">Черные списки могут содержать ошибки. Дважды убедитель в репутации адреса/домена в сети. Вы можете исключить ложные срабатывания через белый список</string>
@@ -488,7 +488,7 @@
     <string name="errno_econnrefused_msg">Сервер отклонил соединение, что может означать высокую загруженность или неисправность сервера</string>
     <string name="errno_etimedout_msg">Сервер отвечал слишком долго, вероятно из-за сетевых задержек или загруженности сервера</string>
     <string name="geo_db_missing">Отсутствует база данных геолокации</string>
-    <string name="country_rules_warning">Чтобы использовать правила по странам, необходимо загрузить базу данных геолокации из настроек PCAPdroid, иначе правила по странам будут неэффективны</string>
+    <string name="country_rules_warning">Чтобы использовать правила по странам, необходимо загрузить базу данных геолокации из настроек ADBye, иначе правила по странам будут неэффективны</string>
     <string name="unsupported_pcap_file">Неподдерживаемый формат файла захвата</string>
     <string name="error_code_with_text">%1$s (ошибка %2$d)</string>
     <string name="bytes_threshold">Пороговое значение в байтах</string>
@@ -506,11 +506,11 @@
     <string name="errno_ehostunreach">Нет маршрута до хоста</string>
     <string name="errno_ehostunreach_msg">Система не может найти маршрут до хоста назначения</string>
     <string name="errno_econnrefused">Соединение отклонено</string>
-    <string name="tls_conn_info">TLS/HTTPS трафик зашифрован. Чтобы изучать этот трафик, вам необходимо его дешифровать. Загляните в <a href="%1$s">Руководство пользователя</a> PCAPdroid за деталями</string>
+    <string name="tls_conn_info">TLS/HTTPS трафик зашифрован. Чтобы изучать этот трафик, вам необходимо его дешифровать. Загляните в <a href="%1$s">Руководство пользователя</a> ADBye за деталями</string>
     <string name="dns_conn_info">DNS преобразовывает доменное имя в IP адрес. Фактический обмен данными, как правило, идет через последующие HTTPS/TLS соединения</string>
-    <string name="dump_extensions">Расширения PCAPdroid</string>
+    <string name="dump_extensions">Расширения ADBye</string>
     <string name="tcp_exporter_info">Отправить этот PCAP на удалённый TCP приёмник (pcap-over-ip)</string>
-    <string name="no_permissions_set_info">Никаких разрешений не установлено. Вызовите PCAPdroid через StartActivityForResult чтобы увидеть запрос разрешений</string>
+    <string name="no_permissions_set_info">Никаких разрешений не установлено. Вызовите ADBye через StartActivityForResult чтобы увидеть запрос разрешений</string>
     <string name="api_key_discard_confirm">Вы действительно хотите сбросить текущий ключ API и создать новый?</string>
     <string name="tcp_collector_info">TCP сборщик: %1$s:%2$d</string>
     <string name="tcp_exporter">TCP экспортер</string>
@@ -532,7 +532,7 @@
     <string name="save_as_har">Сохранить как HAR</string>
     <string name="show_system_apps">Показывать системные приложения</string>
     <string name="filename_prefix">Префикс имени файла</string>
-    <string name="filename_prefix_description">Настройка префикса для файлов, экспортируемых PCAPdroid, например PCAP файлы</string>
+    <string name="filename_prefix_description">Настройка префикса для файлов, экспортируемых ADBye, например PCAP файлы</string>
     <string name="connection_number">Соединение #%1$d</string>
     <string name="http_request_number">HTTP запрос #%1$d</string>
     <string name="decryption_error">Ошибка дешифрования</string>

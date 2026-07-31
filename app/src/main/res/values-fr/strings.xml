@@ -102,11 +102,11 @@
     <string name="receiver_port">Port du collecteur</string>
     <string name="pcap_file_info">Créer un fichier PCAP/Pcapng dans l\'espace de stockage de l\'appareil</string>
     <string name="get_app">L\'obtenir :</string>
-    <string name="about_text">PCAPdroid est un outil open-source de capture et de suivi de réseau qui fonctionne sans un compte administrateur</string>
+    <string name="about_text">ADBye est un outil open-source de capture et de suivi de réseau qui fonctionne sans un compte administrateur</string>
     <string name="proxy_port">Port de proxy</string>
     <string name="root_capture">Capturer comme administrateur</string>
     <string name="enable_socks5_proxy_summary">Rediriger toutes les connexions TCP vers un proxy SOCKS5</string>
-    <string name="root_capture_summary">Autorise le lancement de PCAPdroid avec d\'autres applications de VPN</string>
+    <string name="root_capture_summary">Autorise le lancement de ADBye avec d\'autres applications de VPN</string>
     <string name="socks5_proxy">Activer le proxy SOCKS5</string>
     <string name="capture_prefs">Capture</string>
     <string name="packets_dropped">Paquets ignorés</string>
@@ -117,7 +117,7 @@
     <string name="ctrl_consent">Une application voudrait capturer le trafic de l\'appareil.
 \nRefusez si vous n\'est pas sûr(e)</string>
     <string name="pending_transaction">Veuillez terminer votre transaction pour débloquer cette fonctionnalité</string>
-    <string name="ctrl_consent_title">Requête de contrôle cd PCAPdroid</string>
+    <string name="ctrl_consent_title">Requête de contrôle cd ADBye</string>
     <string name="security">Sécurité</string>
     <string name="internet">Internet</string>
     <string name="reset">Rétablir</string>
@@ -125,8 +125,8 @@
     <string name="all_interfaces">Tous les interfaces</string>
     <string name="edit_filter">Modifier le filtre</string>
     <string name="edit_list">Modifier la liste</string>
-    <string name="ctrl_consent_denied">PCAPdroid : la requête de contrôle à été refusée</string>
-    <string name="ctrl_consent_allowed">PCAPdroid : la requête de contrôle à été accepté</string>
+    <string name="ctrl_consent_denied">ADBye : la requête de contrôle à été refusée</string>
+    <string name="ctrl_consent_allowed">ADBye : la requête de contrôle à été accepté</string>
     <string name="capturing_from">Capture des paquets depuis « %1$s »</string>
     <string name="hidden_connections_rules">Règles de connexions masquées</string>
     <string name="list_is_empty">La liste est vide</string>
@@ -152,7 +152,7 @@
     <string name="control_permissions_item">%1$s : %2$s</string>
     <string name="country_val">Pays : %1$s</string>
     <string name="send_report">Envoyer le rapport</string>
-    <string name="control_permissions_summary">Vérifier quelles applications peuvent contrôler la capture de PCAPdroid</string>
+    <string name="control_permissions_summary">Vérifier quelles applications peuvent contrôler la capture de ADBye</string>
     <string name="control_permissions">Contrôle des autorisations</string>
     <string name="start_at_boot">Lancer au démarrage</string>
     <string name="start_at_boot_summary">Capturer dès le lancement</string>
@@ -178,7 +178,7 @@
     <string name="malware_status_update_failed">Certaines listes sont obsolètes</string>
     <string name="malware_detection_learn_more">En apprendre plus sur la fonctionnalité de détection de virus</string>
     <string name="private_dns_hinders_detection">Les DNS privés empêchent la détection</string>
-    <string name="private_dns_message_notice">Un DNS privé empêche PCAPdroid d\'inspecter le trafic DNS. Vous pouvez le désactiver dans les préférences réseau du système Android</string>
+    <string name="private_dns_message_notice">Un DNS privé empêche ADBye d\'inspecter le trafic DNS. Vous pouvez le désactiver dans les préférences réseau du système Android</string>
     <string name="block">Bloquer…</string>
     <string name="firewall">Par-feu</string>
     <string name="blocked_pkts">Bloqué</string>
@@ -283,7 +283,7 @@
     <string name="app_intro_skip_button">Passer</string>
     <string name="app_intro_back_button">Retour</string>
     <string name="app_intro_done_button">Terminé</string>
-    <string name="welcome_to_pcapdroid">Bienvenue sur PCAPdroid</string>
+    <string name="welcome_to_pcapdroid">Bienvenue sur ADBye</string>
     <string name="socks5_info">Proxy SOCKS5 : %1$s:%2$d</string>
     <string name="cancel_action">Annuler</string>
     <string name="warning">Attention</string>
@@ -301,27 +301,27 @@
     <string name="ip_mode">Adresses IP VPN</string>
     <string name="mitm_setup_wizard">Assistance de configuration Mitm</string>
     <string name="mitm_start_failed">"Le service mitm n\'a pu être lancé. Veuillez ouvrir  ce greffon manuellement et réessayez"</string>
-    <string name="mitm_addon_new_version">Le greffon mitm de PCAPdroid doit être mis à jour</string>
+    <string name="mitm_addon_new_version">Le greffon mitm de ADBye doit être mis à jour</string>
     <string name="full_payload">Charge utile complète</string>
     <string name="waiting_application_data">En attente des données</string>
     <string name="no_root_firewall">Pare-feu non-root</string>
     <string name="block_quick">Bloquer QUIC</string>
     <string name="paid_feature">Fonctionnalité payante</string>
     <string name="firewall_purchase_msg">Achetez la fonctionnalité <i>%1$s</i> pour commencer à bloquer des connexions</string>
-    <string name="app_intro_geolocation_msg">PCAPdroid peut demander à une base de données locale le pays du serveur distant
+    <string name="app_intro_geolocation_msg">ADBye peut demander à une base de données locale le pays du serveur distant
 \n
 \nVous devez d\'abord télécharger cette base de géolocalisation depuis les préférences de l\'application</string>
-    <string name="install_the_mitm_addon">Installer <a href="%1$s">le greffon mitm</a> de PCAPdroid</string>
+    <string name="install_the_mitm_addon">Installer <a href="%1$s">le greffon mitm</a> de ADBye</string>
     <string name="app_blocked_info">L\'application %1$s a été bloquée par le pare-feu</string>
     <string name="paid_features_unlocked">Les fonctionnalités payantes ont été débloquées. Relancez la capture si déjà lancée</string>
     <string name="access_paid_features_msg">Consultez <a href="%1$s">le guide utilisateur</a> pour savoir comment accéder au fonctionnalités payantes</string>
     <string name="unlock_token_error">Le \"unlock token\" [%1$d] n\'a pu être demandé : %2$s</string>
     <string name="show_action">Afficher</string>
-    <string name="license_service_unavailable">Le service de licences PCAPdroid n\'a actuellement pas disponible. Veuillez réessayer dans quelques instants</string>
+    <string name="license_service_unavailable">Le service de licences ADBye n\'a actuellement pas disponible. Veuillez réessayer dans quelques instants</string>
     <string name="requesting_unlock_token">Demande d\'un \"unlock token\", veuillez patienter</string>
     <string name="vpn_exemptions">Exemptions VPN</string>
     <string name="remote_server_warning">Pour des raisons de sécurité, envoyer du trafic au serveur distant \"%1$s\" n\'est pas autorisé\"</string>
-    <string name="vpn_setup_msg">PCAPdroid simule un VPN pour pouvoir capturer le trafic réseau sans être root. \n \nPour lancer la capture, vous devez accepter la requête VPN de la page suivante.\n\n<b>NOTE:</b> pour continuer, désactivez tout \"VPN permanent\" que vous auriez configuré depuis les paramètres Android</string>
+    <string name="vpn_setup_msg">ADBye simule un VPN pour pouvoir capturer le trafic réseau sans être root. \n \nPour lancer la capture, vous devez accepter la requête VPN de la page suivante.\n\n<b>NOTE:</b> pour continuer, désactivez tout \"VPN permanent\" que vous auriez configuré depuis les paramètres Android</string>
     <string name="vpn_exemptions_summary">Exclure certaines applications de la connexion VPN. Leur trafic ne pourra pas être suivi</string>
     <string name="payload_scams_notice">Cette vue peut contenir des informations sensibles, comme des mots de passe ou des jetons d\'accès.
 \n
@@ -351,8 +351,8 @@
     <string name="dump_extensions_summary">Enrichir le format de capture de paquet avec des métadonnées additionnelles, telles que l\'application qui a envoyé/reçu nun paquet donné</string>
     <string name="malicious_connection_description">Une connexion de l\'application \"%1$s\" a déclenché une règle de détection de malware (%2$s)</string>
     <string name="cert_exported_now_installed">Certificat exporté, installez-le maintenant à partir des paramètres Android</string>
-    <string name="payload_truncated">La charge utile est tronquée. Pour le voir intégralement, arrêtez la capture et activez \"%1$s\" à partir des réglages de PCAPdroid</string>
-    <string name="dump_extensions">Extensions PCAPdroid</string>
+    <string name="payload_truncated">La charge utile est tronquée. Pour le voir intégralement, arrêtez la capture et activez \"%1$s\" à partir des réglages de ADBye</string>
+    <string name="dump_extensions">Extensions ADBye</string>
     <string name="add_action">Ajouter</string>
     <string name="required">obligatoire</string>
     <string name="rule_exists">Règle déjà définie</string>
@@ -366,7 +366,7 @@
     <string name="qr_license_confirm">Voulez-vous générer une licence pour l\'appareil \"%1$s\" en utilisant le jeton de déverrouillage suivant ?</string>
     <string name="invalid_license">Licence invalide</string>
     <string name="activate_via_qr_code">Activer par QR code</string>
-    <string name="qr_info_text">Installez PCAPdroid depuis Google Play et scannez ce QR code</string>
+    <string name="qr_info_text">Installez ADBye depuis Google Play et scannez ce QR code</string>
     <string name="remove_from_fw_whitelist">Supprimer de la liste autorisée du pare-feu</string>
     <string name="destination_port">Port de destination</string>
     <string name="items_delete_confirm">Supprimer les éléments sélectionnés ?</string>

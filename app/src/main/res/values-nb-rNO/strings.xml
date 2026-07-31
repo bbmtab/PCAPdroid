@@ -59,7 +59,7 @@
     <string name="unknown_app">Ukjent</string>
     <string name="error">Feil</string>
     <string name="older_connections_notice">%1$d eldre tilkoblinger vises ikke</string>
-    <string name="about_text">PCAPdroid er et fritt verktøy for nettverksovervåkning og lagring, som fungerer uten rot-tilgang</string>
+    <string name="about_text">ADBye er et fritt verktøy for nettverksovervåkning og lagring, som fungerer uten rot-tilgang</string>
     <string name="get_app">Hent det:</string>
     <string name="conn_status_unreachable">Kan ikke nåes</string>
     <string name="donate">Doner</string>
@@ -126,24 +126,24 @@
     <string name="app_not_found">Fant ikke programmet «%1$s»</string>
     <string name="no_activity_file_selection">Fant ikke noe program til å håndtere valg av filer</string>
     <string name="file_saved_with_name">Filen «%1$s» ble lagret</string>
-    <string name="ctrl_consent_denied">PCAPdroid: Kontrollforespørsel ble avslått</string>
+    <string name="ctrl_consent_denied">ADBye: Kontrollforespørsel ble avslått</string>
     <string name="all_interfaces">Alle grensesnitt</string>
     <string name="edit_filter">Rediger filter</string>
     <string name="edit_list">Rediger liste</string>
     <string name="hidden_connections_rules">Skjul tilkolbingsregler</string>
     <string name="list_is_empty">Listen er tom</string>
-    <string name="ctrl_consent_allowed">PCAPdroid: Kontrollforespørsel ble innvilget</string>
+    <string name="ctrl_consent_allowed">ADBye: Kontrollforespørsel ble innvilget</string>
     <string name="security">Sikkerhet</string>
     <string name="show_only_malicious">Ondsinnede tilkoblinger</string>
     <string name="control_permissions">Kontrolltilganger</string>
-    <string name="control_permissions_summary">Sjekk hvilke programmer som tillates å kontrollere PCAPdroid-fangst</string>
+    <string name="control_permissions_summary">Sjekk hvilke programmer som tillates å kontrollere ADBye-fangst</string>
     <string name="control_permissions_item">%1$s: %2$s</string>
     <string name="asn">ASN</string>
     <string name="malware_status_ok">Ingen ondsinnet trafikk oppdaget</string>
     <string name="malware_status_detected">Ondsinnet trafikk oppdaget</string>
     <string name="status_updating">Oppdaterer …</string>
     <string name="malware_detection_learn_more">Lær mer om skadevareoppdagelsesfunksjonen</string>
-    <string name="private_dns_message_notice">Privat DNS forhindrer PCAPdroid fra å inspisere DNS-trafikk. Du kan skru det av fra Android-nettverksinnstillingene.</string>
+    <string name="private_dns_message_notice">Privat DNS forhindrer ADBye fra å inspisere DNS-trafikk. Du kan skru det av fra Android-nettverksinnstillingene.</string>
     <string name="n_pkts">%1$s pakker</string>
     <string name="private_dns_hinders_detection">Privat DNS forhindrer oppdagelse</string>
     <string name="decryption_no_filter_warn">Velg et målprogram når du dekrypterer TLS for å unngå å miste tilkoblingen din til Internett</string>
@@ -168,7 +168,7 @@
     <string name="packets_dropped">Pakker som ikke kom fram</string>
     <string name="installed_on">Installert</string>
     <string name="capture_prefs">Trafikkfangst</string>
-    <string name="root_capture_summary">Lar PCAPdroid kjøre med andre VPN-programmer</string>
+    <string name="root_capture_summary">Lar ADBye kjøre med andre VPN-programmer</string>
     <string name="netd_app_info">Systemnissen som utfører DNS-oppslag</string>
     <string name="enable_socks5_proxy_summary">Videresend alle TCP-tilkoblinger til angitt SOCKS5-mellomtjener</string>
     <string name="unknown_app_info">«Ukjent» tilkjennegir tilkoblinger hvis program ikke kunne fastsettes.</string>
@@ -198,7 +198,7 @@
     <string name="notification_msg">%1$s fanget, %2$s tilkoblinger</string>
     <string name="capture_not_running_status">Fangst kjører ikke</string>
     <string name="pending_transaction">Fullfør kjøpet for å bruke denne funksjonen</string>
-    <string name="ctrl_consent_title">PCAPdroid-kontrollforespørsel</string>
+    <string name="ctrl_consent_title">ADBye-kontrollforespørsel</string>
     <string name="capturing_from">Fanger pakker fra «%1$s»</string>
     <string name="capture_interface">Fangstgrensesnitt</string>
     <string name="no_dump_info">PCAP vil ikke bli registrert</string>
@@ -208,7 +208,7 @@
     <string name="firewall_filter">Brannmur: %1$s</string>
     <string name="connection_not_found">Fant ikke angitt tilkobling</string>
     <string name="allowed_connection_filter">Tillatt</string>
-    <string name="connection_blocked">Denne tilkoblingen har blitt blokkert av PCAPdroid</string>
+    <string name="connection_blocked">Denne tilkoblingen har blitt blokkert av ADBye</string>
     <string name="low_memory">Lite minne igjen</string>
     <string name="full_payload_disabled">Alternativet for full nyttelast har blitt avskrudd</string>
     <string name="block_private_dns_summary">Oppdag og potensielt blokker privat DNS for å inspisere DNS-trafikk. Å skru av dette kan forhindre trafikk-analyse.</string>
@@ -220,24 +220,24 @@
     <string name="permission_granted">%1$s-tilgang ble innvilget</string>
     <string name="memory_usage">Minnebruk</string>
     <string name="permission_grant_fail">%1$s-tilgang kunne ikke innvilges</string>
-    <string name="vpn_lockdown_notice">For å forhindre programmer fra å bruke Internett når PCAPdroid ikke kjører (f.eks. etter en omstart) kan du sette PCAPdroid til VPN i nedlåst modus som alltid er påslått.
+    <string name="vpn_lockdown_notice">For å forhindre programmer fra å bruke Internett når ADBye ikke kjører (f.eks. etter en omstart) kan du sette ADBye til VPN i nedlåst modus som alltid er påslått.
 \n
 \nÅpne VPN-innstillingene nå\?</string>
     <string name="low_memory_info">Programmet er i ferd med å slippe opp for minne. Forvent krasj.</string>
-    <string name="app_intro_geolocation_msg">PCAPdroid kan utføre spørring av en lokal database for å fastsette landsopprinnelse for en fjerntjener.
+    <string name="app_intro_geolocation_msg">ADBye kan utføre spørring av en lokal database for å fastsette landsopprinnelse for en fjerntjener.
 \n
 \nDu må laste ned geoposisjoneringsdatabasen først fra programinnstillingene.</string>
-    <string name="install_ca_certificate">Installer sertifikatmyndighetssertifikatet tilhørende PCAPdroid ved å velge «VPN og programmer». Android vil spørre deg om din låseskjerm og passord.</string>
+    <string name="install_ca_certificate">Installer sertifikatmyndighetssertifikatet tilhørende ADBye ved å velge «VPN og programmer». Android vil spørre deg om din låseskjerm og passord.</string>
     <string name="ca_cert_export_failed">En feil oppstod under eksport av sertifikatmyndighetssertifikatet.
 \n
-\nHvis enheten din implementerer automatisk start eller lignende programvare for å forhindre kjøring av bakgrunnstjenester må du <a href="%1$s">hvitliste PCAPdroid</a></string>
+\nHvis enheten din implementerer automatisk start eller lignende programvare for å forhindre kjøring av bakgrunnstjenester må du <a href="%1$s">hvitliste ADBye</a></string>
     <string name="payload_truncated">Nyttelasten er forkortet. Skru på «%1$s» for å vise den i sin helhet.</string>
     <string name="firewall_summary">Blokker Internett-tilgang for programmer, sett opp roller for spesifikke domener og IP-adresser. Fungerer kun med fangst uten rot-tilgang.</string>
-    <string name="mitm_setup_wizard_intro">Denne veiledningen tar deg gjennom installasjon av sertifikatmyndighets-sertifikat og MITM-tillegget for PCAPdroid, som trengs for å utføre <a href="%1$s">TLS-dekryptering</a>.</string>
-    <string name="mitm_setup_wizard_done">PCAPdroid er nå klar til å dekryptere TLS-trafikk.
+    <string name="mitm_setup_wizard_intro">Denne veiledningen tar deg gjennom installasjon av sertifikatmyndighets-sertifikat og MITM-tillegget for ADBye, som trengs for å utføre <a href="%1$s">TLS-dekryptering</a>.</string>
+    <string name="mitm_setup_wizard_done">ADBye er nå klar til å dekryptere TLS-trafikk.
 \n
 \nSjekk ut <a href="%1$s">brukerveiledningen</a> for å finne ut mer om sikkerhetsfunksjoner som kan forhindre dekryptering og hvordan du omgår dem.</string>
-    <string name="app_intro_welcome_msg">PCAPdroid er et personvernsvennlig program som lar deg spore og analysere tilkoblinger gjort av programmer på enheten din.
+    <string name="app_intro_welcome_msg">ADBye er et personvernsvennlig program som lar deg spore og analysere tilkoblinger gjort av programmer på enheten din.
 \n
 \nDet lar deg også eksporter en PCAP-dump av trafikken, pakke ut matadata, med mer.</string>
     <string name="app_intro_privacy_msg">Programmet utfører ingen sporing, analyse, og ringer heller ikke hjem.
@@ -269,7 +269,7 @@
     <string name="decryption">Dekryptering</string>
     <string name="decryption_filter">Dekryptering: %1$s</string>
     <string name="network_traffic">Trafikk</string>
-    <string name="connection_start_not_seen">PCAPdroid har ikke sett starten på denne tilkoblingen. Noe av infoen kan mangle.</string>
+    <string name="connection_start_not_seen">ADBye har ikke sett starten på denne tilkoblingen. Noe av infoen kan mangle.</string>
     <string name="waiting_application_data">Venter på data …</string>
     <string name="downloading">Laster ned …</string>
     <string name="download_in_progress">Laster ned …</string>
@@ -286,12 +286,12 @@
     <string name="export_action">Eksporter</string>
     <string name="tls_decryption">TLS-dekryptering</string>
     <string name="tls_decryption_summary">Dekrypter SSL/TLS-trafikk ved å utføre MITM. Dette kan fungere med noen programmer nå. Sjekk brukerveiledningen.</string>
-    <string name="export_ca_certificate">Eksporter sertifikatmyndighetssertifikatet tilhørende PCAPdroid, åpne så «Kryptering og identitetsdetaljer» i Android og veld å installere det som et «CA-sertifikat».</string>
+    <string name="export_ca_certificate">Eksporter sertifikatmyndighetssertifikatet tilhørende ADBye, åpne så «Kryptering og identitetsdetaljer» i Android og veld å installere det som et «CA-sertifikat».</string>
     <string name="checking_the_certificate">Sjekker sertifikatet …</string>
     <string name="cert_exported_now_installed">Sertifikat eksporter. Installer det nå fra Android-innstillingene.</string>
     <string name="cert_installed_correctly">Sertifikatmyndighetssertifikatet er installert</string>
     <string name="cert_reinstall_required">Sertifikatmyndighetssertifikatet er ikke installert. Kjør MITM-oppsettsveilederen.</string>
-    <string name="mitm_addon_bad_version">Feilaktig versjon for MITM-tillegget i PCAPdroid. Installer versjon %1$s og prøv igjen.</string>
+    <string name="mitm_addon_bad_version">Feilaktig versjon for MITM-tillegget i ADBye. Installer versjon %1$s og prøv igjen.</string>
     <string name="export_failed">Eksport mislyktes</string>
     <string name="not_encrypted">Ikke kryptert</string>
     <string name="request">Forespørsel</string>
@@ -324,16 +324,16 @@
     <string name="no_root_firewall">Brannmur uten rot-tilgang</string>
     <string name="block_quick">Blokker QUIC</string>
     <string name="block_private_dns">Blokker privat DNS</string>
-    <string name="welcome_to_pcapdroid">Velkommen til PCAPdroid</string>
+    <string name="welcome_to_pcapdroid">Velkommen til ADBye</string>
     <string name="app_intro_next_button">Neste</string>
     <string name="app_intro_skip_button">Hopp over</string>
     <string name="privacy_first">Personvern først</string>
     <string name="country_and_asn">Land og ASN</string>
-    <string name="vpn_setup_msg">PCAPdroid simulerer VPN for å fange nettverkstrafikk uten rot-tilgang.
+    <string name="vpn_setup_msg">ADBye simulerer VPN for å fange nettverkstrafikk uten rot-tilgang.
 \n
 \nFor å starte fangst må du godta VPN-forespørselen i neste steg.</string>
-    <string name="app_intro_traffic_dump">PCAPdroid tillater dumping av data på <a href="%1$s">flere vis</a> for dumping av data i forvalgt PCAP-format for videre analyse.
+    <string name="app_intro_traffic_dump">ADBye tillater dumping av data på <a href="%1$s">flere vis</a> for dumping av data i forvalgt PCAP-format for videre analyse.
 \n
 \nVia <a href="%2$s">trailer-alternativet</a>, kan du legge til programnavn i pakkene og vise dem i Wireshark.</string>
-    <string name="mitm_addon_new_version">MITM-tillegget for PCAPdroid må oppgraderes.</string>
+    <string name="mitm_addon_new_version">MITM-tillegget for ADBye må oppgraderes.</string>
 </resources>

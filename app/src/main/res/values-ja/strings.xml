@@ -67,7 +67,7 @@
     <string name="copy_to_clipboard">クリップボードにコピー</string>
     <string name="save_to_file">ファイルに保存</string>
     <string name="older_connections_notice">%1$d より古い接続は表示されません</string>
-    <string name="about_text">PCAPdroid はルート権限なしで動作するオープン ソースのネットワーク キャプチャ、モニタリング ツールです</string>
+    <string name="about_text">ADBye はルート権限なしで動作するオープン ソースのネットワーク キャプチャ、モニタリング ツールです</string>
     <string name="get_app">入手:</string>
     <string name="unknown_app">不明</string>
     <string name="error">エラー</string>
@@ -81,7 +81,7 @@
     <string name="enable_socks5_proxy_summary">すべての TCP 接続を指定した SOCKS5 プロキシにリダイレクトします</string>
     <string name="proxy_port">プロキシ ポート</string>
     <string name="root_capture">ルートとしてキャプチャ</string>
-    <string name="root_capture_summary">PCAPdroid とほかの VPN アプリとの併用を許可します</string>
+    <string name="root_capture_summary">ADBye とほかの VPN アプリとの併用を許可します</string>
     <string name="donate">寄付</string>
     <string name="search">検索…</string>
     <string name="app_val">アプリ: %1$s</string>
@@ -110,9 +110,9 @@
     <string name="ctrl_consent">アプリはデバイスのトラフィックをキャプチャしようとしています。よくわからない場合は拒否してください</string>
     <string name="deny">拒否</string>
     <string name="allow">許可</string>
-    <string name="ctrl_consent_title">PCAPdroid コントロール要求</string>
-    <string name="ctrl_consent_denied">PCAPdroid: コントロール要求は拒否されました</string>
-    <string name="ctrl_consent_allowed">PCAPdroid: コントロール要求は許可されました</string>
+    <string name="ctrl_consent_title">ADBye コントロール要求</string>
+    <string name="ctrl_consent_denied">ADBye: コントロール要求は拒否されました</string>
+    <string name="ctrl_consent_allowed">ADBye: コントロール要求は許可されました</string>
     <string name="capture_interface">キャプチャ インターフェイス</string>
     <string name="internet">インターネット</string>
     <string name="all_interfaces">すべてのインターフェイス</string>
@@ -140,7 +140,7 @@
     <string name="once">1 度のみ</string>
     <string name="forever">表示しない</string>
     <string name="control_permissions">権限を管理</string>
-    <string name="control_permissions_summary">PCAPdroid キャプチャー制御を許可するアプリを確認します</string>
+    <string name="control_permissions_summary">ADBye キャプチャー制御を許可するアプリを確認します</string>
     <string name="control_permissions_item">%1$s: %2$s</string>
     <string name="country">国</string>
     <string name="asn">AS 番号</string>
@@ -170,7 +170,7 @@
     <string name="update_now">いますく更新</string>
     <string name="status_updating">アップデートしています…</string>
     <string name="malware_detection_learn_more">マルウェア検出機能の詳細</string>
-    <string name="private_dns_message_notice">プライベート DNS は PCAPdroid が DNS トラフィックを検出するのを妨害します。Android のネットワーク設定からオフにすることができます</string>
+    <string name="private_dns_message_notice">プライベート DNS は ADBye が DNS トラフィックを検出するのを妨害します。Android のネットワーク設定からオフにすることができます</string>
     <string name="private_dns_hinders_detection">プライベート DNS は検出を妨害します</string>
     <string name="block">ブロック…</string>
     <string name="firewall">ファイアウォール</string>

@@ -14,8 +14,8 @@
     <string name="pending_transaction">Silakan selesaikan transaksi Anda untuk menukarkan fitur ini</string>
     <string name="ctrl_consent">Sebuah aplikasi ingin menangkap lalu lintas perangkat Anda.
 \nTolak jika Anda tidak yakin</string>
-    <string name="ctrl_consent_title">Permintaan kontrol PCAPdroid</string>
-    <string name="ctrl_consent_denied">PCAPdroid: permintaan kontrol ditolak</string>
+    <string name="ctrl_consent_title">Permintaan kontrol ADBye</string>
+    <string name="ctrl_consent_denied">ADBye: permintaan kontrol ditolak</string>
     <string name="deny">Tolak</string>
     <string name="all_interfaces">Semua interface</string>
     <string name="list_is_empty">Daftar kosong</string>
@@ -30,7 +30,7 @@
     <string name="forever">Selamanya</string>
     <string name="not_hidden_filter">Tidak tersembunyi</string>
     <string name="once">Sekali</string>
-    <string name="control_permissions_summary">Periksa aplikasi mana yang diizinkan untuk mengontrol penangkapan PCAPdroid</string>
+    <string name="control_permissions_summary">Periksa aplikasi mana yang diizinkan untuk mengontrol penangkapan ADBye</string>
     <string name="country">Negara</string>
     <string name="asn">ASN</string>
     <string name="status_outdated">Usang</string>
@@ -91,7 +91,7 @@
     <string name="first_seen">Terlihat</string>
     <string name="last_seen">Terakhir terlihat</string>
     <string name="conn_status_closed">Tertutup</string>
-    <string name="about_text">PCAPdroid adalah alat penangkapan dan pemantauan jaringan sumber terbuka yang bekerja tanpa hak akses root</string>
+    <string name="about_text">ADBye adalah alat penangkapan dan pemantauan jaringan sumber terbuka yang bekerja tanpa hak akses root</string>
     <string name="get_app">Dapatkan:</string>
     <string name="error">Kesalahan</string>
     <string name="app_language">Bahasa</string>
@@ -116,7 +116,7 @@
     <string name="packets_dropped">Paket dikecualikan</string>
     <string name="capture_prefs">Tangkap</string>
     <string name="allow">Izinkan</string>
-    <string name="ctrl_consent_allowed">PCAPdroid: permintaan kontrol diizinkan</string>
+    <string name="ctrl_consent_allowed">ADBye: permintaan kontrol diizinkan</string>
     <string name="capture_interface">Tangkap interface</string>
     <string name="internet">Internet</string>
     <string name="capturing_from">Menangkap paket dari \"%1$s\"</string>
@@ -150,7 +150,7 @@
     <string name="updated_blacklists">Daftar hitam yang diperbarui</string>
     <string name="domain_rules">Aturan domain</string>
     <string name="ip_rules">Aturan IP</string>
-    <string name="private_dns_message_notice">DNS Pribadi mencegah PCAPdroid memeriksa lalu lintas DNS. Anda dapat menonaktifkan dari pengaturan jaringan Android</string>
+    <string name="private_dns_message_notice">DNS Pribadi mencegah ADBye memeriksa lalu lintas DNS. Anda dapat menonaktifkan dari pengaturan jaringan Android</string>
     <string name="decryption_no_filter_warn">Pilih aplikasi tujuan saat mendekripsi TLS untuk menghindari kehilangan koneksi ke Internet</string>
     <string name="firewall_rules">Aturan firewall</string>
     <string name="blocked_pkts">Diblokir</string>
@@ -209,7 +209,7 @@
     <string name="unknown_app">Tidak diketahui</string>
     <string name="system_default">Bawaan sistem</string>
     <string name="conn_status_unreachable">Tidak terjangkau</string>
-    <string name="root_capture_summary">Mengizinkan PCAPdroid menangkap koneksi VPN aplikasi lain yang sedang berjalan</string>
+    <string name="root_capture_summary">Mengizinkan ADBye menangkap koneksi VPN aplikasi lain yang sedang berjalan</string>
     <string name="network_traffic">Lalu lintas</string>
     <string name="warn_no_app_data">Tidak ada data aplikasi yang dipertukarkan</string>
     <string name="hexdump">Timbunan kode heksadesimal</string>
@@ -234,11 +234,11 @@
     <string name="decryption">Dekripsi</string>
     <string name="geo_db_not_found">Basis data tidak ditemukan. Geolokasi dinonaktifkan</string>
     <string name="built_on">Dibuat pada: %1$s</string>
-    <string name="connection_blocked">Koneksi ini telah diblokir oleh PCAPdroid</string>
+    <string name="connection_blocked">Koneksi ini telah diblokir oleh ADBye</string>
     <string name="import_action">Impor</string>
     <string name="action_unblock">Buka blokir</string>
     <string name="decryption_filter">Status: %1$s</string>
-    <string name="connection_start_not_seen">PCAPdroid belum melihat awal dari koneksi ini. Beberapa informasi mungkin hilang</string>
+    <string name="connection_start_not_seen">ADBye belum melihat awal dari koneksi ini. Beberapa informasi mungkin hilang</string>
     <string name="decrypted">Didekripsi</string>
     <string name="waiting_application_data">Menunggu data</string>
     <string name="text">Teks</string>
@@ -267,7 +267,7 @@
     <string name="mitm_setup_wizard">Petunjuk instalasi Mitm</string>
     <string name="install_action">Instal</string>
     <string name="export_action">Ekspor</string>
-    <string name="export_ca_certificate">Ekspor sertifikat CA PCAPdroid, lalu buka pengaturan \"Enkripsi &amp; Kredensial\" Android dan pilih instal sebagai \"sertifikat CA\"</string>
+    <string name="export_ca_certificate">Ekspor sertifikat CA ADBye, lalu buka pengaturan \"Enkripsi &amp; Kredensial\" Android dan pilih instal sebagai \"sertifikat CA\"</string>
     <string name="export_failed">Ekspor gagal</string>
     <string name="not_encrypted">Tidak dienkripsi</string>
     <string name="request">Permintaan</string>
@@ -276,8 +276,8 @@
     <string name="string_http_request">Permintaan HTTP</string>
     <string name="string_http_response">Respon HTTP</string>
     <string name="payload_truncated">Payload terpotong. Aktifkan \"%1$s\" untuk menampilkannya secara penuh</string>
-    <string name="mitm_addon_bad_version">Versi addon PCAPdroid mitm buruk. Instal versi %1$s dan coba lagi</string>
-    <string name="mitm_addon_new_version">Addon mitm PCAPdroid harus di perbarui</string>
+    <string name="mitm_addon_bad_version">Versi addon ADBye mitm buruk. Instal versi %1$s dan coba lagi</string>
+    <string name="mitm_addon_new_version">Addon mitm ADBye harus di perbarui</string>
     <string name="websocket">WebSocket</string>
     <string name="http">HTTP</string>
     <string name="payload">Muatan</string>
@@ -294,8 +294,8 @@
     <string name="cert_exported_now_installed">Sertifikat diekspor, sekarang instal dari pengaturan Android</string>
     <string name="ca_cert_export_failed">Terjadi kesalahan saat mengekspor sertifikat CA
 \n
-\nJika perangkat Anda mengimplementasikan Autostart atau perangkat lunak serupa untuk membatasi eksekusi layanan latar belakang, pastikan untuk <a href="%1$s">PCAPdroid masuk daftar putih</a></string>
-    <string name="install_ca_certificate">Instal sertifikat CA PCAPdroid, pilih \"VPN dan aplikasi\". Android akan meminta kunci layar atau kata sandi Anda</string>
+\nJika perangkat Anda mengimplementasikan Autostart atau perangkat lunak serupa untuk membatasi eksekusi layanan latar belakang, pastikan untuk <a href="%1$s">ADBye masuk daftar putih</a></string>
+    <string name="install_ca_certificate">Instal sertifikat CA ADBye, pilih \"VPN dan aplikasi\". Android akan meminta kunci layar atau kata sandi Anda</string>
     <string name="checking_the_certificate">Memeriksa sertifikat…</string>
     <string name="app_intro_skip_button">Lewati</string>
     <string name="firewall_summary">Blokir akses internet ke aplikasi, konfigurasikan aturan untuk domain dan alamat IP tertentu. Hanya berfungsi dengan tangkapan non-root</string>
@@ -305,23 +305,23 @@
     <string name="block_quick">Blokir QUIC</string>
     <string name="block_private_dns_summary">Mendeteksi dan mungkin memblokir DNS pribadi untuk memeriksa lalu lintas DNS. Menonaktifkan ini dapat menghambat analisis lalu lintas</string>
     <string name="app_intro_back_button">Kembali</string>
-    <string name="mitm_setup_wizard_intro">Wizard ini akan memandu Anda melalui penginstalan PCAPdroid mitm addon dan otoritas sertifikasi, yang diperlukan untuk melakukan <a href="%1$s">dekripsi TLS</a></string>
-    <string name="mitm_setup_wizard_done">PCAPdroid sekarang siap untuk mendekripsi lalu lintas TLS
+    <string name="mitm_setup_wizard_intro">Wizard ini akan memandu Anda melalui penginstalan ADBye mitm addon dan otoritas sertifikasi, yang diperlukan untuk melakukan <a href="%1$s">dekripsi TLS</a></string>
+    <string name="mitm_setup_wizard_done">ADBye sekarang siap untuk mendekripsi lalu lintas TLS
 \n
 \nLihat <a href="%1$s">panduan pengguna</a> untuk mengetahui lebih lanjut tentang langkah-langkah keamanan yang dapat mencegah dekripsi dan cara mengabaikannya</string>
-    <string name="welcome_to_pcapdroid">Selamat datang di PCAPdroid</string>
+    <string name="welcome_to_pcapdroid">Selamat datang di ADBye</string>
     <string name="app_intro_done_button">Selesai</string>
-    <string name="app_intro_geolocation_msg">PCAPdroid dapat meminta database lokal untuk menentukan negara dari server jarak jauh
+    <string name="app_intro_geolocation_msg">ADBye dapat meminta database lokal untuk menentukan negara dari server jarak jauh
 \n
 \nAnda harus terlebih dahulu mengunduh basis data geolokasi dari pengaturan aplikasi</string>
-    <string name="app_intro_welcome_msg">PCAPdroid adalah aplikasi ramah privasi yang memungkinkan Anda melacak dan menganalisis koneksi yang dibuat oleh aplikasi di perangkat Anda
+    <string name="app_intro_welcome_msg">ADBye adalah aplikasi ramah privasi yang memungkinkan Anda melacak dan menganalisis koneksi yang dibuat oleh aplikasi di perangkat Anda
 \n
 \nSelain itu, ini memungkinkan Anda untuk mengekspor dump PCAP dari lalu lintas, mengekstrak metadata, dan banyak lagi!</string>
     <string name="app_intro_privacy_msg">Aplikasi ini tidak menggunakan pelacakan, analitik, atau anti-fitur telepon rumah
 \n
 \nBagaimana Anda bisa yakin\? Lihat <a href="%1$s">kebijakan privasi</a> dan <a href="%2$s">kode sumber</a>-nya</string>
     <string name="privacy_first">Utamakan privasi</string>
-    <string name="vpn_setup_msg">PCAPdroid mensimulasikan VPN untuk menangkap lalu lintas jaringan tanpa root.
+    <string name="vpn_setup_msg">ADBye mensimulasikan VPN untuk menangkap lalu lintas jaringan tanpa root.
 \n
 \nUntuk memulai pengambilan, Anda harus menerima permintaan VPN di layar berikutnya
 \n
@@ -333,7 +333,7 @@
     <string name="app_intro_malware_detection">Tingkatkan keamanan perangkat Anda dengan fitur <a href="%1$s">deteksi malware</a>
 \n
 \nDengan menggunakan daftar hitam terbaru, ini dapat mendeteksi, memblokir, dan memperingatkan koneksi berbahaya secara waktu nyata</string>
-    <string name="app_intro_traffic_dump">PCAPdroid menyediakan <a href="%1$s">berbagai cara</a> untuk membuang lalu lintas dalam format PCAP standar untuk analisis lebih lanjut \n \nMelalui <a href="%2$s">opsi ekstensi PCAPdroid</a>, Anda dapat menambahkan nama aplikasi ke paket dan menampilkannya di Wireshark</string>
+    <string name="app_intro_traffic_dump">ADBye menyediakan <a href="%1$s">berbagai cara</a> untuk membuang lalu lintas dalam format PCAP standar untuk analisis lebih lanjut \n \nMelalui <a href="%2$s">opsi ekstensi ADBye</a>, Anda dapat menambahkan nama aplikasi ke paket dan menampilkannya di Wireshark</string>
     <string name="low_memory">Kekurangan Memori</string>
     <string name="heap_usage">memori menumpuk</string>
     <string name="no_matches_found">Tidak ada yang cocok</string>
@@ -346,14 +346,14 @@
 \nJangan pernah memberikan informasi ini kepada siapa pun, ini mungkin upaya penipuan</string>
     <string name="show_data_action">Lihat data</string>
     <string name="unblock_for_n_minutes">Buka blokir untuk %1$dmenit</string>
-    <string name="remote_collector_notice">Anda telah mengonfigurasi PCAPdroid untuk mengirim lalu lintas ke server jauh. Server akan dapat mengakses informasi sensitif Anda.
+    <string name="remote_collector_notice">Anda telah mengonfigurasi ADBye untuk mengirim lalu lintas ke server jauh. Server akan dapat mengakses informasi sensitif Anda.
 \n
 \nJika seseorang meminta Anda untuk melakukan ini, itu mungkin upaya penipuan</string>
     <string name="memory_usage">Memori digunakan</string>
     <string name="ip_mode">Alamat IP VPN</string>
     <string name="mitm_skip_notice">Sertifikat mitm tampaknya tidak diinstal. Jika Anda melanjutkan, dekripsi mungkin gagal</string>
     <string name="mitm_wizard_description">Konfigurasikan perangkat untuk dekripsi TLS</string>
-    <string name="install_the_mitm_addon">Instal PCAPdroid <a href="%1$s">addon mitm</a></string>
+    <string name="install_the_mitm_addon">Instal ADBye <a href="%1$s">addon mitm</a></string>
     <string name="permission_grant_fail">%1$s izin tidak dapat diberikan</string>
     <string name="low_memory_info">Aplikasi kehabisan memori, perkirakan macet</string>
     <string name="full_payload_disabled">Opsi muatan penuh telah dinonaktifkan</string>
@@ -368,7 +368,7 @@
     <string name="unlock_token_summary">Token yang dapat digunakan untuk membuka kunci fitur berbayar di versi aplikasi non-Google-Play (mis. F-Droid/Github)</string>
     <string name="unlock_token_error">Tidak dapat meminta unlock token [%1$d]: %2$s</string>
     <string name="access_paid_features_msg">Lihat <a href="%1$s">panduan pengguna</a> untuk mempelajari cara mengakses fitur berbayar</string>
-    <string name="license_service_unavailable">Layanan lisensi PCAPdroid saat ini tidak tersedia. Silakan coba lagi dalam beberapa menit</string>
+    <string name="license_service_unavailable">Layanan lisensi ADBye saat ini tidak tersedia. Silakan coba lagi dalam beberapa menit</string>
     <string name="requesting_unlock_token">Meminta sebuah unlock token, tunggu sebentar</string>
     <string name="show_action">Lihat</string>
     <string name="show_connection">Lihat koneksi</string>
@@ -380,7 +380,7 @@
     <string name="firewall_filter">Firewall : %1$s</string>
     <string name="connection_not_found">Tidak dapat menemukan koneksi yang diberikan</string>
     <string name="capture_stopped_low_memory">Penangkapan telah berhenti</string>
-    <string name="vpn_lockdown_notice">Untuk mencegah aplikasi mengakses Internet saat PCAPdroid tidak berjalan (misalnya setelah reboot), Anda dapat mengatur PCAPdroid sebagai VPN yang selalu aktif dalam mode penguncian.
+    <string name="vpn_lockdown_notice">Untuk mencegah aplikasi mengakses Internet saat ADBye tidak berjalan (misalnya setelah reboot), Anda dapat mengatur ADBye sebagai VPN yang selalu aktif dalam mode penguncian.
 \n
 \nApakah Anda ingin membuka pengaturan VPN sekarang\?</string>
     <string name="vpn_exemptions_summary">Mengecualikan beberapa aplikasi dari koneksi VPN. Lalu lintas mereka tidak akan dipantau</string>
@@ -446,13 +446,13 @@
     <string name="ipv6_dns_server">Server DNS IPv6</string>
     <string name="port_mapping">Pemetaan port</string>
     <string name="redirect_to">Arahkan ke:</string>
-    <string name="mitm_addon_autostart_workaround">Koneksi ke addon mitm gagal. Sebagai solusi, Anda dapat mencoba membuka aplikasi addon mitm dan kembali ke PCAPdroid tanpa menutupnya. Apakah Anda ingin membukanya sekarang\?</string>
+    <string name="mitm_addon_autostart_workaround">Koneksi ke addon mitm gagal. Sebagai solusi, Anda dapat mencoba membuka aplikasi addon mitm dan kembali ke ADBye tanpa menutupnya. Apakah Anda ingin membukanya sekarang\?</string>
     <string name="items_delete_confirm">Hapus item yang dipilih\?</string>
     <string name="no_data">Tidak ada data</string>
     <string name="qr_license_confirm">Apakah Anda ingin membuat lisensi untuk perangkat \"%1$s\" menggunakan token pembuka kunci berikut ini\?</string>
-    <string name="qr_info_text">Instal PCAPdroid dari Google Play dan pindai kode QR ini</string>
+    <string name="qr_info_text">Instal ADBye dari Google Play dan pindai kode QR ini</string>
     <string name="injected">Disuntikkan</string>
-    <string name="tls_decryption_with_root_msg">Kemampuan untuk menjalankan dekripsi TLS dengan root adalah fitur eksperimental. Ini adalah daftar bug yang diketahui: \n \n - di PCAPdroid Anda akan melihat lalu lintas yang dihasilkan dari aplikasi mitm-addon sebagai pengganti aplikasi asli \n - ump keylog SSL tidak didukung\n - ketika filter aplikasi ditetapkan, dekripsi hanya akan terjadi untuk aplikasi target, tetapi PCAPdroid masih akan menampilkan lalu lintas aplikasi lain \n - jika penangkapan gagal dimulai, pastikan bahwa Anda benar-benar dapat menjalankan perintah iptables sebagai root (mis. melalui termux) \n - ini mungkin tidak bekerja pada Android 12 dan yang lebih baru \n - jika aplikasi VPN sedang berjalan, Anda harus menargetkan aplikasi tertentu untuk dekripsi atau mengecualikan addon mitm PCAPdroid dari VPN, jika tidak, lalu lintas akan berputar-putar</string>
+    <string name="tls_decryption_with_root_msg">Kemampuan untuk menjalankan dekripsi TLS dengan root adalah fitur eksperimental. Ini adalah daftar bug yang diketahui: \n \n - di ADBye Anda akan melihat lalu lintas yang dihasilkan dari aplikasi mitm-addon sebagai pengganti aplikasi asli \n - ump keylog SSL tidak didukung\n - ketika filter aplikasi ditetapkan, dekripsi hanya akan terjadi untuk aplikasi target, tetapi ADBye masih akan menampilkan lalu lintas aplikasi lain \n - jika penangkapan gagal dimulai, pastikan bahwa Anda benar-benar dapat menjalankan perintah iptables sebagai root (mis. melalui termux) \n - ini mungkin tidak bekerja pada Android 12 dan yang lebih baru \n - jika aplikasi VPN sedang berjalan, Anda harus menargetkan aplikasi tertentu untuk dekripsi atau mengecualikan addon mitm ADBye dari VPN, jika tidak, lalu lintas akan berputar-putar</string>
     <string name="requesting_license">Meminta kode lisensi, harap tunggu</string>
     <string name="mitm_addon_running">Addon mitm sedang berjalan</string>
     <string name="malware_whitelist_action">Daftar putih (malware)…</string>
@@ -462,7 +462,7 @@
     <string name="open_pcap_file">Buka file PCAP/Pcapng…</string>
     <string name="use_system_dns">Gunakan DNS sistem</string>
     <string name="decrypt_action">Dekripsi…</string>
-    <string name="root_capture_pcapd_start_failure">Pencatatan gagal dijalankan. Pastikan Anda memberikan akses root ke PCAPdroid</string>
+    <string name="root_capture_pcapd_start_failure">Pencatatan gagal dijalankan. Pastikan Anda memberikan akses root ke ADBye</string>
     <string name="qr_purchase_required">Beli token pembuka kunci untuk melanjutkan aktivasi melalui kode QR</string>
     <string name="connection_error">Kesalahan koneksi: %1$s</string>
     <string name="invalid_pcap_file">Format file penangkapan tidak valid</string>
@@ -475,14 +475,14 @@
     <string name="destination_port">Porta tujuan</string>
     <string name="capture_interface_open_error">Tidak dapat membuka antarmuka pencatatan</string>
     <string name="raw_bytes">Byte mentah</string>
-    <string name="dnscrypt_how_to">Cara penggunaan DoH / DNSCrypt dengan PCAPdroid</string>
+    <string name="dnscrypt_how_to">Cara penggunaan DoH / DNSCrypt dengan ADBye</string>
     <string name="export_ellipsis">Ekspor…</string>
     <string name="never">Jangan pernah</string>
     <string name="always">Selalu</string>
     <string name="ipv6_bytes_sent">Byte IPv6 terkirim</string>
     <string name="ipv6_bytes_rcvd">Byte IPv6 diterima</string>
     <string name="connection_redirected_port_map">Koneksi ini telah dialihkan karena aturan pemetaan port</string>
-    <string name="decrypt_quic_notice">Mendekripsi QUIC saat ini tidak didukung. Sebagai solusi sementara, hentikan penangkapan dan pilih opsi untuk memblokir QUIC di pengaturan PCAPdroid</string>
+    <string name="decrypt_quic_notice">Mendekripsi QUIC saat ini tidak didukung. Sebagai solusi sementara, hentikan penangkapan dan pilih opsi untuk memblokir QUIC di pengaturan ADBye</string>
     <string name="restart_on_disconnection">Mulai ulang saat putus koneksi</string>
     <string name="restart_on_disconnection_summary">Jalankan ulang tangkapan karena penggunaan apl VPN lain</string>
     <string name="vpn_reconnection">Menghubungkan kembali VPN</string>
@@ -506,9 +506,9 @@
     <string name="errno_econnrefused">Koneksi ditolak</string>
     <string name="errno_ehostunreach">Tidak ada rute ke host</string>
     <string name="errno_ehostunreach_msg">Sistem tidak dapat menemukan rute ke host tujuan</string>
-    <string name="tls_conn_info">lalu lintas TLS/HTTPS dienkripsi. Untuk memeriksa lalu lintas ini, Anda perlu mendekripsinya. Cek <a href="%1$s">panduan pengguna</a> PCAPdroid untuk detailnya</string>
+    <string name="tls_conn_info">lalu lintas TLS/HTTPS dienkripsi. Untuk memeriksa lalu lintas ini, Anda perlu mendekripsinya. Cek <a href="%1$s">panduan pengguna</a> ADBye untuk detailnya</string>
     <string name="filename_prefix">Awalan nama file</string>
-    <string name="filename_prefix_description">Atur awalan untuk file yang diekspor oleh PCAPdroid, mis. file PCAP</string>
+    <string name="filename_prefix_description">Atur awalan untuk file yang diekspor oleh ADBye, mis. file PCAP</string>
     <string name="no_requests">Tidak ada permintaan</string>
     <string name="item_not_found">Item yang ditentukan tidak ditemukan</string>
     <string name="connection_number">Koneksi #%1$d</string>
@@ -521,11 +521,11 @@
     <string name="next">Berikutnya</string>
     <string name="save_as_text">Simpan sebagai teks</string>
     <string name="save_as_har">Simpan sebagai HAR</string>
-    <string name="dump_extensions_how_to">Cara menampilkan ekstensi pembuangan PCAPdroid di Wireshark</string>
-    <string name="dump_extensions">Ekstensi PCAPdroid</string>
+    <string name="dump_extensions_how_to">Cara menampilkan ekstensi pembuangan ADBye di Wireshark</string>
+    <string name="dump_extensions">Ekstensi ADBye</string>
     <string name="errno_enetdown">Jaringan mati</string>
     <string name="update_available">Pembaruan Tersedia</string>
-    <string name="country_rules_warning">Untuk menggunakan aturan firewall berbasis negara, unduh database geolokasi dari pengaturan PCAPdroid, jika tidak, aturan berbasis negara akan menjadi tidak efektif</string>
+    <string name="country_rules_warning">Untuk menggunakan aturan firewall berbasis negara, unduh database geolokasi dari pengaturan ADBye, jika tidak, aturan berbasis negara akan menjadi tidak efektif</string>
     <string name="ip_address_or_cidr">Alamat IP / CIDR</string>
     <string name="errno_enetdown_msg">Antarmuka jaringan mati atau tidak dapat tersambung ke jaringan</string>
     <string name="errno_econnaborted_msg">Sambungan terputus, biasanya karena peralihan jaringan</string>
@@ -555,5 +555,5 @@
     <string name="show_api_key">Tampilkan kunci API</string>
     <string name="api_key">Kunci API</string>
     <string name="api_key_discard_confirm">Apakah Anda benar-benar ingin membuang kunci API saat ini dan membuat yang baru?</string>
-    <string name="no_permissions_set_info">Tidak ada izin yang ditetapkan. Panggil PCAPdroid melalui StartActivityForResult untuk menampilkan permintaan izin</string>
+    <string name="no_permissions_set_info">Tidak ada izin yang ditetapkan. Panggil ADBye melalui StartActivityForResult untuk menampilkan permintaan izin</string>
 </resources>
