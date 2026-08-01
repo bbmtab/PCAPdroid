@@ -29,6 +29,17 @@
 
 **Phase 4 dependency note:** §3 and §4 are framed in this document's own §3 as protecting against OOM from "MITM + content-filtering on high-throughput traffic." Both are primarily Phase 4 prerequisites — §3 prevents OOM from MITM intercepting video downloads; §4 keeps FCM alive without MITM overhead. Neither is urgent until Phase 4 (HTTPS MITM content filtering) lands. §1 App/UID allowlist is *not* MITM-dependent — it is general resource protection and is independently actionable now.
 
+**>>> PHASE 2 TESTING GATE — EXECUTED 2026-07-30 (Mi A1, device 3595381c0804, build 953b8962) <<<**
+Previously this document noted the gate had NEVER been executed (2026-07-26 snapshot). This gap is now closed.
+| Check | Result | Notes |
+|-------|--------|-------|
+| YouTube 1080p playback | PASS | Smooth, no buffering/stalls |
+| Play Store download (Plants vs Zombies 2, ~1GB, completed) | PASS | Memory stable, no leak/OOM — `phase2-meminfo.log` (6 samples/30s, TOTAL PSS 90MB→77MB, no growth pattern) |
+| Push notification (real-world trigger) | PASS | Arrived instantly, no perceptible delay |
+**CONCLUSION:** All 3 manual checks pass cleanly DESPITE §1 (UID allowlist), §3 (dynamic flow threshold), and §4 (FCM port bypass) still NOT WIRED into native capture path (confirmed — comment-only in merged rules, no JNI call sites). Only §2 (Domain/SNI allowlist) is live.
+**DECISION (lead-confirmed):** Do NOT wire §1/§3/§4 preemptively. No user-visible problem surfaced to justify native wiring work now. Wiring status table above UNCHANGED (still NOT WIRED for §1/§3/§4) — only the "has the gate been run" question changed from "never" to "executed with recorded results."
+**Caveat:** Single run (N=1), ~1GB not full 2GB+, 6-minute window. Sufficient to inform "wire now vs defer" decision, not exhaustive. If real user-reported issue surfaces later pointing at UID/flow/FCM-port behavior, revisit.
+
 **Implementation Sketch note (see below):** The `shouldBypassByUid`/`shouldBypassByPort`/`shouldBypassBySni` + conntrack-callback architecture described in the Implementation Sketch section was **NEVER IMPLEMENTED**. The sketch is a historical design record only — do not treat it as current architecture.
 
 ---

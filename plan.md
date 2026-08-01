@@ -213,6 +213,15 @@ The fix reuses `check_adblock_sni_rules` (the `@@`-allowlist-first ORDER is pres
   * *Manual (Video):* Open YouTube. Verify video plays immediately in 1080p. Check Logcat to ensure `BypassManager` printed "Bypassed googlevideo.com".
   * *Manual (Push):* Send a test WhatsApp or Firebase push notification. Verify it arrives instantly (port 5228 bypass).
   * *Manual (Download):* Download a large game (e.g., 2GB) from the Play Store. Ensure VPN memory usage stays flat (Dynamic Flow Bypass active).
+  **>>> EXECUTED 2026-07-30 (Mi A1, device 3595381c0804, build 953b8962) — ALL THREE CHECKS PASS <<<**
+  | Check | Result | Notes |
+  |-------|--------|-------|
+  | YouTube 1080p playback | PASS | Smooth, no buffering/stalls |
+  | Play Store download (Plants vs Zombies 2, ~1GB, completed) | PASS | Memory stable, no leak/OOM — see `phase2-meminfo.log` (6 samples/30s, TOTAL PSS 90MB→77MB range, no growth pattern) |
+  | Push notification (real-world trigger) | PASS | Arrived instantly, no perceptible delay |
+  **CONCLUSION:** All 3 manual checks pass cleanly DESPITE §1 (UID allowlist), §3 (dynamic flow threshold), and §4 (FCM port bypass) still NOT WIRED into the native capture path (confirmed — comment-only in merged rules file, no JNI call sites). Only §2 (Domain/SNI allowlist) is live.
+  **DECISION (lead-confirmed):** Do NOT wire §1/§3/§4 preemptively. No user-visible problem surfaced in this gate run to justify the native wiring work now. Keep wiring status table as-is (still NOT WIRED for §1/§3/§4) — only the "has the gate been run" question changed from "never" to "executed with recorded results."
+  **Caveat:** Single run (N=1), ~1GB download not full 2GB+, 6-minute window. Sufficient to inform "wire now vs defer" decision, not exhaustive. If real user-reported issue surfaces later pointing at UID/flow/FCM-port behavior, revisit.
 
 ### Phase 3 — SNI Early-Drop (Layer 2 Blocking)
 *Focus: Blocking HTTPS tracker domains at the handshake level without needing a CA certificate.*
