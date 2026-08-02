@@ -200,6 +200,34 @@ The fix reuses `check_adblock_sni_rules` (the `@@`-allowlist-first ORDER is pres
 
 **Diagnostic question this answers (kept brief, the long version is the diagnostic commit's message):** "Is `data->info` populated at SYN on the CI emulator for the test host (example.com/example.net)?" — if YES, the new path is reachable in this environment (and its reversal suggests constraint-#2 risk IS empirically reachable here too). If NO, the new path stays empirically inert in CI, and the latent over-block risk remains a real-devices-only concern. Either answer is fine; the answer itself is what the diagnostic exists to produce, and it will land in a follow-up commit that reverts both edits in `(i)(ii)` to leave the codebase bit-identical to the post-revert state, with greppable history.
 
+#### Forward-vs-classify sequencing re-verified 2026-08-02 — "reorder classify-before-forward" fix candidate is a no-op; race reframed as nDPI-completeness bounded
+
+**Status: documentation-only re-verification.** No code change attempted, no fix proposed or executed. The forward/classify sequencing below was re-derived directly from live source at HEAD `acb88fc0` (this session, 2026-08-02), independently cross-checked. The conclusion is that the "reorder classify-before-forward" fix candidate — distinct from the already-reverted SYN-time `data->info` consult — is a **no-op**: the code already structurally classifies before it forwards, on the same packet, in the same call frame.
+
+**Synchronous chain, one packet — not two passes, not deferred.** The `capture_vpn.c` main packet-handling loop ([L691–758](app/src/main/jni/core/capture_vpn.c#L691-L758)) calls `pd_process_packet(pd, &pctx)` (→ `perform_dpi` → `ndpi_detection_process_packet` → `process_ndpi_data` → `check_adblock_sni_rules`) at **L708**, then evaluates `if(data->to_block) { … goto housekeeping; }` at **L725–730**, and only reaches `zdtun_forward(zdt, &pkt, conn)` at **L734** when `to_block` is false. The comment at L697 (`// To be run before pd_process_packet/process_payload`) corroborates the ordering as intentional, not accidental. The server→app direction has an analogous gate inside `remote2vpn` ([capture_vpn.c:95–120](app/src/main/jni/core/capture_vpn.c#L95-L120)): `if(data->to_block) { …; return -1; }` at L105–114, which closes the connection before `write(pd->vpn.tunfd)` at L116.
+
+The `to_block` flag evaluated at capture_vpn.c L725 is the direct synchronous outcome of `check_adblock_sni_rules` ([pcapdroid.c:622](app/src/main/jni/core/pcapdroid.c#L622) TLS branch, [pcapdroid.c:643](app/src/main/jni/core/pcapdroid.c#L643) HTTP branch), called synchronously inside `process_ndpi_data` ([pcapdroid.c:599–666](app/src/main/jni/core/pcapdroid.c#L599-L666)), called synchronously inside `perform_dpi` ([pcapdroid.c:838–866](app/src/main/jni/core/pcapdroid.c#L838-L866)), called synchronously inside `pd_process_packet` ([pcapdroid.c:1274–1299](app/src/main/jni/core/pcapdroid.c#L1274-L1299)). There is no deferred callback, no second-pass-on-a-later-tick, and no separate thread. If `host_server_name[0]` is populated when `process_ndpi_data` returns, the gate at capture_vpn.c L725 sees `to_block=true` on **this** packet's call frame and drops it before `zdtun_forward`.
+
+**Implication: "reorder classify-before-forward" is already the code's shape.** There is no PCAPdroid-side ordering defect to fix. Every candidate that would change the order of `pd_process_packet` and `zdtun_forward` is a no-op — the forward is already gated on classification for this packet.
+
+**So where is the actual race?** It moves one layer down, from PCAPdroid code-ordering to nDPI-internal classification completeness at the IP-packet boundary:
+
+- nDPI populates `data->ndpi_flow->host_server_name[0]` when it has successfully parsed the TLS ClientHello (SNI extension) or HTTP Host header (request-line-based) from the packet(s) it has seen so far for this flow — nDPI-internal state, not introspectable by PCAPdroid.
+- If the request fits in a **single IP packet** (the common case — a TLS ClientHello or HTTP GET ≤ MSS, both ≤ 1460 bytes), `host_server_name` populates during the `ndpi_detection_process_packet` call on *that same packet*, the `to_block` gate closes at L725, `zdtun_forward` is never called, and the server never sees the hello/request. No race.
+- If the request exceeds one TCP segment (ClientHello with many extensions, or HTTP GET where the Host header lands in a different TCP segment than the request line), the earlier segment(s) forward through L734 **before** `host_server_name` is populated — nDPI needs subsequent byte(s) from a later segment to finish populating it. From the server's TCP-stack perspective those bytes have already been delivered. **That** is the real remaining race window, and its width is determined by TCP segmentation + nDPI's internal parsing strategy, not by PCAPdroid's code ordering.
+
+**Remaining fix-shape options (documenting the design space only — none attempted or being proposed):**
+1. **TCP-segment reassembly / deferred-forward buffering ahead of the gate** — buffer enough of the TCP stream to run the classification pass before forwarding any content. Significant architectural change, constraint #8 blast radius.
+2. **Accept this as a documented structural limit of nDPI-based classification at the IP-packet edge.** Do not pursue for now. The race is single-packet-bounded, the common case drops on the first IP packet (no leak), and the worst-case span is 1–2 TCP segments.
+
+Which fork the project takes is deferred to explicit lead sign-off per constraint #8.
+
+**Citations (independently verified at HEAD `acb88fc0`, not restating prior claims):**
+- `capture_vpn.c` egress gate: [L691–758](app/src/main/jni/core/capture_vpn.c#L691-L758) — classify L708, gate L725–730, forward L734
+- `capture_vpn.c` ingress gate (remote2vpn): [L95–120](app/src/main/jni/core/capture_vpn.c#L95-L120) — gate + return -1 at L105/113
+- `pcapdroid.c` process_ndpi_data: [L599–666](app/src/main/jni/core/pcapdroid.c#L599-L666) — TLS consult L622, HTTP consult L643
+- `pcapdroid.c` pd_process_packet: [L1274–1299](app/src/main/jni/core/pcapdroid.c#L1274-L1299)
+- `pcapdroid.c` perform_dpi: [L838–866](app/src/main/jni/core/pcapdroid.c#L838-L866)
 
 
 ### Phase 2 — Resource Protection (The "Anti-Crash" Layer)
