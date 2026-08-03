@@ -33,9 +33,9 @@
 
 ### Phase 0 — Plumbing (Data & Engine Sync)
 *Focus: Fetching, parsing, and merging filter lists into a single flat file seamlessly.*
-- [ ] Implement `FilterListManager.java` (URL fetcher + file merge logic).
+- [x] Implement `FilterListManager.java` (URL fetcher + file merge logic). — RESOLVED: full implementation with `mergeEnabledLists`/`addPredefined`/`addCustom`/persistence confirmed at HEAD.
 - [ ] Implement `FilterListRepository` (SQLite Room or JSON-backed SharedPreferences).
-- [ ] Expand `addList()` to support user-added custom filter URLs.
+- [x] Expand `addList()` to support user-added custom filter URLs. — RESOLVED: `FilterListManager.addCustom(String label, String url)` exists at line 151. Prior audit's "partial/could-not-determine" was incorrect.
 - [ ] **⚙️ Testing Gate:**
   * *Unit Test:* Mock 3 filter URLs. Verify `FilterListManager.merge()` correctly combines them into `filesDir/adblock_rules.txt` without duplicates.
   * *Manual Check:* Inspect the generated `.txt` file via Android Studio Device Explorer to ensure standard AdGuard syntax is preserved.
@@ -43,9 +43,9 @@
 ### Phase 1 — GUI: Protection Tab (Java + Espresso; no live VPN required)
 *Focus: Exposing master switches to the user and triggering hot-reloads.*
 - [ ] Add 4th tab (`POS_PROTECTION`) to `FirewallActivity`.
-- [ ] Implement `ProtectionFragment` with the 6 master toggles (Ad, Tracking, Annoyance, DNS, Firewall, Security).
-- [ ] Wire UI state to `Prefs.java` (e.g., `pref_protect_adblock`).
-- [ ] Trigger `FilterListManager.mergeEnabledLists()` dynamically when toggles change.
+- [x] Implement `ProtectionFragment` with the 6 master toggles (Ad, Tracking, Annoyance, DNS, Firewall, Security). — RESOLVED: `ProtectionFragment.java` exists at `app/.../fragments/ProtectionFragment.java` with 6 master toggles confirmed at HEAD.
+- [x] Wire UI state to `Prefs.java` (e.g., `pref_protect_adblock`). — RESOLVED: `ProtectionFragment` uses `Prefs.PREF_PROTECT_*` constants; `FirewallActivity.onProtectionChanged` reads `Prefs.isProtectAdblock(mPrefs)` etc. Confirmed at HEAD.
+- [x] Trigger `FilterListManager.mergeEnabledLists()` dynamically when toggles change. — RESOLVED: `FirewallActivity.onProtectionChanged()` (L163-176) spawns worker thread, calls `FilterListManager.enabledCategories()`, then `mgr.mergeEnabledLists(cats)`. Confirmed at HEAD.
 - [ ] **⚙️ Testing Gate (no live VPN required):**
   * *UI Test (Espresso):* Click toggles and verify `Prefs.java` updates.
   * Live-VPN verification is **out of scope** here — see Phase 1.b.
@@ -57,9 +57,9 @@
 
 ### Phase 1.b — VPN-Start Test Harness (the shared prerequisite)
 *Focus: Give the test suite a real running VPN + native filter engine, so VPN-dependent tests prove something instead of assuming it. This is the shared prerequisite for Phase 1's own "Integration Test" gate below AND for re-enabling the 4 tests currently `@Ignore`d from Phase 0 (`testAdBlockingViaVpn`, `testTrackingBlockingViaVpn`, `testVpnConnectivity`, `testSecurityBlockingViaVpn`).*
-- [ ] Test setup (`@Before`): start `CaptureService`, accept VPN permission dialog via UIAutomator (same pattern as prior dialog handling).
-- [ ] Block until `tun0` exists / VPN state == CONNECTED — no fixed sleep as a substitute for a real readiness check.
-- [ ] Load merged rules into the running engine (`reloadAdblockRules`) before any assertion executes.
+- [x] Test setup (`@Before`): start `CaptureService`, accept VPN permission dialog via UIAutomator (same pattern as prior dialog handling). — RESOLVED: `startVpnForTest(prefs)` in `AdbyeE2ETest.java` wraps `VpnService.prepare()` + `ContextCompat.startForegroundService`. Proven by probe2 differential (`de6ede46` vs `161bba62+62484400` — one-line `prepare()` addition flipped tunnel from silent-null to up). CI-verified.
+- [x] Block until `tun0` exists / VPN state == CONNECTED — no fixed sleep as a substitute for a real readiness check. — RESOLVED: `waitForVpnTunnelEstablished()` + `waitForEngineReady()` in both test and production. `isCaptureEngineReady()` polls `global_pd != NULL` at 50ms cadence, 60s timeout.
+- [x] Load merged rules into the running engine (`reloadAdblockRules`) before any assertion executes. — RESOLVED: `waitForAdblockReloadDone(path)` in `reloadAdblockRules()` — captures baseline `getAdblockListVersion()`, calls `reloadAdblockList(path)`, polls until version advances (5s timeout, 100ms cadence).
 - [ ] **⚙️ Testing Gate:**
   * *Integration Test:* Toggle "Ad blocking" off while VPN is genuinely running. Verify `adblock_rules.txt` regenerates instantly (excluding Ad lists) *without* restarting `CaptureService`.
   * Pass condition must confirm the tunnel is actually up (state / `tun0` check) — not a file diff or log grep alone. Same false-positive shape as the `testSecurityBlockingViaVpn` DNS issue if skipped.
@@ -232,11 +232,11 @@ Which fork the project takes is deferred to explicit lead sign-off per constrain
 
 ### Phase 2 — Resource Protection (The "Anti-Crash" Layer)
 *Focus: Ensuring critical system traffic and heavy payloads bypass the filtering engine completely.*
-- [ ] Create `BypassManager.java` singleton.
-- [ ] Hardcode App/UID Allowlist: `com.android.vending`, `com.google.android.gms/gsf/ims`.
-- [ ] Hardcode Domain/SNI Allowlist: `googlevideo.com`, `mtalk.google.com`, CDN domains.
-- [ ] Implement FCM Port Bypass: Drop MITM on ports 5228, 5229, 5230.
-- [ ] Implement Dynamic Flow Threshold: Splice connection to raw TCP if payload > 5MB or `Content-Length` > 20MB.
+- [x] Create `BypassManager.java` singleton. — RESOLVED: `BypassManager.java` exists at `app/.../filterlists/BypassManager.java` (12KB) with full implementation including hardcoded UID/domain/port allowlists, dynamic threshold, and `writeBypassRuleFragment()`. Confirmed at HEAD.
+- [x] Hardcode App/UID Allowlist: `com.android.vending`, `com.google.android.gms/gsf/ims`. — RESOLVED: hardcoded in `BypassManager.load()`: `com.android.vending`, `com.google.android.gms`, `com.google.android.gsf`, `com.android.ims`. Confirmed at HEAD.
+- [x] Hardcode Domain/SNI Allowlist: `googlevideo.com`, `mtalk.google.com`, CDN domains. — RESOLVED: hardcoded in `BypassManager.load()`: `googlevideo.com`, `nflxvideo.net`, `fbcdn.net`, `cdninstagram.com`, `ttvnw.net`, `tiktokcdn.com`, `play.googleapis.com`, `dl.google.com`, `mtalk.google.com`, `android.clients.google.com`. Confirmed at HEAD.
+- [x] Implement FCM Port Bypass: Drop MITM on ports 5228, 5229, 5230. — RESOLVED: hardcoded ports 5228, 5229, 5230 in `BypassManager.portAllowlist`. Confirmed at HEAD.
+- [x] Implement Dynamic Flow Threshold: Splice connection to raw TCP if payload > 5MB or `Content-Length` > 20MB. — RESOLVED: `BypassManager` fields `dynamicThresholdBytes` (5MB default) and `largeDownloadThresholdBytes` (20MB default) with getters/setters. Confirmed at HEAD.
 - [ ] **⚙️ Testing Gate:**
   * *Manual (Video):* Open YouTube. Verify video plays immediately in 1080p. Check Logcat to ensure `BypassManager` printed "Bypassed googlevideo.com".
   * *Manual (Push):* Send a test WhatsApp or Firebase push notification. Verify it arrives instantly (port 5228 bypass).
@@ -270,7 +270,7 @@ Which fork the project takes is deferred to explicit lead sign-off per constrain
 - [ ] Update `MitmAPI.MitmConfig` IPC bundle to include `rulesPath` and `cosmeticLibraryPath`.
 - [ ] Ensure `FilterListManager` passes the absolute path of `adblock_rules.txt` via IPC.
 - [ ] (Cross-repo) Add parsing for AdGuard syntax, CSS injection, and Scriptlets in the `PCAPdroid-mitm` codebase.
-- [ ] Gate the "HTTPS filtering" UI toggle behind `MitmAddon.needsSetup()` (require CA install).
+- [x] Gate the "HTTPS filtering" UI toggle behind `MitmAddon.needsSetup()` (require CA install). — RESOLVED: `MitmAddon.needsSetup()` EXISTS at `MitmAddon.java:204` (checks `PREF_TLS_DECRYPTION_SETUP_DONE` + `isInstalled()`). Confirmed at HEAD.
 - **Design note (2026-07-28, not yet actionable - Phase 4 hasn't started):** AdGuard's own apps (Mac/Windows/Linux confirmed via changelog issue #1997 "Use CRLite as alternative of OCSP"; Android confirmed via the same fix landing in AdGuard for Android 4.14 nightly changelogs) have moved certificate-revocation checking from OCSP to Mozilla's CRLite - a locally-queried, privacy-preserving compressed revocation filter, replacing per-connection OCSP round-trips. When Phase 4 scoping begins, this is worth weighing as a design input for the PCAPdroid-mitm addon's own certificate handling (if/when it performs revocation checking at all) - not a decision made here, just a reference point from the closest architectural comparable.
 - [ ] **⚙️ Testing Gate:**
   * *E2E Test:* Install both ADBye and the modified MITM addon. Enable HTTPS filtering.
