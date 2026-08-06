@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.adbye.filter.AppIconLoader;
 import com.adbye.filter.PCAPdroid;
 import com.adbye.filter.R;
+import com.adbye.filter.filterlists.BypassManager;
 import com.adbye.filter.model.AppDescriptor;
 import com.adbye.filter.model.Blocklist;
 import com.adbye.filter.model.MatchList;
@@ -172,6 +173,20 @@ public class AppRuleAdapter extends RecyclerView.Adapter<AppRuleAdapter.RowHolde
             }
         });
 
+        // ---- Filter HTTPS toggle ----
+        final String pkg = row.app.getPackageName();
+        final boolean isHttpsExempt = BypassManager.get(mContext).isFilterHttpsExempt(pkg);
+        h.filterHttpsSwitch.setOnCheckedChangeListener(null);
+        h.filterHttpsSwitch.setChecked(!isHttpsExempt);   // checked = filter HTTPS (not exempt)
+        h.filterHttpsLabel.setText(R.string.app_mgmt_filter_https_label);
+        h.filterHttpsSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (isChecked) {
+                BypassManager.get(mContext).removeFilterHttpsExempt(pkg);
+            } else {
+                BypassManager.get(mContext).addFilterHttpsExempt(pkg);
+            }
+        });
+
         if (row.allowlistCount == 0) {
             h.allowlistCountSubhead.setVisibility(View.GONE);
             h.allowlistEmpty.setVisibility(View.VISIBLE);
@@ -276,6 +291,8 @@ public class AppRuleAdapter extends RecyclerView.Adapter<AppRuleAdapter.RowHolde
         final ImageButton expandArrow;
         final MaterialSwitch blockSwitch;
         final TextView blockLabel;
+        final MaterialSwitch filterHttpsSwitch;
+        final TextView filterHttpsLabel;
         final TextView allowlistCountSubhead;
         final LinearLayout allowlistContainer;
         final TextView allowlistEmpty;
@@ -296,6 +313,8 @@ public class AppRuleAdapter extends RecyclerView.Adapter<AppRuleAdapter.RowHolde
             expandArrow = v.findViewById(R.id.app_expand);
             blockSwitch = v.findViewById(R.id.app_block_switch);
             blockLabel  = v.findViewById(R.id.app_block_label);
+            filterHttpsSwitch = v.findViewById(R.id.app_filter_https_switch);
+            filterHttpsLabel  = v.findViewById(R.id.app_filter_https_label);
             allowlistCountSubhead = v.findViewById(R.id.app_allowlist_count_subhead);
             allowlistContainer = v.findViewById(R.id.app_allowlist_container);
             allowlistEmpty = v.findViewById(R.id.app_allowlist_empty);

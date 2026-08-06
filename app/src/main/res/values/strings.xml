@@ -415,6 +415,7 @@
     <string name="app_mgmt_block_action">Block this app</string>
     <string name="app_mgmt_unblock_action">Unblock this app</string>
     <string name="app_mgmt_unblock_warning">Unblocking %1$s will also remove its per-app allowlist (%2$d allowed host(s)). Remove the block and the allowlist?</string>
+    <string name="app_mgmt_filter_https_label">Filter HTTPS traffic</string>
     <string name="app_mgmt_launch">Launch</string>
     <string name="app_mgmt_remove">Remove</string>
     <string name="app_mgmt_sort_by">Sort by</string>
