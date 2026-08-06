@@ -18,6 +18,7 @@ import androidx.core.view.ViewCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.adbye.filter.AppIconLoader;
+import com.adbye.filter.CaptureService;
 import com.adbye.filter.PCAPdroid;
 import com.adbye.filter.R;
 import com.adbye.filter.filterlists.BypassManager;
@@ -175,15 +176,20 @@ public class AppRuleAdapter extends RecyclerView.Adapter<AppRuleAdapter.RowHolde
 
         // ---- Filter HTTPS toggle ----
         final String pkg = row.app.getPackageName();
+        final int uid = row.app.getUid();
         final boolean isHttpsExempt = BypassManager.get(mContext).isFilterHttpsExempt(pkg);
         h.filterHttpsSwitch.setOnCheckedChangeListener(null);
         h.filterHttpsSwitch.setChecked(!isHttpsExempt);   // checked = filter HTTPS (not exempt)
         h.filterHttpsLabel.setText(R.string.app_mgmt_filter_https_label);
         h.filterHttpsSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             if (isChecked) {
+                // Switch ON = filter HTTPS active = app NOT exempt.
                 BypassManager.get(mContext).removeFilterHttpsExempt(pkg);
+                CaptureService.setFilterHttpsExempt(uid, false);
             } else {
+                // Switch OFF = exempt from HTTPS filtering.
                 BypassManager.get(mContext).addFilterHttpsExempt(pkg);
+                CaptureService.setFilterHttpsExempt(uid, true);
             }
         });
 

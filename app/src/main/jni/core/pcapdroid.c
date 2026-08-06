@@ -1465,6 +1465,14 @@ int pd_run(pcapdroid_t *pd) {
         pd_free(e);
     }
 
+    // ADBye filterHttps per-UID exemption set teardown (mirrors uid2app above;
+    // pd_malloc/pd_free since this table hangs off pcapdroid_t, not blacklist_t).
+    https_exempt_uid_t *he, *htmp;
+    HASH_ITER(hh, pd->adblock.https_exempt_uids, he, htmp) {
+        HASH_DEL(pd->adblock.https_exempt_uids, he);
+        pd_free(he);
+    }
+
     log_i("Host LRU cache size: %d", ip_lru_size(pd->ip_to_host));
     log_i("Discarded fragments: %ld", pd->num_discarded_fragments);
     ip_lru_destroy(pd->ip_to_host);

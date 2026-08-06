@@ -1109,6 +1109,47 @@ Java_com_adbye_filter_CaptureService_nativeSetAdblockEnabled(JNIEnv *env, jclass
 
 /* ******************************************************* */
 
+// ADBye filterHttps per-UID exemption setter (Option 2 per the 2026-08-04 scoping
+// decision): updates the native in-memory https_exempt_uids set directly — no file
+// I/O, no full adblock reload cycle, near-instant (the next packet through
+// check_adblock_sni_rules reads the new state). Mirrors nativeSetAdblockEnabled's
+// global_pd guard and the pd-level allocator (pd_malloc/pd_free — matching the
+// uid2app table in pcapdroid.c, NOT bl_malloc/bl_free, which belong to
+// blacklist_t internals). Storage + setter only: the consult wiring inside
+// check_adblock_sni_rules (pcapdroid.c) is a separate follow-up task; until then
+// this set is written but never read by the packet path.
+JNIEXPORT void JNICALL
+Java_com_adbye_filter_CaptureService_nativeSetFilterHttpsExempt(JNIEnv *env, jclass clazz,
+                                                                jint uid, jboolean exempt) {
+    pcapdroid_t *pd = global_pd;
+    if(!pd) {
+        log_e("NULL pd instance");
+        return;
+    }
+
+    https_exempt_uid_t *entry;
+    HASH_FIND_INT(pd->adblock.https_exempt_uids, &uid, entry);
+
+    if(exempt) {
+        if(!entry) {
+            entry = pd_malloc(sizeof(https_exempt_uid_t));
+            if(!entry) {
+                log_e("https_exempt_uid_t alloc failed for uid %d", uid);
+                return;
+            }
+            entry->uid = uid;
+            HASH_ADD_INT(pd->adblock.https_exempt_uids, uid, entry);
+        }
+    } else {
+        if(entry) {
+            HASH_DEL(pd->adblock.https_exempt_uids, entry);
+            pd_free(entry);
+        }
+    }
+}
+
+/* ******************************************************* */
+
 JNIEXPORT int JNICALL
 Java_com_adbye_filter_CaptureService_rootCmd(JNIEnv *env, jclass clazz, jstring prog,
                                                           jstring args) {

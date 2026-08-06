@@ -2093,6 +2093,29 @@ public class CaptureService extends VpnService implements Runnable {
         nativeSetAdblockEnabled(enabled);
     }
 
+    // ADBye filterHttps per-UID exemption runtime setter (Option 2 per the
+    // 2026-08-04 scoping decision). Pushes a single add/remove into the native
+    // in-memory https_exempt_uids set via nativeSetFilterHttpsExempt — no adblock
+    // reload cycle, near-instant. Mirrors setAdblockEnabled's INSTANCE-null and
+    // waitForEngineReady guards: if the capture engine isn't ready the JNI's
+    // if(!pd) return; guard would silently drop the update, so we gate identically.
+    // The exemption is already persisted to prefs by BypassManager before this is
+    // called (AppRuleAdapter), so a dropped update here (engine not running) is
+    // recovered on the next VPN start by the boot-seed path (separate follow-up
+    // alongside the check_adblock_sni_rules consult wiring).
+    public static void setFilterHttpsExempt(int uid, boolean exempt) {
+        if(INSTANCE == null)
+            return;
+
+        if (!waitForEngineReady()) {
+            Log.w(TAG, "skipping filterHttps exempt toggle: capture engine not ready within "
+                    + ENGINE_READY_TIMEOUT_MS + "ms");
+            return;
+        }
+
+        nativeSetFilterHttpsExempt(uid, exempt);
+    }
+
     public static @NonNull CaptureStats getStats() {
         CaptureStats stats = lastStats.getValue();
         return((stats != null) ? stats : new CaptureStats());
@@ -2154,6 +2177,7 @@ public class CaptureService extends VpnService implements Runnable {
     public static native byte[] getPcapHeader();
     public static native void nativeSetFirewallEnabled(boolean enabled);
     public static native void nativeSetAdblockEnabled(boolean enabled);
+    public static native void nativeSetFilterHttpsExempt(int uid, boolean exempt);
     public static native int getNumCheckedMalwareConnections();
     public static native int getNumCheckedFirewallConnections();
     public static native int rootCmd(String prog, String args);
