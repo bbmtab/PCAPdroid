@@ -1,6 +1,12 @@
 <resources>
     <string name="pcapdroid_app_name" translatable="false">ADBye</string>
     <string name="adbye_protection_tab" translatable="false">Protection</string>
+    <string name="adbye_sections_title" translatable="false">ADBye</string>
+    <string name="adbye_network_tab" translatable="false">Network</string>
+    <string name="adbye_filters_tab" translatable="false">Filters &amp; Rules</string>
+    <string name="adbye_network_stub_msg" translatable="false">Network filtering settings — coming soon</string>
+    <string name="adbye_firewall_stub_msg" translatable="false">Granular network-state rules — coming soon</string>
+    <string name="adbye_filters_stub_msg" translatable="false">Filter lists &amp; user rules — coming soon</string>
     <string name="adbye_protect_adblock_title">Ad blocking</string>
     <string name="adbye_protect_adblock_subtitle">Blocks unwanted ads like banners, videos, and popups</string>
     <string name="adbye_protect_tracking_title">Tracking protection</string>

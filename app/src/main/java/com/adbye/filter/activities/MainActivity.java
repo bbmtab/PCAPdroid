@@ -607,6 +607,9 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         } else if(id == R.id.firewall) {
             Intent intent = new Intent(MainActivity.this, FirewallActivity.class);
             startActivity(intent);
+        } else if(id == R.id.item_sections) {
+            Intent intent = new Intent(MainActivity.this, SectionsActivity.class);
+            startActivity(intent);
         } else if(id == R.id.open_log) {
             Intent intent = new Intent(MainActivity.this, LogviewActivity.class);
             startActivity(intent);
