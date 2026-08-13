@@ -94,13 +94,14 @@ public class ProtectionFragmentTest {
     }
 
     @Test
-    public void testSixRowsCreatedWithDefaultsAllOn() {
-        // ProtectionFragment.onCreate adds 6 rows with defaultOn=true
-        assertEquals(6, getRowCount());
+    public void testFiveRowsCreatedWithDefaultsAllOn() {
+        // ProtectionFragment.onCreate adds 5 rows with defaultOn=true.
+        // Ad blocking was relocated to NetworkFragment as "HTTPS Filtering"
+        // (F1, 2026-08-13) -- ADBLOCK is no longer a row here.
+        assertEquals(5, getRowCount());
 
         // Verify each row has the expected pref key
         String[] expectedKeys = {
-            Prefs.PREF_PROTECT_ADBLOCK,
             Prefs.PREF_PROTECT_TRACKING,
             Prefs.PREF_PROTECT_ANNOYANCE,
             Prefs.PREF_PROTECT_DNS,
@@ -117,60 +118,60 @@ public class ProtectionFragmentTest {
     @Test
     public void testPrefHydrationFromDefaultsWhenSharedPrefsEmpty() {
         // No prefs saved yet - all should be true (defaultOn)
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 5; i++) {
             assertTrue("Row " + i + " should default to enabled", getRow(i).enabled);
         }
     }
 
     @Test
     public void testPrefHydrationFromSavedPreferences() {
-        // Pre-populate SharedPreferences with some off values
+        // Pre-populate SharedPreferences with some off values.
+        // Row order after F1 (2026-08-13): TRACKING, ANNOYANCE, DNS, FIREWALL,
+        // SECURITY (ADBLOCK relocated to NetworkFragment as "HTTPS Filtering").
         prefs.edit()
-            .putBoolean(Prefs.PREF_PROTECT_ADBLOCK, false)
-            .putBoolean(Prefs.PREF_PROTECT_TRACKING, true)
-            .putBoolean(Prefs.PREF_PROTECT_ANNOYANCE, false)
-            .putBoolean(Prefs.PREF_PROTECT_DNS, true)
-            .putBoolean(Prefs.PREF_PROTECT_FIREWALL, false)
-            .putBoolean(Prefs.PREF_PROTECT_SECURITY, true)
+            .putBoolean(Prefs.PREF_PROTECT_TRACKING, false)
+            .putBoolean(Prefs.PREF_PROTECT_ANNOYANCE, true)
+            .putBoolean(Prefs.PREF_PROTECT_DNS, false)
+            .putBoolean(Prefs.PREF_PROTECT_FIREWALL, true)
+            .putBoolean(Prefs.PREF_PROTECT_SECURITY, false)
             .commit();
 
         // Re-create fragment to re-hydrate
         recreateFragmentWithPrefs();
 
-        assertFalse(getRow(0).enabled); // ADBLOCK
-        assertTrue(getRow(1).enabled);  // TRACKING
-        assertFalse(getRow(2).enabled); // ANNOYANCE
-        assertTrue(getRow(3).enabled);  // DNS
-        assertFalse(getRow(4).enabled); // FIREWALL
-        assertTrue(getRow(5).enabled);  // SECURITY
+        assertFalse(getRow(0).enabled); // TRACKING
+        assertTrue(getRow(1).enabled);  // ANNOYANCE
+        assertFalse(getRow(2).enabled); // DNS
+        assertTrue(getRow(3).enabled);  // FIREWALL
+        assertFalse(getRow(4).enabled); // SECURITY
     }
 
     @Test
     public void testToggleWritesToSharedPreferences() {
-        // Toggle first row (ADBLOCK) off
+        // Toggle first row (TRACKING after F1 -- ADBLOCK relocated to NetworkFragment) off
         clickSwitch(0);
 
-        assertFalse(prefs.getBoolean(Prefs.PREF_PROTECT_ADBLOCK, true));
+        assertFalse(prefs.getBoolean(Prefs.PREF_PROTECT_TRACKING, true));
         assertFalse(getRow(0).enabled);
 
         // Toggle back on
         clickSwitch(0);
-        assertTrue(prefs.getBoolean(Prefs.PREF_PROTECT_ADBLOCK, true));
+        assertTrue(prefs.getBoolean(Prefs.PREF_PROTECT_TRACKING, true));
         assertTrue(getRow(0).enabled);
     }
 
     @Test
     public void testCallbackFiresOnToggle() {
-        // Toggle row 0 (ADBLOCK)
+        // Toggle row 0 (TRACKING after F1 -- ADBLOCK relocated to NetworkFragment)
         clickSwitch(0);
         assertEquals(1, callback.prefKeys.size());
-        assertEquals(Prefs.PREF_PROTECT_ADBLOCK, callback.prefKeys.get(0));
+        assertEquals(Prefs.PREF_PROTECT_TRACKING, callback.prefKeys.get(0));
         assertFalse(callback.values.get(0));
 
-        // Toggle row 1 (TRACKING)
+        // Toggle row 1 (ANNOYANCE)
         clickSwitch(1);
         assertEquals(2, callback.prefKeys.size());
-        assertEquals(Prefs.PREF_PROTECT_TRACKING, callback.prefKeys.get(1));
+        assertEquals(Prefs.PREF_PROTECT_ANNOYANCE, callback.prefKeys.get(1));
         assertFalse(callback.values.get(1));
     }
 
@@ -185,16 +186,17 @@ public class ProtectionFragmentTest {
 
     @Test
     public void testRowClickTogglesSwitch() {
-        // Click the item view (should toggle the switch)
+        // Click the item view (should toggle the switch). Row 0 is TRACKING
+        // after F1 (ADBLOCK relocated to NetworkFragment).
         clickItem(0);
-        assertFalse(prefs.getBoolean(Prefs.PREF_PROTECT_ADBLOCK, true));
+        assertFalse(prefs.getBoolean(Prefs.PREF_PROTECT_TRACKING, true));
         assertFalse(getRow(0).enabled);
     }
 
     @Test
     public void testSwitchCheckedStateReflectsEnabled() {
         // Initial state: all enabled
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 5; i++) {
             assertTrue("Switch " + i + " should be checked initially", isSwitchChecked(i));
         }
 
@@ -207,7 +209,7 @@ public class ProtectionFragmentTest {
     @Test
     public void testTitlesAndSubtitlesFromStringRes() {
         // Check that title/subtitle are set from resources and not empty
-        for (int i = 0; i < 6; i++) {
+        for (int i = 0; i < 5; i++) {
             String title = getTitleText(i);
             String subtitle = getSubtitleText(i);
             assertNotNull("Row " + i + " title should not be null", title);
@@ -219,19 +221,20 @@ public class ProtectionFragmentTest {
 
     @Test
     public void testMissingPrefDefaultsToDefaultOn() {
-        // Only set a subset of prefs
+        // Only set a subset of prefs. Row 0 = TRACKING, row 1 = ANNOYANCE
+        // after F1 (ADBLOCK relocated to NetworkFragment).
         prefs.edit()
-            .putBoolean(Prefs.PREF_PROTECT_ADBLOCK, false)
-            .putBoolean(Prefs.PREF_PROTECT_TRACKING, true)
-            // leave ANNOYANCE, DNS, FIREWALL, SECURITY unset
+            .putBoolean(Prefs.PREF_PROTECT_TRACKING, false)
+            .putBoolean(Prefs.PREF_PROTECT_ANNOYANCE, true)
+            // leave DNS, FIREWALL, SECURITY unset
             .commit();
 
         recreateFragmentWithPrefs();
 
-        assertFalse(getRow(0).enabled);  // ADBLOCK explicitly false
-        assertTrue(getRow(1).enabled);   // TRACKING explicitly true
-        // Remaining 4 should fall back to defaultOn = true
-        for (int i = 2; i < 6; i++) {
+        assertFalse(getRow(0).enabled);  // TRACKING explicitly false
+        assertTrue(getRow(1).enabled);   // ANNOYANCE explicitly true
+        // Remaining 3 should fall back to defaultOn = true
+        for (int i = 2; i < 5; i++) {
             assertTrue("Row " + i + " should default to true when unset", getRow(i).enabled);
         }
     }
