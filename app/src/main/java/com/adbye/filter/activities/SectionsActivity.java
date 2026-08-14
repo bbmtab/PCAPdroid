@@ -32,6 +32,7 @@ import com.adbye.filter.Utils;
 import com.adbye.filter.activities.prefs.SettingsActivity;
 import com.adbye.filter.fragments.AppManagementFragment;
 import com.adbye.filter.fragments.ProtectionFragment;
+import com.adbye.filter.fragments.NetworkFragment;
 import com.adbye.filter.fragments.SectionStubFragment;
 import com.google.android.material.tabs.TabLayoutMediator;
 
@@ -67,7 +68,7 @@ public class SectionsActivity extends BaseActivity {
                 case POS_PROTECTION:
                     return new ProtectionFragment();
                 case POS_NETWORK:
-                    return SectionStubFragment.newInstance(getString(R.string.adbye_network_stub_msg));
+                    return new NetworkFragment();
                 case POS_APP:
                     return new AppManagementFragment();
                 case POS_FIREWALL:

@@ -6,7 +6,6 @@
  */
 package com.adbye.filter.fragments;
 
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -20,16 +19,12 @@ import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.adbye.filter.CaptureService;
 import com.adbye.filter.Log;
 import com.adbye.filter.R;
-import com.adbye.filter.filterlists.FilterListManager;
 import com.adbye.filter.model.Prefs;
 import com.google.android.material.materialswitch.MaterialSwitch;
 
-import java.io.File;
 import java.util.ArrayList;
-import java.util.EnumSet;
 import java.util.List;
 
 /**
@@ -72,50 +67,10 @@ public class ProtectionFragment extends Fragment {
         mCallback = cb;
     }
 
-    /**
-     * Host-independent hot-reload. Moved from FirewallActivity.onProtectionChanged
-     * (2026-08-11 nav-restructure refactor) so this fragment works correctly under
-     * ANY host Activity, not just FirewallActivity. Plan.md constraint #7: toggling
-     * any master switch must re-merge rules and reload the engine without restarting
-     * CaptureService. Uses only Context.getApplicationContext(), CaptureService's
-     * public static methods, and FilterListManager(Context) -- all confirmed
-     * host-agnostic (FilterListManager internally calls ctx.getApplicationContext()).
-     */
-    private void applyProtectionChange(String prefKey, boolean enabled) {
-        Log.d(TAG, "Protection changed: " + prefKey + "=" + enabled);
-
-        if (Prefs.PREF_PROTECT_ADBLOCK.equals(prefKey)) {
-            CaptureService.setAdblockEnabled(enabled);
-        }
-
-        Context appCtx = requireContext().getApplicationContext();
-        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(appCtx);
-
-        new Thread(() -> {
-            try {
-                EnumSet<FilterListManager.Category> cats = FilterListManager.enabledCategories(
-                        Prefs.isProtectAdblock(prefs),
-                        Prefs.isProtectTracking(prefs),
-                        Prefs.isProtectAnnoyance(prefs),
-                        Prefs.isProtectSecurity(prefs));
-                Log.d(TAG, "Master switches -> enabled categories: " + cats);
-
-                FilterListManager mgr = new FilterListManager(appCtx);
-                int n = mgr.mergeEnabledLists(cats);
-                File merged = mgr.getMergedRulesFile();
-                Log.d(TAG, "mergeEnabledLists wrote " + n + " user lines -> " + merged);
-                CaptureService.reloadAdblockRules(merged.getAbsolutePath());
-            } catch (java.io.IOException e) {
-                Log.e(TAG, "mergeEnabledLists failed for " + prefKey + ": " + e);
-            }
-        }, "AdbyeHotReload").start();
-    }
-
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mRows.clear();
-        mRows.add(new Row(Prefs.PREF_PROTECT_ADBLOCK,   true,  R.string.adbye_protect_adblock_title,   R.string.adbye_protect_adblock_subtitle));
         mRows.add(new Row(Prefs.PREF_PROTECT_TRACKING,  true,  R.string.adbye_protect_tracking_title,  R.string.adbye_protect_tracking_subtitle));
         mRows.add(new Row(Prefs.PREF_PROTECT_ANNOYANCE, true,  R.string.adbye_protect_annoyance_title, R.string.adbye_protect_annoyance_subtitle));
         mRows.add(new Row(Prefs.PREF_PROTECT_DNS,       true,  R.string.adbye_protect_dns_title,       R.string.adbye_protect_dns_subtitle));
@@ -166,7 +121,7 @@ public class ProtectionFragment extends Fragment {
                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
                 prefs.edit().putBoolean(r.prefKey, isChecked).apply();
                 if (mCallback != null) mCallback.onProtectionChanged(r.prefKey, isChecked);
-                applyProtectionChange(r.prefKey, isChecked);
+                ProtectionHotReload.apply(requireContext().getApplicationContext(), r.prefKey, isChecked);
             });
             h.itemView.setOnClickListener(v -> h.sw.toggle());
         }
