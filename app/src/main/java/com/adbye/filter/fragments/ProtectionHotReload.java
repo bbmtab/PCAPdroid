@@ -37,6 +37,20 @@ public final class ProtectionHotReload {
             CaptureService.setAdblockEnabled(enabled);
         }
 
+        reloadRulesOnly(appCtx, prefKey);
+    }
+
+    /**
+     * Re-merge the enabled filter lists (based on the current Protection
+     * master-switch prefs) and hot-reload the native engine, WITHOUT any
+     * prefKey-specific side effect. Used by apply() above, and also called
+     * directly when a single filter list's per-entry enabled flag is
+     * toggled in the Filters tab (no master-switch prefKey involved in that
+     * case -- just a re-merge). {@code logContext} is only used for the log
+     * line, to say what triggered the reload; pass any short identifying
+     * string (a prefKey, a filter list fname, etc).
+     */
+    public static void reloadRulesOnly(Context appCtx, String logContext) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(appCtx);
 
         new Thread(() -> {
@@ -54,7 +68,7 @@ public final class ProtectionHotReload {
                 Log.d(TAG, "mergeEnabledLists wrote " + n + " user lines -> " + merged);
                 CaptureService.reloadAdblockRules(merged.getAbsolutePath());
             } catch (java.io.IOException e) {
-                Log.e(TAG, "mergeEnabledLists failed for " + prefKey + ": " + e);
+                Log.e(TAG, "mergeEnabledLists failed for " + logContext + ": " + e);
             }
         }, "AdbyeHotReload").start();
     }
