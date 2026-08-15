@@ -48,7 +48,7 @@ public final class ProtectionHotReload {
                         Prefs.isProtectSecurity(prefs));
                 Log.d(TAG, "Master switches -> enabled categories: " + cats);
 
-                FilterListManager mgr = new FilterListManager(appCtx);
+                FilterListManager mgr = com.adbye.filter.PCAPdroid.getInstance().getFilterListManager();
                 int n = mgr.mergeEnabledLists(cats);
                 File merged = mgr.getMergedRulesFile();
                 Log.d(TAG, "mergeEnabledLists wrote " + n + " user lines -> " + merged);
