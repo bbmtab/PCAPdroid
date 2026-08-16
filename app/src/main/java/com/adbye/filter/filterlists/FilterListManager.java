@@ -38,6 +38,7 @@ import java.util.Set;
  */
 public class FilterListManager {
     public static final String PREF_FILTER_LISTS_STATUS = "adbye_filter_lists_status";
+    private static final String PREF_FILTER_LISTS_DISABLED = "adbye_filter_lists_disabled";
     public static final long FILTER_LISTS_UPDATE_MILLIS = 86400L * 1000; // 1 day
 
     /** Categories used by Protection master toggles (see firewall_blocking_tab.md). */
@@ -71,6 +72,18 @@ public class FilterListManager {
 
     public interface OnChangeListener {
         void onFilterListsStateChanged();
+    }
+
+    /** Reads the persisted set of fnames the user has explicitly disabled.
+     *  Returns a mutable copy -- SharedPreferences.getStringSet()'s returned
+     *  instance must never be mutated directly (Android API contract). */
+    private java.util.HashSet<String> readDisabledFnames() {
+        java.util.Set<String> stored = mPrefs.getStringSet(PREF_FILTER_LISTS_DISABLED, null);
+        return (stored != null) ? new java.util.HashSet<>(stored) : new java.util.HashSet<>();
+    }
+
+    private void writeDisabledFnames(java.util.HashSet<String> disabled) {
+        mPrefs.edit().putStringSet(PREF_FILTER_LISTS_DISABLED, disabled).apply();
     }
 
     private final List<FilterListEntry> mLists = new ArrayList<>();
@@ -141,7 +154,8 @@ public class FilterListManager {
                                            boolean enabledByDefault) {
         if (mListByFname.containsKey(fname)) return;
         FilterListEntry e = new FilterListEntry(label, category, fname, url);
-        e.setEnabled(enabledByDefault);
+        boolean persistedDisabled = readDisabledFnames().contains(fname);
+        e.setEnabled(enabledByDefault && !persistedDisabled);
         mLists.add(e);
         mListByFname.put(fname, e);
         notifyListeners();
@@ -163,6 +177,15 @@ public class FilterListManager {
         FilterListEntry e = mListByFname.get(fname);
         if (e == null) return false;
         e.setEnabled(enabled);
+
+        java.util.HashSet<String> disabled = readDisabledFnames();
+        if (enabled) {
+            disabled.remove(fname);
+        } else {
+            disabled.add(fname);
+        }
+        writeDisabledFnames(disabled);
+
         notifyListeners();
         return true;
     }
