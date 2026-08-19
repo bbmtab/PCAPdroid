@@ -191,8 +191,8 @@ public class PCAPdroid extends Application {
         mgr.addPredefined("I don't care about cookies", FilterListManager.Category.ANNOYANCE, "idcac.txt",
                 "https://www.i-dont-care-about-cookies.eu/abp/", false);
 
-        mgr.addPredefined("AdGuard Phishing Protection", FilterListManager.Category.SECURITY, "adguard_phishing.txt",
-                "https://filters.adtidy.org/android/filters/9_optimized.txt", true);
+        mgr.addPredefined("Phishing URL Blocklist", FilterListManager.Category.SECURITY, "phishing_filter_agh.txt",
+                "https://malware-filter.gitlab.io/malware-filter/phishing-filter-agh.txt", true);
         mgr.addPredefined("URLhaus Malicious URLs", FilterListManager.Category.SECURITY, "urlhaus.txt",
                 "https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-online.txt", false);
         mgr.addPredefined("Phishing Army", FilterListManager.Category.SECURITY, "phishing_army.txt",
