@@ -116,6 +116,10 @@
             android:launchMode="singleTop"
             android:parentActivityName=".activities.EditFilterActivity" />
         <activity
+            android:name=".activities.FilterGroupActivity"
+            android:launchMode="singleTop"
+            android:parentActivityName=".activities.SectionsActivity" />
+        <activity
             android:name=".activities.EditFilterActivity"
             android:launchMode="singleTop" />
         <activity

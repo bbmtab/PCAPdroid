@@ -14,6 +14,11 @@ public class FilterListEntry {
     public final FilterListManager.Category category;
     public final String fname;
     public final String url;
+    public final String description;
+    public final String homepage;
+    public final String subscriptionUrl;
+    public final String timeUpdated;
+    public final java.util.List<Integer> tagIds;
 
     private boolean isEnabled = true;
     private boolean isCustom = false;
@@ -30,6 +35,31 @@ public class FilterListEntry {
         this.category = category;
         this.fname = fname;
         this.url = url;
+        this.description = null;
+        this.homepage = null;
+        this.subscriptionUrl = null;
+        this.timeUpdated = null;
+        this.tagIds = java.util.Collections.emptyList();
+    }
+
+    public FilterListEntry(String label,
+                           FilterListManager.Category category,
+                           String fname,
+                           String url,
+                           String description,
+                           String homepage,
+                           String subscriptionUrl,
+                           String timeUpdated,
+                           java.util.List<Integer> tagIds) {
+        this.label = label;
+        this.category = category;
+        this.fname = fname;
+        this.url = url;
+        this.description = description;
+        this.homepage = homepage;
+        this.subscriptionUrl = subscriptionUrl;
+        this.timeUpdated = timeUpdated;
+        this.tagIds = tagIds;
     }
 
     public boolean isEnabled() { return isEnabled; }

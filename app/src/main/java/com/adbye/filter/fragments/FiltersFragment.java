@@ -1,6 +1,6 @@
 package com.adbye.filter.fragments;
 
-import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,78 +12,71 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
-import com.adbye.filter.Log;
 import com.adbye.filter.R;
 import com.adbye.filter.filterlists.FilterListManager;
 import com.adbye.filter.filterlists.FilterListEntry;
-import com.google.android.material.materialswitch.MaterialSwitch;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
-import java.util.Locale;
+import java.util.Map;
 
 /**
- * Filters & User Rules tab — per-filter-list enable/disable toggles.
+ * Filters & Rules tab — Layer 1: one row per FilterListManager.Category,
+ * showing "X of Y enabled" and navigating to FilterGroupActivity on tap.
  *
- * Each row shows a filter list's label + human-readable category name and
- * a MaterialSwitch bound to {@link FilterListManager#getFilterListManager}'s
- * per-entry enabled flag. Toggling a switch calls setEnabled() (which persists
- * the choice to SharedPreferences) and then triggers a hot-re-merge via
- * {@link ProtectionHotReload#reloadRulesOnly(Context, String)} so the
- * native engine picks up the change without a service restart.
- *
- * Custom (user-added) lists created via addCustom() are shown at the bottom
- * of the list with a "(custom)" label; the custom list itself is still
- * in scope for display — only addCustom()'s catalog persistence is out of
- * scope (see FilterListManager commit ae54d7a8).
+ * Replaces the prior flat per-list layout (see e998ae0d) with a grouped
+ * view. Per-list toggling now lives in FilterGroupActivity (Layer 2);
+ * this fragment is read-only summary + navigation.
  */
 public class FiltersFragment extends Fragment {
     private static final String TAG = "FiltersFragment";
 
-    public static class Row {
-        final String fname;
-        final String label;
-        final String categoryLabel;
-        boolean enabled;
+    public static class GroupRow {
+        final FilterListManager.Category category;
+        final int enabledCount;
+        final int totalCount;
 
-        Row(String fname, String label, String categoryLabel, boolean enabled) {
-            this.fname = fname;
-            this.label = label;
-            this.categoryLabel = categoryLabel;
-            this.enabled = enabled;
+        GroupRow(FilterListManager.Category category, int enabledCount, int totalCount) {
+            this.category = category;
+            this.enabledCount = enabledCount;
+            this.totalCount = totalCount;
         }
     }
 
-    private final List<Row> mRows = new ArrayList<>();
+    private final List<GroupRow> mGroupRows = new ArrayList<>();
     private RecyclerView mRecycler;
-    private FilterListManager mFilterListManager;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mRows.clear();
+        mGroupRows.clear();
 
-        // Snapshot a consistent view under FilterListManager's synchronized lock.
         List<FilterListEntry> entries =
                 com.adbye.filter.PCAPdroid.getInstance().getFilterListManager().snapshot();
 
-        // Predefined lists first (sorted by label), then custom lists at the end.
-        List<Row> predefined = new ArrayList<>();
-        List<Row> custom   = new ArrayList<>();
-
-        for (FilterListEntry e : entries) {
-            String catLabel = e.category.key.replace('_', ' ');
-            if (e.isCustom()) {
-                custom.add(new Row(e.fname, e.label + " (custom)", catLabel, e.isEnabled()));
-            } else {
-                predefined.add(new Row(e.fname, e.label, catLabel, e.isEnabled()));
-            }
+        Map<FilterListManager.Category, int[]> counts =
+                new EnumMap<>(FilterListManager.Category.class);
+        for (FilterListManager.Category c : FilterListManager.Category.values()) {
+            if (c == FilterListManager.Category.CUSTOM) continue; // custom shown separately, later step
+            counts.put(c, new int[]{0, 0}); // [enabled, total]
         }
 
-        // Sort predefined by label (case-insensitive) for stable ordering.
-        predefined.sort((a, b) -> a.label.compareToIgnoreCase(b.label));
-        mRows.addAll(predefined);
-        mRows.addAll(custom);
+        for (FilterListEntry e : entries) {
+            if (e.category == FilterListManager.Category.CUSTOM) continue;
+            int[] c = counts.get(e.category);
+            if (c == null) continue; // defensive, shouldn't happen
+            c[1]++; // total
+            if (e.isEnabled()) c[0]++; // enabled
+        }
+
+        // Stable display order matches the enum declaration order.
+        for (FilterListManager.Category c : FilterListManager.Category.values()) {
+            if (c == FilterListManager.Category.CUSTOM) continue;
+            int[] counts_ = counts.get(c);
+            if (counts_[1] == 0) continue; // skip empty categories (no entries loaded)
+            mGroupRows.add(new GroupRow(c, counts_[0], counts_[1]));
+        }
     }
 
     @Nullable
@@ -97,10 +90,24 @@ public class FiltersFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-        mFilterListManager = com.adbye.filter.PCAPdroid.getInstance().getFilterListManager();
         mRecycler = view.findViewById(R.id.filters_list);
         mRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
         mRecycler.setAdapter(new Adapter());
+    }
+
+    /** Human-readable label for a category (used here and reusable by FilterGroupActivity). */
+    public static String categoryDisplayLabel(FilterListManager.Category c) {
+        switch (c) {
+            case AD_BLOCKING: return "Ad Blocking";
+            case PRIVACY: return "Privacy";
+            case SOCIAL: return "Social";
+            case ANNOYANCE: return "Annoyance";
+            case SECURITY: return "Security";
+            case LANGUAGE: return "Language";
+            case OTHER: return "Other";
+            case CUSTOM: return "Custom";
+            default: return c.key;
+        }
     }
 
     private final class Adapter extends RecyclerView.Adapter<Adapter.VH> {
@@ -109,52 +116,41 @@ public class FiltersFragment extends Fragment {
         @Override
         public VH onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             View v = LayoutInflater.from(parent.getContext())
-                    .inflate(R.layout.filter_row, parent, false);
+                    .inflate(R.layout.filter_group_row, parent, false);
             return new VH(v);
         }
 
         @Override
         public void onBindViewHolder(@NonNull VH h, int position) {
-            Row r = mRows.get(position);
-            h.title.setText(r.label);
-            h.subtitle.setText(r.categoryLabel);
-            // Temporarily clear listener so setChecked does not fire a toggle.
-            h.sw.setOnCheckedChangeListener(null);
-            h.sw.setChecked(r.enabled);
-            h.sw.setOnCheckedChangeListener((view, isChecked) -> {
-                r.enabled = isChecked;
-                boolean ok = mFilterListManager.setEnabled(r.fname, isChecked);
-                if (!ok) {
-                    Log.w(TAG, "setEnabled returned false for fname=" + r.fname);
-                }
-                // Trigger re-merge + native reload. logContext = fname so logs
-                // identify which entry triggered the reload.
-                ProtectionHotReload.reloadRulesOnly(
-                        requireContext().getApplicationContext(), r.fname);
+            GroupRow r = mGroupRows.get(position);
+            h.title.setText(categoryDisplayLabel(r.category));
+            h.subtitle.setText(r.enabledCount + " of " + r.totalCount + " filters enabled");
+            h.itemView.setOnClickListener(v -> {
+                Intent intent = new Intent(requireContext(),
+                        com.adbye.filter.activities.FilterGroupActivity.class);
+                intent.putExtra(com.adbye.filter.activities.FilterGroupActivity.EXTRA_CATEGORY,
+                        r.category.name());
+                startActivity(intent);
             });
-            // Tap anywhere on the row to toggle the switch.
-            h.itemView.setOnClickListener(v -> h.sw.toggle());
         }
 
-        @Override public int getItemCount() { return mRows.size(); }
+        @Override public int getItemCount() { return mGroupRows.size(); }
 
         final class VH extends RecyclerView.ViewHolder {
             final android.widget.TextView title, subtitle;
-            final MaterialSwitch sw;
             final View itemView;
             VH(@NonNull View v) {
                 super(v);
                 itemView = v;
-                title    = v.findViewById(R.id.row_title);
-                subtitle = v.findViewById(R.id.row_subtitle);
-                sw       = v.findViewById(R.id.row_switch);
+                title    = v.findViewById(R.id.group_title);
+                subtitle = v.findViewById(R.id.group_subtitle);
             }
         }
     }
 
     /** Expose rows for testing. */
     @SuppressWarnings("unused")
-    public List<Row> getRows() {
-        return mRows;
+    public List<GroupRow> getGroupRows() {
+        return mGroupRows;
     }
 }

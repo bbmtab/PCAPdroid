@@ -173,6 +173,85 @@ public class FilterListManager {
         return e;
     }
 
+    /**
+     * Loads filter list entries from the bundled assets/filters.json catalog,
+     * replacing the previous hardcoded addPredefined() call-site approach.
+     * Idempotent per fname (mirrors addPredefined's containsKey guard).
+     *
+     * JSON schema (top-level object): "groups"[], "tags"[], "filters"[].
+     * Category mapping: filters.json groupId (1-7) -> FilterListManager.Category,
+     * by groupId numeric value (1=AD_BLOCKING, 2=PRIVACY, 3=SOCIAL, 4=ANNOYANCE,
+     * 5=SECURITY, 6=OTHER, 7=LANGUAGE). AD_BLOCKING group (groupId 1) defaults
+     * enabled; all others default disabled, matching the prior addPredefined()
+     * defaults pattern for this app.
+     */
+    @WorkerThread
+    public synchronized void loadFromAssetJson(android.content.Context ctx) {
+        try {
+            java.io.InputStream is = ctx.getAssets().open("filters.json");
+            java.io.ByteArrayOutputStream buf = new java.io.ByteArrayOutputStream();
+            byte[] chunk = new byte[8192];
+            int n;
+            while ((n = is.read(chunk)) != -1) buf.write(chunk, 0, n);
+            is.close();
+            String json = buf.toString("UTF-8");
+            org.json.JSONObject root = new org.json.JSONObject(json);
+            org.json.JSONArray filters = root.getJSONArray("filters");
+
+            for (int i = 0; i < filters.length(); i++) {
+                org.json.JSONObject f = filters.getJSONObject(i);
+                int filterId = f.getInt("filterId");
+                int groupId = f.getInt("groupId");
+                Category category = categoryFromGroupId(groupId);
+                if (category == null) continue; // unknown groupId, skip defensively
+
+                String label = f.optString("name", "Filter " + filterId);
+                String fname = "json_filter_" + filterId + ".txt";
+                String url = f.optString("downloadUrl", f.optString("subscriptionUrl", ""));
+                if (url.isEmpty()) continue; // no usable download URL, skip
+
+                String description = f.optString("description", "");
+                String homepage = f.optString("homepage", "");
+                String subscriptionUrl = f.optString("subscriptionUrl", "");
+                String timeUpdated = f.optString("timeUpdated", "");
+
+                java.util.List<Integer> tagIds = new java.util.ArrayList<>();
+                org.json.JSONArray tagsArr = f.optJSONArray("tags");
+                if (tagsArr != null) {
+                    for (int t = 0; t < tagsArr.length(); t++) tagIds.add(tagsArr.getInt(t));
+                }
+
+                if (mListByFname.containsKey(fname)) continue;
+
+                boolean enabledByDefault = (category == Category.AD_BLOCKING);
+                boolean persistedDisabled = readDisabledFnames().contains(fname);
+
+                FilterListEntry e = new FilterListEntry(label, category, fname, url,
+                        description, homepage, subscriptionUrl, timeUpdated, tagIds);
+                e.setEnabled(enabledByDefault && !persistedDisabled);
+                mLists.add(e);
+                mListByFname.put(fname, e);
+            }
+            notifyListeners();
+        } catch (Exception e) {
+            android.util.Log.e("FilterListManager", "loadFromAssetJson failed", e);
+        }
+    }
+
+    /** Maps filters.json numeric groupId (1-7) to the app's Category enum. */
+    private static Category categoryFromGroupId(int groupId) {
+        switch (groupId) {
+            case 1: return Category.AD_BLOCKING;
+            case 2: return Category.PRIVACY;
+            case 3: return Category.SOCIAL;
+            case 4: return Category.ANNOYANCE;
+            case 5: return Category.SECURITY;
+            case 6: return Category.OTHER;
+            case 7: return Category.LANGUAGE;
+            default: return null;
+        }
+    }
+
     public synchronized boolean setEnabled(String fname, boolean enabled) {
         FilterListEntry e = mListByFname.get(fname);
         if (e == null) return false;
