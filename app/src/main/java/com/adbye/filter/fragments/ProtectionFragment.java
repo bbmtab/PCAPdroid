@@ -6,6 +6,7 @@
  */
 package com.adbye.filter.fragments;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -123,7 +124,17 @@ public class ProtectionFragment extends Fragment {
                 if (mCallback != null) mCallback.onProtectionChanged(r.prefKey, isChecked);
                 ProtectionHotReload.apply(requireContext().getApplicationContext(), r.prefKey, isChecked);
             });
-            h.itemView.setOnClickListener(v -> h.sw.toggle());
+            if (com.adbye.filter.model.Prefs.PREF_PROTECT_DNS.equals(r.prefKey)) {
+                // DNS row: tap switch to toggle, tap elsewhere on the row to open
+                // DnsProtectionActivity (server picker + DNS filter list).
+                h.itemView.setOnClickListener(v -> {
+                    Intent intent = new Intent(requireContext(),
+                            com.adbye.filter.activities.DnsProtectionActivity.class);
+                    startActivity(intent);
+                });
+            } else {
+                h.itemView.setOnClickListener(v -> h.sw.toggle());
+            }
         }
 
         @Override public int getItemCount() { return mRows.size(); }

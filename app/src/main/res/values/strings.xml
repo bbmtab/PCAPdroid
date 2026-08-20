@@ -665,4 +665,7 @@
     <string name="connections_log_size">Max logged connections</string>
     <string name="connections_log_size_entry">%1$s (~%2$d MB of RAM used)</string>
     <string name="capture_list_files_changed">Captures changed on disk, list updated</string>
+    <string name="adbye_dns_current_server">Current DNS server</string>
+    <string name="adbye_dns_custom_server">Custom</string>
+    <string name="adbye_dns_filters_header">DNS Filters</string>
 </resources>

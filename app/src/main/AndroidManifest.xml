@@ -120,6 +120,10 @@
             android:launchMode="singleTop"
             android:parentActivityName=".activities.SectionsActivity" />
         <activity
+            android:name=".activities.DnsProtectionActivity"
+            android:launchMode="singleTop"
+            android:parentActivityName=".activities.SectionsActivity" />
+        <activity
             android:name=".activities.EditFilterActivity"
             android:launchMode="singleTop" />
         <activity
