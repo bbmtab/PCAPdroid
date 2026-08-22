@@ -73,16 +73,23 @@ public class DnsProtectionActivity extends BaseActivity {
         bindFilterList();
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        bindCurrentServerRow();
+    }
+
     private void bindCurrentServerRow() {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        String currentV4 = Prefs.getDnsServerV4(prefs);
+        int currentProviderId = Prefs.getDnsProviderId(prefs);
 
         DnsProvider matched = null;
-        for (DnsProvider p : mProviders) {
-            DnsServer s = p.getSupportedServer();
-            if (s != null && s.upstreams.contains(currentV4)) {
-                matched = p;
-                break;
+        if (currentProviderId != -1) {
+            for (DnsProvider p : mProviders) {
+                if (p.providerId == currentProviderId) {
+                    matched = p;
+                    break;
+                }
             }
         }
 
@@ -90,8 +97,9 @@ public class DnsProtectionActivity extends BaseActivity {
         subtitle.setText(matched != null ? matched.name : getString(R.string.adbye_dns_custom_server));
 
         findViewById(R.id.current_server_row).setOnClickListener(v -> {
-            // Placeholder: DnsServerListActivity not yet implemented.
-            android.util.Log.d(TAG, "current_server_row tapped - server picker not yet implemented");
+            android.content.Intent intent = new android.content.Intent(
+                    this, DnsServerListActivity.class);
+            startActivity(intent);
         });
     }
 

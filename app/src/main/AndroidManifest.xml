@@ -128,6 +128,14 @@
             android:launchMode="singleTop"
             android:parentActivityName=".activities.SectionsActivity" />
         <activity
+            android:name=".activities.DnsServerListActivity"
+            android:launchMode="singleTop"
+            android:parentActivityName=".activities.DnsProtectionActivity" />
+        <activity
+            android:name=".activities.DnsServerVariantActivity"
+            android:launchMode="singleTop"
+            android:parentActivityName=".activities.DnsServerListActivity" />
+        <activity
             android:name=".activities.EditFilterActivity"
             android:launchMode="singleTop" />
         <activity
