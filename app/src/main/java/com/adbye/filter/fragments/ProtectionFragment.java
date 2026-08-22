@@ -6,6 +6,7 @@
  */
 package com.adbye.filter.fragments;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -19,6 +20,7 @@ import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.adbye.filter.Log;
 import com.adbye.filter.R;
 import com.adbye.filter.model.Prefs;
 import com.google.android.material.materialswitch.MaterialSwitch;
@@ -36,6 +38,7 @@ import java.util.List;
  * (see Phase 1 in plan.md).
  */
 public class ProtectionFragment extends Fragment {
+    private static final String TAG = "ProtectionFragment";
 
     public interface Callback {
         void onProtectionChanged(@NonNull String prefKey, boolean enabled);
@@ -69,7 +72,6 @@ public class ProtectionFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mRows.clear();
-        mRows.add(new Row(Prefs.PREF_PROTECT_ADBLOCK,   true,  R.string.adbye_protect_adblock_title,   R.string.adbye_protect_adblock_subtitle));
         mRows.add(new Row(Prefs.PREF_PROTECT_TRACKING,  true,  R.string.adbye_protect_tracking_title,  R.string.adbye_protect_tracking_subtitle));
         mRows.add(new Row(Prefs.PREF_PROTECT_ANNOYANCE, true,  R.string.adbye_protect_annoyance_title, R.string.adbye_protect_annoyance_subtitle));
         mRows.add(new Row(Prefs.PREF_PROTECT_DNS,       true,  R.string.adbye_protect_dns_title,       R.string.adbye_protect_dns_subtitle));
@@ -120,8 +122,19 @@ public class ProtectionFragment extends Fragment {
                 SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(requireContext());
                 prefs.edit().putBoolean(r.prefKey, isChecked).apply();
                 if (mCallback != null) mCallback.onProtectionChanged(r.prefKey, isChecked);
+                ProtectionHotReload.apply(requireContext().getApplicationContext(), r.prefKey, isChecked);
             });
-            h.itemView.setOnClickListener(v -> h.sw.toggle());
+            if (com.adbye.filter.model.Prefs.PREF_PROTECT_DNS.equals(r.prefKey)) {
+                // DNS row: tap switch to toggle, tap elsewhere on the row to open
+                // DnsProtectionActivity (server picker + DNS filter list).
+                h.itemView.setOnClickListener(v -> {
+                    Intent intent = new Intent(requireContext(),
+                            com.adbye.filter.activities.DnsProtectionActivity.class);
+                    startActivity(intent);
+                });
+            } else {
+                h.itemView.setOnClickListener(v -> h.sw.toggle());
+            }
         }
 
         @Override public int getItemCount() { return mRows.size(); }

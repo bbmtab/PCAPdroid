@@ -69,7 +69,7 @@
     <string name="copy_to_clipboard">نسخ</string>
     <string name="save_to_file">حفظ إلى الملف</string>
     <string name="older_connections_notice">%1$d اتصالات قديمة غير معروضة</string>
-    <string name="about_text">PCAPdroid هي أداة التقاط ومراقبة للشبكة مفتوحة المصدر تعمل بدون امتيازات الجذر</string>
+    <string name="about_text">ADBye هي أداة التقاط ومراقبة للشبكة مفتوحة المصدر تعمل بدون امتيازات الجذر</string>
     <string name="delete_error">لا يمكن حذف الملف</string>
     <string name="socks5_auth">مصادقة SOCKS5</string>
     <string name="socks5_auth_summary">قم بالمصادقة على الوكيل عبر اسم المستخدم وكلمة المرور</string>
@@ -89,10 +89,10 @@
     <string name="update_now">تحديث الان</string>
     <string name="valid">صالح</string>
     <string name="copied">تم نسخّه</string>
-    <string name="install_the_mitm_addon">ثبّت PCAPdroid <a href="%1$s">mitm إضافة</a></string>
+    <string name="install_the_mitm_addon">ثبّت ADBye <a href="%1$s">mitm إضافة</a></string>
     <string name="size_x">الحجم: %1$s</string>
     <string name="block_quick">حظر QUIC</string>
-    <string name="welcome_to_pcapdroid">مرحبًا بك في PCAPdroid</string>
+    <string name="welcome_to_pcapdroid">مرحبًا بك في ADBye</string>
     <string name="app_intro_skip_button">تخطي</string>
     <string name="capture_stopped_low_memory">تم إيقاف الالتقاط</string>
     <string name="memory_usage">إستهلاك الذاكرة</string>
@@ -123,7 +123,7 @@
     <string name="proxy_host">مضيف الوكيل</string>
     <string name="app_val">التطبيق: %1$s</string>
     <string name="root_capture">الالتقاط باستخدام الجذر</string>
-    <string name="root_capture_summary">يسمح لـ PCAPdroid بالعمل مع تطبيقات VPN الأخرى</string>
+    <string name="root_capture_summary">يسمح لـ ADBye بالعمل مع تطبيقات VPN الأخرى</string>
     <string name="donate">تبرّع</string>
     <string name="app_log">السجل</string>
     <string name="no_data">لا بيانات</string>
@@ -142,14 +142,14 @@
     <string name="phone_app_info">الخدمات الهاتفية</string>
     <string name="unknown_app_info">يشير \"غير معروف\" إلى الاتصالات التي لا يمكن تحديد تطبيقها</string>
     <string name="packets_dropped">إسقاط الحزم</string>
-    <string name="ctrl_consent_denied">pcapdroid: تم رفض طلب التحكم</string>
+    <string name="ctrl_consent_denied">adbye: تم رفض طلب التحكم</string>
     <string name="allow">السماح</string>
     <string name="pending_transaction">يرجى إكمال معاملتك لاسترداد هذه الميزة</string>
     <string name="ctrl_consent">يريد أحد التطبيقات التقاط حركة مرور جهازك.
 \nارفض ذلك إذا لم تكن متأكد</string>
-    <string name="ctrl_consent_title">طلب التحكم في PCAPdroid</string>
+    <string name="ctrl_consent_title">طلب التحكم في ADBye</string>
     <string name="deny">رفض</string>
-    <string name="ctrl_consent_allowed">pcapdroid: تم السماح بطلب التحكم</string>
+    <string name="ctrl_consent_allowed">adbye: تم السماح بطلب التحكم</string>
     <string name="capture_interface">‌واجهة الالتقاط</string>
     <string name="internet">الإنترنت</string>
     <string name="all_interfaces">‌جميع الواجهات</string>
@@ -181,7 +181,7 @@
     <string name="start_at_boot_summary">يبدأ الالتقاط تلقائيًا بعد التمهيد</string>
     <string name="once">مرة واحِدة</string>
     <string name="forever">‎للأبد</string>
-    <string name="control_permissions_summary">تحقق من التطبيقات المسموح لها بالتحكم في التقاط PCAPdroid</string>
+    <string name="control_permissions_summary">تحقق من التطبيقات المسموح لها بالتحكم في التقاط ADBye</string>
     <string name="send_report">أرسل تقريراً</string>
     <string name="malware_status_ok">لم يتم اكتشاف أي حركة مرور ضارة</string>
     <string name="malware_status_detected">تم اكتشاف اتصالات ضارة</string>
@@ -201,7 +201,7 @@
     <string name="ip_rules">قواعد عناوين IP</string>
     <string name="status_updating">جارٍ التحديث…</string>
     <string name="malware_detection_learn_more">تعرف المزيد حول ميزة الكشف عن البرامج الضارة</string>
-    <string name="private_dns_message_notice">يمنع DNS الخاص PCAPdroid من فحص حركة مرور DNS. يمكنك إيقاف تشغيله من إعدادات شبكة Android</string>
+    <string name="private_dns_message_notice">يمنع DNS الخاص ADBye من فحص حركة مرور DNS. يمكنك إيقاف تشغيله من إعدادات شبكة Android</string>
     <string name="private_dns_hinders_detection">DNS الخاص يعيق الكشف</string>
     <string name="decryption_no_filter_warn">حدد تطبيقًا مستهدفًا عند فك تعمية TLS لتجنب فقدان اتصالك بالإنترنت</string>
     <string name="block">حظر…</string>
@@ -242,13 +242,13 @@
     <string name="sort_by">الترتيب حسب</string>
     <string name="username">أسم المستخدم</string>
     <string name="write_ext_storage_failed">فشلت الكتابة إلى وحدة التخزين الخارجية. تحقق من سجل التطبيق للحصول على التفاصيل</string>
-    <string name="mitm_addon_autostart_workaround">فشل الاتصال بالملحق mitm. كحل بديل، يمكنك محاولة فتح تطبيق mitm addon ثم العودة إلى PCAPdroid دون إغلاقه. هل تريد فتحه الآن؟</string>
+    <string name="mitm_addon_autostart_workaround">فشل الاتصال بالملحق mitm. كحل بديل، يمكنك محاولة فتح تطبيق mitm addon ثم العودة إلى ADBye دون إغلاقه. هل تريد فتحه الآن؟</string>
     <string name="qr_license_confirm">هل تريد إنشاء ترخيص لجهاز \"%1$s\" باستخدام رمز إلغاء القفل التالي؟</string>
     <string name="invalid_license">ترخيص غير صالح</string>
     <string name="connection_error">خطأ في الاتصال: %1$s</string>
     <string name="activate_via_qr_code">تنشيط عبر رمز QR</string>
     <string name="qr_code_expired">انتهت صلاحية رمز QR. قم بإنشاء رمز QR جديد ثم أعِد المحاولة</string>
-    <string name="qr_info_text">قم بتثبيت PCAPdroid من Google Play وقم بمسح رمز QR هذا ضوئيًا</string>
+    <string name="qr_info_text">قم بتثبيت ADBye من Google Play وقم بمسح رمز QR هذا ضوئيًا</string>
     <string name="qr_purchase_required">قم بشراء رمز إلغاء القفل لمتابعة تنشيط رمز QR</string>
     <string name="decryption_rules_help">تحدد هذه القواعد الاتصالات التي سيتم فك تعميتها. تعمل القواعد المستندة إلى المضيف فقط في حالة رؤية رد DNS سابق</string>
     <string name="pcap_read_error">خطأ في قراءة ملف الالتقاط. تحقق من السجل للحصول على التفاصيل</string>
@@ -278,17 +278,17 @@
     <string name="socks5_proxy">SOCKS5</string>
     <string name="control_permissions_item">%1$s: %2$s</string>
     <string name="asn">ASN</string>
-    <string name="export_ca_certificate">صدّر شهادة PCAPdroid CA، افتح إعدادات \"التشفير وبيانات الاعتماد\" لنظام Android واختر تثبيتها كـ \"شهادة CA\"</string>
-    <string name="install_ca_certificate">قم بتثبيت شهادة PCAPdroid CA، واختيار \"VPN والتطبيقات\". سيطلب Android شاشة القفل أو كلمة مرورك</string>
+    <string name="export_ca_certificate">صدّر شهادة ADBye CA، افتح إعدادات \"التشفير وبيانات الاعتماد\" لنظام Android واختر تثبيتها كـ \"شهادة CA\"</string>
+    <string name="install_ca_certificate">قم بتثبيت شهادة ADBye CA، واختيار \"VPN والتطبيقات\". سيطلب Android شاشة القفل أو كلمة مرورك</string>
     <string name="checking_the_certificate">جارِ التحقق من الشهادة…</string>
     <string name="ca_cert_export_failed">حدث خطأ أثناء تصدير شهادة CA
 \n
-\nإذا كان جهازك يستخدم برنامج التشغيل التلقائي أو برنامجًا مشابهًا للحد من تنفيذ خدمات الخلفية، فتأكد من <a href="%1$s">إضافة PCAPdroid إلى القائمة البيضاء</a></string>
+\nإذا كان جهازك يستخدم برنامج التشغيل التلقائي أو برنامجًا مشابهًا للحد من تنفيذ خدمات الخلفية، فتأكد من <a href="%1$s">إضافة ADBye إلى القائمة البيضاء</a></string>
     <string name="cert_exported_now_installed">تم تصدير الشهادة، قم بتثبيتها الآن من إعدادات Android</string>
     <string name="cert_installed_correctly">تم تثبيت شهادة CA</string>
     <string name="cert_reinstall_required">لم يتم تثبيت شهادة CA، قم بتشغيل معالج إعداد mitm</string>
-    <string name="mitm_addon_bad_version">نُسخة إضافة PCAPdroid mitm سيئة. الرجاء تثبيت إصدار %1$s وإعادة المحاولة</string>
-    <string name="mitm_addon_new_version">يجب ترقية إضافة PCAPdroid mitm</string>
+    <string name="mitm_addon_bad_version">نُسخة إضافة ADBye mitm سيئة. الرجاء تثبيت إصدار %1$s وإعادة المحاولة</string>
+    <string name="mitm_addon_new_version">يجب ترقية إضافة ADBye mitm</string>
     <string name="mitm_addon">المُلحق mitm</string>
     <string name="export_failed">فشل التصدير</string>
     <string name="overview">نظرة عامة</string>
@@ -298,7 +298,7 @@
     <string name="response">إستجابة</string>
     <string name="string_http_request">طلب HTTP</string>
     <string name="string_http_response">إستجابة HTTP</string>
-    <string name="payload_truncated">يتم اقتطاع الحمولة. لإظهاره بالكامل، قم بإيقاف الالتقاط وتمكين \"%1$s\" من إعدادات PCAPdroid</string>
+    <string name="payload_truncated">يتم اقتطاع الحمولة. لإظهاره بالكامل، قم بإيقاف الالتقاط وتمكين \"%1$s\" من إعدادات ADBye</string>
     <string name="websocket">ويب سوكت</string>
     <string name="http">HTTP</string>
     <string name="payload">الحمولة</string>
@@ -307,7 +307,7 @@
     <string name="decrypted">تم فك تعميتها</string>
     <string name="network_traffic">حركة المرور</string>
     <string name="decryption">فك التعمية</string>
-    <string name="connection_start_not_seen">لم يشاهد PCAPdroid بداية هذا الاتصال. قد تكون بعض المعلومات مفقودة</string>
+    <string name="connection_start_not_seen">لم يشاهد ADBye بداية هذا الاتصال. قد تكون بعض المعلومات مفقودة</string>
     <string name="warn_no_app_data">لم يتم تبادل أي بيانات التطبيق</string>
     <string name="decryption_filter">الحالة: %1$s</string>
     <string name="waiting_application_data">في انتظار البيانات</string>
@@ -324,7 +324,7 @@
     <string name="geo_db_download">انقر لتنزيل أحدث قاعدة بيانات. قواعد بيانات جديدة متاحة شهريا</string>
     <string name="geo_db_delete">انقر لحذف قاعدة البيانات وتوفير المساحة</string>
     <string name="download">تحميل</string>
-    <string name="connection_blocked">تم حظر هذا الاتصال بواسطة PCAPdroid</string>
+    <string name="connection_blocked">تم حظر هذا الاتصال بواسطة ADBye</string>
     <string name="import_action">إستيراد</string>
     <string name="import_failed">فشل الأستيراد</string>
     <string name="invalid_backup">تنسيق النسخة الاحتياطية غير صالح</string>
@@ -344,24 +344,24 @@
     <string name="firewall_summary">منع الوصول إلى الإنترنت للتطبيقات، وتكوين القواعد لنطاقات وعناوين IP محددة. يعمل فقط مع الالتقاط غير الجذر</string>
     <string name="no_root_firewall">جدار الحماية بدون جذر</string>
     <string name="block_private_dns_summary">اكتشاف وربما حظر DNS الخاص لفحص حركة مرور DNS. يمكن أن يؤدي تعطيل هذا إلى إعاقة تحليل حركة المرور</string>
-    <string name="mitm_setup_wizard_intro">سيرشدك هذا المعالج خلال تثبيت الوظيفة الإضافية لـ PCAPdroid mitm وهيئة الشهادات، وهما ضروريان لإجراء <a href="%1$s">فك تشفير TLS</a></string>
-    <string name="mitm_setup_wizard_done">PCAPdroid جاهز الآن لفك تعمية حركة مرور TLS \n \nراجع <a href="%1$s">دليل المستخدم</a> لمعرفة المزيد حول الإجراءات الأمنية التي قد تمنع فك التعمية وكيفية تجاوزها</string>
+    <string name="mitm_setup_wizard_intro">سيرشدك هذا المعالج خلال تثبيت الوظيفة الإضافية لـ ADBye mitm وهيئة الشهادات، وهما ضروريان لإجراء <a href="%1$s">فك تشفير TLS</a></string>
+    <string name="mitm_setup_wizard_done">ADBye جاهز الآن لفك تعمية حركة مرور TLS \n \nراجع <a href="%1$s">دليل المستخدم</a> لمعرفة المزيد حول الإجراءات الأمنية التي قد تمنع فك التعمية وكيفية تجاوزها</string>
     <string name="app_intro_next_button">التالي</string>
     <string name="country_and_asn">البلد و ASN</string>
     <string name="app_intro_back_button">رجوع</string>
     <string name="app_intro_done_button">تم</string>
-    <string name="app_intro_welcome_msg">تطبيق PCAPdroid صديق للخصوصية يتيح لك تتبع وتحليل الاتصالات التي تجريها التطبيقات الموجودة على جهازك
+    <string name="app_intro_welcome_msg">تطبيق ADBye صديق للخصوصية يتيح لك تتبع وتحليل الاتصالات التي تجريها التطبيقات الموجودة على جهازك
 \n
 \nعلاوة على ذلك، فهو يسمح لك بتصدير تفريغ PCAP لحركة المرور واستخراج البيانات الوصفية وغير ذلك الكثير!</string>
     <string name="privacy_first">الخصوصية أولاً</string>
     <string name="app_intro_privacy_msg">لا يستخدم التطبيق أي ميزات تتبع أو تحليلات أو ميزات مضادة للاتصال بالمنزل
 \n
 \nكيف يمكنك ان تكون متأكدا؟ راجع <a href="%1$s">سياسة الخصوصية</a> و<a href="%2$s">الشيفرة المصدرية</a></string>
-    <string name="app_intro_geolocation_msg">يمكن لـ PCAPdroid الاستعلام عن قاعدة بيانات محلية لتحديد بلد الخادم البعيد
+    <string name="app_intro_geolocation_msg">يمكن لـ ADBye الاستعلام عن قاعدة بيانات محلية لتحديد بلد الخادم البعيد
 \n
 \nيجب عليك أولاً تنزيل قاعدة بيانات تحديد الموقع الجغرافي من إعدادات التطبيق</string>
     <string name="app_intro_firewall_msg">باستخدام <a href="%1$s">جدار الحماية</a> المدمج، يمكنك بسهولة حظر الوصول إلى الإنترنت للتطبيقات والمجالات الفردية والبلاد \n \nادمج هذا مع رؤية حركة المرور المضمنة للحصول على الأداة المثالية لحماية خصوصيتك</string>
-    <string name="vpn_setup_msg">يحاكي برنامج pcapdroid شبكة VPN لالتقاط حركة مرور الشبكة دون الحاجة إلى الجذر.
+    <string name="vpn_setup_msg">يحاكي برنامج adbye شبكة VPN لالتقاط حركة مرور الشبكة دون الحاجة إلى الجذر.
 \n
 \nلبدء الالتقاط، تحتاج إلى قبول طلب VPN في الشاشة التالية.
 \n
@@ -370,18 +370,18 @@
     <string name="app_intro_malware_detection">يمكنك تحسين أمان جهازك باستخدام ميزة <a href="%1$s">الكشف عن البرامج الضارة</a>
 \n
 \nوباستخدام قوائم سوداء محدثة، يمكنه اكتشاف الاتصالات الضارة وحظرها وتنبيهها في الوقت الفعلي</string>
-    <string name="app_intro_traffic_dump">يوفر PCAPdroid <a href="%1$s">طرق متعددة</a> لتفريغ حركة المرور بتنسيق PCAP القياسي لمزيد من التحليل \n \nعبر <a href="%2$s">خيار امتدادات PCAPdroid</a>، يمكنك إضافة أسماء التطبيقات إلى الحزم وعرضها في Wireshark</string>
+    <string name="app_intro_traffic_dump">يوفر ADBye <a href="%1$s">طرق متعددة</a> لتفريغ حركة المرور بتنسيق PCAP القياسي لمزيد من التحليل \n \nعبر <a href="%2$s">خيار امتدادات ADBye</a>، يمكنك إضافة أسماء التطبيقات إلى الحزم وعرضها في Wireshark</string>
     <string name="permission_granted">تم منح الإذن %1$s</string>
     <string name="permission_grant_fail">تعذر منح الإذن %1$s</string>
     <string name="connection_not_found">تعذر العثور على الاتصال المحدد</string>
     <string name="low_memory_info">نفذت ذاكرة التطبيق، توقع حدوث أعطال</string>
     <string name="full_payload_disabled">تم تعطيل خيار الحمولة الكاملة</string>
-    <string name="vpn_lockdown_notice">لمنع التطبيقات من الوصول إلى الإنترنت عندما لا يكون PCAPdroid قيد التشغيل (على سبيل المثال، بعد إعادة التشغيل)، يمكنك تعيين PCAPdroid كشبكة VPN تعمل دائمًا في وضع التأمين.
+    <string name="vpn_lockdown_notice">لمنع التطبيقات من الوصول إلى الإنترنت عندما لا يكون ADBye قيد التشغيل (على سبيل المثال، بعد إعادة التشغيل)، يمكنك تعيين ADBye كشبكة VPN تعمل دائمًا في وضع التأمين.
 \n
 \nهل تريد فتح إعدادات VPN الآن؟</string>
     <string name="app_blocked">حُظر التطبيق</string>
     <string name="ipv4_only">IPv4 فقط</string>
-    <string name="remote_collector_notice">لقد قمت بتكوين PCAPdroid لإرسال حركة المرور إلى خادم بعيد. سيكون الخادم قادرًا على الوصول إلى معلوماتك الحساسة.
+    <string name="remote_collector_notice">لقد قمت بتكوين ADBye لإرسال حركة المرور إلى خادم بعيد. سيكون الخادم قادرًا على الوصول إلى معلوماتك الحساسة.
 \n
 \nإذا طلب منك شخص ما القيام بذلك، فمن المحتمل أن تكون هذه محاولة احتيال</string>
     <string name="ipv6_only">IPv6 فقط</string>
@@ -402,7 +402,7 @@
     <string name="build_info">معلومات البناء</string>
     <string name="unlock_token_error">تعذر طلب رمز إلغاء القفل [%1$d]: %2$s</string>
     <string name="unlock_token_summary">رمز مميز يمكن استخدامه لفتح الميزات المدفوعة في إصدارات التطبيق غير التابعة لـ Google Play (مثل F-Droid/Github)</string>
-    <string name="license_service_unavailable">خدمة ترخيص PCAPdroid غير متوفرة حاليًا. يرجى إعادة المحاولة خلال بضع دقائق</string>
+    <string name="license_service_unavailable">خدمة ترخيص ADBye غير متوفرة حاليًا. يرجى إعادة المحاولة خلال بضع دقائق</string>
     <string name="unlock_token_msg1">هذا هو رمز إلغاء القفل الخاص بك. لاحظ ذلك لأنك ستحتاج إليه <a href="%1$s">لإنشاء رموز الترخيص</a></string>
     <string name="firewall_purchase_msg">اشترِ مِيزة <i>%1$s</i> لبدء حظر الاتصالات</string>
     <string name="requesting_unlock_token">جارٍ طلب رمز إلغاء القفل، برجاء الانتظار</string>
@@ -431,7 +431,7 @@
     <string name="block_private_dns">حظر DNS الخاص</string>
     <string name="low_memory">الذاكرة منخفضة</string>
     <string name="remote_server_warning">لأسباب أمنية، غير مسموح بإرسال حركة المرور إلى الخادم البعيد \"%1$s\"</string>
-    <string name="tls_decryption_with_root_msg">تعد القدرة على تشغيل فك تعمية TLS باستخدام الجذر ميزة تجريبية. هذه قائمة بالأخطاء المعروفة: \n \n- في PCAPdroid، ستشاهد حركة المرور كما تم إنشاؤها من تطبيق mitm-addon بدلاً من التطبيق الأصلي \n- لا يتم دعم تفريغ سجل مفتاح SSL\n- عند تعيين مرشح التطبيق، سيتم فك التعمية فقط للتطبيق المستهدف، ولكن PCAPdroid سيظل يعرض حركة مرور التطبيقات الأخرى \n- إذا فشل بدء الالتقاط، فتأكد من أنه يمكنك بالفعل تشغيل أمر iptables كجذر (على سبيل المثال عبر termux) \n- قد لا يعمل هذا على نظام Android 12 والإصدارات الأحدث \n- إذا كان تطبيق VPN قيد التشغيل، فيجب عليك إما استهداف تطبيق معين لفك التعمية أو استبعاد ملحق PCAPdroid mitm من VPN، وإلا ستستمر حركة المرور في حلقة</string>
+    <string name="tls_decryption_with_root_msg">تعد القدرة على تشغيل فك تعمية TLS باستخدام الجذر ميزة تجريبية. هذه قائمة بالأخطاء المعروفة: \n \n- في ADBye، ستشاهد حركة المرور كما تم إنشاؤها من تطبيق mitm-addon بدلاً من التطبيق الأصلي \n- لا يتم دعم تفريغ سجل مفتاح SSL\n- عند تعيين مرشح التطبيق، سيتم فك التعمية فقط للتطبيق المستهدف، ولكن ADBye سيظل يعرض حركة مرور التطبيقات الأخرى \n- إذا فشل بدء الالتقاط، فتأكد من أنه يمكنك بالفعل تشغيل أمر iptables كجذر (على سبيل المثال عبر termux) \n- قد لا يعمل هذا على نظام Android 12 والإصدارات الأحدث \n- إذا كان تطبيق VPN قيد التشغيل، فيجب عليك إما استهداف تطبيق معين لفك التعمية أو استبعاد ملحق ADBye mitm من VPN، وإلا ستستمر حركة المرور في حلقة</string>
     <string name="access_paid_features_msg">راجع <a href="%1$s">دليل المستخدم</a> للتعرف على كيفية الوصول إلى الميزات المدفوعة</string>
     <string name="paid_feature">مِيزة مدفوعة</string>
     <string name="firewall_whitelist_notice">في هذا الوضع، سيتم حظر جميع الاتصالات، ما لم يتم إدراجها يدويًا في القائمة البيضاء. قد تفوتك إشعارات الدفع بدون قائمة بيضاء مناسبة</string>
@@ -454,9 +454,9 @@
     <string name="no_matches_found">لا توجد تطابقات</string>
     <string name="cleartext_connection">نص غير مشفر</string>
     <string name="rx_direction">RX</string>
-    <string name="root_capture_pcapd_start_failure">بدء لالتقاط فشل . تأكد من منح حق الوصول إلى الجذر (root) لPCAPdroid</string>
+    <string name="root_capture_pcapd_start_failure">بدء لالتقاط فشل . تأكد من منح حق الوصول إلى الجذر (root) لADBye</string>
     <string name="redirected">حُوّلت</string>
-    <string name="dnscrypt_how_to">كيفية استخدام DoH / DNSCrypt مع PCAPdroid</string>
+    <string name="dnscrypt_how_to">كيفية استخدام DoH / DNSCrypt مع ADBye</string>
     <string name="always">دائمًا</string>
     <string name="target_apps_help">حدّد التطبيقات المراد التقاطها</string>
     <string name="body">المحتوى</string>
@@ -465,7 +465,7 @@
     <string name="connection_redirected_port_map">حُوّل توجيه هذا الاتصال بسبب قاعدة تعيين المنفذ</string>
     <string name="never">أبداً</string>
     <string name="for_connections_to_decrypt">فقط للاتصالات لفك التعمية</string>
-    <string name="decrypt_quic_notice">فك تعمية QUIC غير مدعوم حاليًا. كحل بديل، أوقِف الالتقاط وحدّد خيار حظر QUIC في إعدادات PCAPdroid</string>
+    <string name="decrypt_quic_notice">فك تعمية QUIC غير مدعوم حاليًا. كحل بديل، أوقِف الالتقاط وحدّد خيار حظر QUIC في إعدادات ADBye</string>
     <string name="target_apps">استهدف التطبيقات</string>
     <string name="headers">الترويسات</string>
     <string name="both">كلاهما</string>
@@ -482,15 +482,15 @@
     <string name="update_available">يتوفر تحديث</string>
     <string name="mitm_addon_update_available">يتوفر تحديث جديد لإضافة mitm. حدّث للحصول على أحدث إصلاحات العلل</string>
     <string name="update_action">حدّث</string>
-    <string name="dump_extensions">امتدادات PCAPdroid</string>
+    <string name="dump_extensions">امتدادات ADBye</string>
     <string name="dump_extensions_summary">مدّد تنسيق تفريغ الحزمة مع بيانات وصفية إضافية، مثل التطبيق الذي أرسل/تلقى حزمة معينة</string>
     <string name="ip_address_or_cidr">عنوان CIDR / IP</string>
     <string name="cidr_val">CIDR: %1$s</string>
-    <string name="dump_extensions_how_to">كيفية عرض امتدادات تفريغ PCAPdroid في Wireshark</string>
+    <string name="dump_extensions_how_to">كيفية عرض امتدادات تفريغ ADBye في Wireshark</string>
     <string name="malicious_connections_notice">قد تحتوي القوائم السوداء على إيجابيات خاطئة. تأكد من التحقق من سمعة عنوان IP/المجال عبر الإنترنت. يمكنك استبعاد الإيجابيات الخاطئة عبر قائمة البرامج الخبيثة البيضاء</string>
     <string name="malicious_connection_description">أدى اتصال من التطبيق %1$s\" إلى قاعدة اكتشاف البرامج الخبيثة (%2$s)</string>
     <string name="geo_db_missing">قاعدة بيانات تحديد الموقع الجغرافي مفقود</string>
-    <string name="country_rules_warning">لاستخدام قواعد جدار الحماية القائمة على الدول، نزّل قاعدة بيانات تحديد الموقع الجغرافي من إعدادات PCAPdroid، وإلا ستكون القواعد القائمة على الدول غير فعالة</string>
+    <string name="country_rules_warning">لاستخدام قواعد جدار الحماية القائمة على الدول، نزّل قاعدة بيانات تحديد الموقع الجغرافي من إعدادات ADBye، وإلا ستكون القواعد القائمة على الدول غير فعالة</string>
     <string name="unsupported_pcap_file">تنسيق ملف التقاط غير مدعوم</string>
     <string name="bytes_threshold">بايتات عتبة</string>
     <string name="error_code_with_text">%1$s (خطأ %2$d)</string>
@@ -512,19 +512,19 @@
     <string name="errno_ehostunreach">لا طريق للاستضافة</string>
     <string name="errno_ehostunreach_msg">لا يمكن للنظام العثور على طريق إلى مضيف الوجهة</string>
     <string name="dns_conn_info">يترجم DNS اسم مجال إلى عنوان IP. عادةً ما يتم تبادل البيانات الفعلية عبر اتصالات HTTPS/TLS اللاحقة</string>
-    <string name="tls_conn_info">يتم تعمية حركة المرور TLS/HTTPS. لتفقد حركة المرور هذه، تحتاج إلى فك تعميتها. تحقق من <a href="%1$s">دليل المستخدم</a> PCAPdroid لمزيد من التفاصيل</string>
+    <string name="tls_conn_info">يتم تعمية حركة المرور TLS/HTTPS. لتفقد حركة المرور هذه، تحتاج إلى فك تعميتها. تحقق من <a href="%1$s">دليل المستخدم</a> ADBye لمزيد من التفاصيل</string>
     <string name="errno_enetreset_msg">تمت إعادة ضبط اتصال الشبكة بواسطة جهاز وسيط (مثل جهاز التوجيه أو شركة الاتصالات المحمولة)</string>
     <string name="tcp_udp_exporter">مُصدّر TCP/UDP</string>
     <string name="tcp_exporter_info">أرسل ملف PCAP إلى مستقبل TCP عن بُعد (pcap-over-ip)</string>
     <string name="tcp_collector_info">جامع TCP: %1$s:%2$d</string>
     <string name="tcp_exporter">مُصدّر TCP</string>
-    <string name="no_permissions_set_info">لم يتم تعيين أذونات. شغّل PCAPdroid عبر StartActivityForResult لإظهار موجه الأذونات</string>
+    <string name="no_permissions_set_info">لم يتم تعيين أذونات. شغّل ADBye عبر StartActivityForResult لإظهار موجه الأذونات</string>
     <string name="generate_api_key">ولّد مفتاح API</string>
     <string name="show_api_key">أظهِر مفتاح API</string>
     <string name="api_key">مفتاح API</string>
     <string name="api_key_discard_confirm">هل تريد حقًا التخلص من مفتاح الـ API الحالي وتوليد مفتاح جديد؟</string>
     <string name="filename_prefix">بادئة اسم الملف</string>
-    <string name="filename_prefix_description">عيّن البادئة للملفات التي يصدرها PCAPdroid، مثل ملفات PCAP</string>
+    <string name="filename_prefix_description">عيّن البادئة للملفات التي يصدرها ADBye، مثل ملفات PCAP</string>
     <string name="select">حدِّد</string>
     <string name="request_method">طريقة الطلب</string>
     <string name="content_type">نوع المحتوى</string>

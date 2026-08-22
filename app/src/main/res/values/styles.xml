@@ -10,6 +10,12 @@
         <item name="android:windowAllowEnterTransitionOverlap">true</item>
         <item name="alertDialogTheme">@style/AppAlertDialogTheme</item>
         <item name="actionBarStyle">@style/MyActionBar</item>
+        <item name="materialSwitchStyle">@style/Widget.Material3.CompoundButton.MaterialSwitch</item>
+        <item name="colorOutline">#8A8A8A</item>
+        <item name="colorSurfaceContainerHighest">#3A3A3A</item>
+        <item name="colorOnSurface">#FFFFFF</item>
+        <item name="colorOnSurfaceVariant">#CCCCCC</item>
+        <item name="colorSurfaceVariant">#2A2A2A</item>
     </style>
 
     <!-- Make the Widget.MaterialComponents.Button.TextButton of AlertDialog use the accent color -->

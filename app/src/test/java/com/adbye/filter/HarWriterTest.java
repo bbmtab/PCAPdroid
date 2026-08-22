@@ -207,7 +207,7 @@ public class HarWriterTest {
         // Verify creator
         assertTrue("log should have 'creator' object", log.has("creator"));
         JsonObject creator = log.getAsJsonObject("creator");
-        assertEquals("PCAPdroid", creator.get("name").getAsString());
+        assertEquals("ADBye", creator.get("name").getAsString());
         assertNotNull("creator should have version", creator.get("version"));
 
         // Verify entries array exists

@@ -2,9 +2,16 @@ name: Android CI/CD
 
 on:
   push:
-    branches: [master]
+    branches: [master, debug-emulator]
   pull_request:
-    branches: [master]
+    branches: [master, debug-emulator]
+  workflow_dispatch:
+    inputs:
+      force-all-attempts:
+        description: 'Run all 3 retry attempts unconditionally (bypass early-break) to exercise MODE B consent-recovery on attempts 2-3. Default false preserves push/PR early-break behavior.'
+        type: choice
+        options: ['false', 'true']
+        default: 'false'
 
 jobs:
   test:
@@ -27,7 +34,10 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: 'platforms;android-36 build-tools;36.0.0 cmake;3.22.1 ndk;28.2.13676358'
+          packages: 'platforms;android-30 build-tools;30.0.3 cmake;3.22.1 ndk;25.1.8937393'
+
+      - name: Accept SDK licenses
+        run: yes | sdkmanager --licenses
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -58,7 +68,10 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: 'platforms;android-36 build-tools;36.0.0 cmake;3.22.1 ndk;28.2.13676358'
+          packages: 'platforms;android-30 build-tools;30.0.3 cmake;3.22.1 ndk;25.1.8937393'
+
+      - name: Accept SDK licenses
+        run: yes | sdkmanager --licenses
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -79,7 +92,7 @@ jobs:
     name: E2E Tests (Emulator)
     runs-on: ubuntu-latest
     needs: build
-    timeout-minutes: 45
+    timeout-minutes: 50
 
     steps:
       - name: Checkout
@@ -97,49 +110,170 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
         with:
-          packages: 'platforms;android-36 build-tools;36.0.0 cmake;3.22.1 ndk;28.2.13676358'
+          packages: 'platforms;android-30 build-tools;30.0.3 cmake;3.22.1 ndk;25.1.8937393'
+
+      - name: Accept SDK licenses
+        run: yes | sdkmanager --licenses
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
-      - name: Download Release APK
-        uses: actions/download-artifact@v4
-        with:
-          name: app-release-standard
-          path: apk/
-
-      - name: Start Emulator
+      - name: Start Emulator & Run E2E Tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 36
-          target: google_apis
+          api-level: 30
+          target: default
           arch: x86_64
           profile: pixel_5
           force-avd-creation: true
-          emulator-options: -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -memory 2048 -partition-size 4096
+          emulator-options: -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -memory 2048 -partition-size 4096 -debug-init -no-metrics
           disable-animations: false
+          # CRITICAL ARCHITECTURE: android-emulator-runner@v2 boots the emulator, runs
+          # `script:`, then TERMINATES the emulator (step log shows "Terminate Emulator"
+          # -> `adb emu kill`). So ALL emulator-dependent work -- installing the app,
+          # granting the VPN appop, and the gradle instrumented-test run itself -- MUST
+          # live inside this `script:` block. Steps placed after this action execute with
+          # NO device, so any `adb`/`wait-for-device` there blocks forever (this is exactly
+          # what canceled run 28729987723: Install APK hung 39 min on `adb wait-for-device`
+          # until the 50-min job timeout).
+          #
+          # GOTCHA: the action splits `script:` on newlines and runs EACH LINE as its own
+          # `/usr/bin/sh -c <line>`. So every command MUST be a single self-contained line:
+          # no multi-line for/while/if blocks (the `do` line lands alone and parse-errors),
+          # and variables do NOT persist across lines. Use `;` plus `&&`/`||` to keep any
+          # compound construct on ONE physical line.
+          #
+          # The app under test is com.adbye.filter.debug (standardDebug variant has
+          # applicationIdSuffix '.debug'). `connectedStandardDebugAndroidTest` does its own
+          # `adb install -r` of the debug apk then `am instrument`; we pre-install + pre-grant
+          # ACTIVATE_VPN so the reinstall (same package uid -> appops preserved) has the VPN
+          # already authorized, and VpnService.prepare() returns null without a dialog.
           script: |
-            echo "Waiting for emulator to boot..."
+            echo "Waiting for emulator to finish booting..."
             adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 1; done'
-            echo "Emulator booted"
-            adb shell settings put global window_animation_scale 0
-            adb shell settings put global transition_animation_scale 0
-            adb shell settings put global animator_duration_scale 0
+            echo "Boot complete. Waiting for PackageManager service to stabilize..."
+            # WHY: on the non-KVM swiftshader emulator, system services (package, settings)
+            # keep returning `cmd: Can't find service: package` for *minutes* after
+            # sys.boot_completed=1. Run 28732010023 died here at 06:46 -- 4 min *after* boot
+            # completed -- `installStandardDebug` -> InstallException. Run 28764550095 hit the
+            # same error AFTER the gate passed (1-shot `pm list packages` worked but full
+            # `pm install create` from gradle's ddmlib hit "Can't find service: package" 2 min
+            # later). So we now require 5x consecutive `pm list packages -d android` confirms
+            # bounded to 240 x 2s = 480s, AND run a heavy PMS warm-up (cmd package
+            # install-existing) below before gradle takes over.
+            adb shell 'i=0; n=0; while [ $i -lt 240 ] && [ $n -lt 5 ]; do i=$((i+1)); pm list packages -d android >/dev/null 2>&1 && n=$((n+1)) || n=0; sleep 2; done; test $n -ge 5'
+            echo "PackageManager stable. Warming PMS with synthetic install-existing..."
+            # WHY: `pm list packages` only proves PMS is responsive to a LIGHT call -- but
+            # gradle's ddmlib install actually invokes `pm install create` + commit, which
+            # bind PMS heavier. On the AOSP default image (no GMS keeping PMS warm) the heavy
+            # path flakes for ~minutes after boot. We hammer a real PMS state-changing call
+            # (`cmd package install-existing com.android.shell`) up to 5x; one success in a
+            # row is enough to prove PMS is ready for install. If PMS is dead, we proceed
+            # anyway (warn) -- gradle's 5x install retry below will catch the case.
+            ok_w=0; for w in 1 2 3 4 5; do if adb shell cmd package install-existing com.android.shell >/dev/null 2>&1; then ok_w=1; break; fi; sleep 4; done; echo "PMS warmup ok=$ok_w (1 = PMS responded; 0 = proceeding to gradle anyway)"
+            echo "Warming animation settings..."
+            adb shell settings put global window_animation_scale 0 2>/dev/null || true
+            adb shell settings put global transition_animation_scale 0 2>/dev/null || true
+            adb shell settings put global animator_duration_scale 0 2>/dev/null || true
+            echo "Building + installing the DEBUG app under test (com.adbye.filter.debug)..."
+            # Retry install up to 5x with 30s gaps. The whole construct is ONE physical line
+            # so the action's per-line sh -c splits it fine. Each gradle invocation re-spawns
+            # ddmlib; on the AOSP image PMS can take a few minutes to fully warm, so 30s gaps
+            # let PMS finish settling between attempts. `[ $ok -eq 1 ]` makes the line fail
+            # loud if all 5 attempts bomb.
+            ok=0; for i in 1 2 3 4 5; do GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx2g" ./gradlew :app:installStandardDebug --no-daemon && { ok=1; break; }; echo "install attempt $i of 5 failed; sleeping 30s"; sleep 30; done; [ $ok -eq 1 ]
+            echo "Pre-granting VPN authorization for the DEBUG app under test..."
+            adb shell appops set com.adbye.filter.debug ACTIVATE_VPN allow
+            adb shell appops get com.adbye.filter.debug ACTIVATE_VPN
+            echo "Letting adbd settle before the test task re-fetches device properties..."
+            # WHY: connectedStandardDebugAndroidTest spawns a FRESH ddmlib session that
+            # re-discovers the device and re-fetches ro.build.version.sdk / ABI / density
+            # to run its compatibility check. Right after the 4-min install + appops grant,
+            # the slow swiftshader emulator doesn't answer `getprop` within ddmlib's default
+            # 2s shell timeout -> PropertyFetcher throws ShellCommandUnresponsiveException
+            # -> device is marked "Unknown API Level" -> gradle rejects it as "No compatible
+            # devices" -> BUILD FAILED (this is exactly what failed run b7086a86 at 09:13:40,
+            # ~55s after install succeeded at 09:12:39). A 30s settle lets adbd drain. The
+            # 2x retry below catches a residual race where the property fetch still flakes.
+            sleep 30
+            adb wait-for-device
+            echo "Running E2E instrumented tests on the live emulator (up to 3 attempts; per-attempt VPN-consent re-grant)..."
+            # MODE B fix (2026-07-16): AGP/UTP's connectedStandardDebugAndroidTest UNINSTALLS
+            # the app at the END of each attempt (deletePackageX), which clears the
+            # `appops set com.adbye.filter.debug ACTIVATE_VPN allow` pre-grant -> attempts
+            # 2-3 see VpnService.prepare() return non-null -> Builder.establish()=null ->
+            # no tunnel -> waitForVpnTunnelEstablished 60s timeout -> RED (the "consent-lost"
+            # race, fixed.md 2026-07-15 (b) decision (b); also the todo.md MODE B thread).
+            # `-x installStandardDebug` is a verified NO-OP here (local gradle dry-run:
+            # installStandardDebug is NOT a task dependency of connectedStandardDebugAndroidTest
+            # -- the app install is internal to the test task's ddmlib/UTP, so excluding the
+            # gradle task does nothing). Fix shape (1) per constraint #8 (CI-workflow blast
+            # radius only): before EACH attempt re-install the app (a replace-install
+            # preserves a freshly-granted appops op, exactly as attempt-1's L184 install +
+            # L186 grant preserve consent THROUGH connectedAndroidTest) then re-grant
+            # `appops set ... ACTIVATE_VPN allow`. This replicates attempt-1's
+            # [install + grant] sequence for attempts 2-3 -- the only difference that
+            # produced consent-GRANTED (attempt 1) vs consent-LOST (attempts 2-3) in the
+            # verified CI evidence, so replicating it replicates the grant.
+            # The 3x retry on transient PropertyFetcher races (run b7086a86, L189-197) is
+            # PRESERVED: the connectedTest-failed branch still sleeps 30s + adb wait-for-device.
+            #
+            # FORCE_ALL knob (workflow_dispatch input force-all-attempts): on push/PR and the
+            # dispatch default, `${{ inputs.force-all-attempts }}` renders to empty or 'false'
+            # -> early-break on first success (push/PR behavior UNCHANGED). Set to 'true' on
+            # a manual dispatch to bypass the early-break and run all 3 attempts
+            # unconditionally, so MODE B's consent-recovery on attempts 2-3 is EXERCISED even
+            # when attempt-1 would otherwise succeed (N=1-green could skip MODE B entirely --
+            # the 580a107f "3/3" lesson is that a green job proves nothing about a path it
+            # never ran; a green job where attempts 2-3 silently never ran proves nothing
+            # about MODE B specifically).
+            # Verification standard (lead 2026-07-16, same as 580a107f): do NOT accept "job
+            # green" alone. Paste the per-attempt logcat showing attempts 2 AND 3 specifically
+            # hit `prepare() returned null` + `isTunnelEstablished()=true` on the consent
+            # path -- attributed to the specific attempt by the `modeB` logcat anchors
+            # (`adb shell log -t modeB "attempt N start ..."`) below, which the widened
+            # logcat filter (modeB:*) captures into the artifact.
+            FORCE_ALL='${{ inputs.force-all-attempts }}'; ok=0; for i in 1 2 3; do adb shell log -t modeB "attempt $i of 3 start force_all=$FORCE_ALL"; oki=0; for k in 1 2 3; do GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx2g" ./gradlew :app:installStandardDebug --no-daemon && { oki=1; break; }; sleep 10; done; if [ $oki -eq 1 ]; then adb shell appops set com.adbye.filter.debug ACTIVATE_VPN allow; if GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx2g" ./gradlew :app:connectedStandardDebugAndroidTest --no-daemon; then ok=1; if [ "$FORCE_ALL" = true ]; then continue; else break; fi; else echo "Test attempt $i of 3 failed, sleeping 30s..."; sleep 30; adb wait-for-device; fi; else echo "Install attempt $i of 3 failed after 3 tries, sleeping 30s..."; sleep 30; adb wait-for-device; fi; done; adb logcat -d -s CaptureService:* VpnService:* AndroidRuntime:* System.err:* ActivityManager:* modeB:* > "$GITHUB_WORKSPACE/logcat-e2e.txt" 2>&1 || echo "WARN: adb logcat -d failed but continuing"; [ $ok -eq 1 ]
+          emulator-boot-timeout: 1200
 
-      - name: Install APK
-        run: |
-          adb install -r apk/*.apk
-
-      - name: Grant VPN Permission
-        run: |
-          adb shell am start -n com.adbye.filter/.activities.MainActivity
-          sleep 3
-          # Accept VPN permission dialog (if shown) - run the AcceptVpnDialogTest UIAutomator test
-          adb shell uiautomator runtest -c com.adbye.filter.ui.AcceptVpnDialogTest .
-
-      - name: Run E2E Instrumented Tests
-        run: |
-          ./gradlew :app:connectedStandardDebugAndroidTest --no-daemon
-        env:
-          GRADLE_OPTS: "-Dorg.gradle.jvmargs=-Xmx4g"
-        timeout-minutes: 35
+      # Always-stream device logcat from the e2e run, FILTERED to the 6 tags
+      # that distinguish the three Phase 1.b probe failure shapes (never
+      # called / called and threw / called and returned null). Filter at
+      # capture time, not after — a ~KB artifact with the named signature
+      # tags instead of a ~4 MB everything-dump.
+      #   CaptureService:*     — our own class; catches whatever it logs in
+      #     onCreate()/establish(), including silence (silence here is itself
+      #     the signature for Outcome B "never called").
+      #   VpnService:*         — framework tag for prepare()/establish() failures.
+      #   AndroidRuntime:*     — uncaught exceptions/crashes; if the service
+      #     dies on create, the stack trace prints here (= Outcome B "called
+      #     and threw").
+      #   System.err:*         — the test's own "VPN tunnel not up..." catch
+      #     block line, the marker that went missing from the unfiltered dump.
+      #   ActivityManager:*    — confirms/denies OS recognized the service as
+      #     starting/bound.
+      #   modeB:*              — MODE B fix (2026-07-16): attempt-boundary anchors
+      #     (`adb shell log -t modeB "attempt N of 3 start force_all=..."`) emitted
+      #     at the top of each connectedAndroidTest retry. They let the per-attempt
+      #     consent-recovery verification attribute downstream `prepare() returned
+      #     null` + `isTunnelEstablished()=true` lines to the SPECIFIC attempt
+      #     (esp. attempts 2-3 under force-all-attempts=true), instead of a green
+      #     job that silently never exercised them. NOT a probe-failure-shape tag.
+      # Outcome A (tunnel established): a CaptureService or VpnService line
+      #   containing "establish" with a non-null/success result, OR
+      #   sTunnelEstablished-related output near the test timestamp.
+      # Outcome B (real failure): an AndroidRuntime exception with
+      #   CaptureService or VpnService in the stack, OR a VpnService line
+      #   containing "prepare" followed by null/SecurityException, OR total
+      #   silence from CaptureService/VpnService tags for the full test
+      #   window (= onCreate() never ran at all).
+      # If NEITHER signature matches: say so explicitly and paste a
+      # representative slice of what IS there. The post-step upload uses
+      # `if: always()` so this fires in both green and red cases.
+      - name: Upload E2E device logcat
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-logcat
+          path: ${{ github.workspace }}/logcat-e2e.txt
+          retention-days: 7

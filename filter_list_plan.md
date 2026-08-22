@@ -10,7 +10,37 @@
 
 ---
 
-## Status ⬜ NOT STARTED
+## Status 🟡 PARTIALLY IMPLEMENTED
+
+> **Source:** item (e) investigation (2026-07-26). Verify against source before relying on this status.
+
+**BypassManager.java** (`app/src/main/java/com/adbye/filter/filterlists/BypassManager.java`, 290 lines, 17 unit tests in `BypassManagerTest.java`) is fully implemented in the Java layer. All 4 layers are present as data/behavior, 17 unit tests cover the Java surface.
+
+| Layer | Java layer | Native/JNI wired? | Notes |
+|---|---|---|---|
+| §1 App/UID allowlist | ✓ implemented | ❌ NOT WIRED | `! u:pkg` comments in rules file; no `shouldBypassByUid` JNI path exists |
+| §2 Domain/SNI allowlist | ✓ implemented | ✅ LIVE | `@@||domain^` rules → `sni_allowlist` in JNI → consulted first in `check_adblock_sni_rules` (constraint #2 preserved) |
+| §3 Dynamic flow/payload | ✓ implemented (API) | ❌ NOT ENFORCED | thresholds persist to SharedPreferences; no call site passes byte counts through `isFlowBypassed`/`isLargeDownloadBypassed`; Phase 4 MITM prerequisite |
+| §4 FCM port bypass | ✓ implemented (data) | ❌ NOT WIRED | `! p:5228/5229/5230` comments in rules file; no port-gating, no raw splice; Phase 4 MITM prerequisite |
+
+**Status key:**
+- ✅ LIVE — wired into native/JNI capture path, operating at runtime
+- ❌ NOT WIRED — Java data/class exists, no native consult path; same structural pattern as item (b) orphaned-native-decls finding
+
+**Phase 4 dependency note:** §3 and §4 are framed in this document's own §3 as protecting against OOM from "MITM + content-filtering on high-throughput traffic." Both are primarily Phase 4 prerequisites — §3 prevents OOM from MITM intercepting video downloads; §4 keeps FCM alive without MITM overhead. Neither is urgent until Phase 4 (HTTPS MITM content filtering) lands. §1 App/UID allowlist is *not* MITM-dependent — it is general resource protection and is independently actionable now.
+
+**>>> PHASE 2 TESTING GATE — EXECUTED 2026-07-30 (Mi A1, device 3595381c0804, build 953b8962) <<<**
+Previously this document noted the gate had NEVER been executed (2026-07-26 snapshot). This gap is now closed.
+| Check | Result | Notes |
+|-------|--------|-------|
+| YouTube 1080p playback | PASS | Smooth, no buffering/stalls |
+| Play Store download (Plants vs Zombies 2, ~1GB, completed) | PASS | Memory stable, no leak/OOM — `phase2-meminfo.log` (6 samples/30s, TOTAL PSS 90MB→77MB, no growth pattern) |
+| Push notification (real-world trigger) | PASS | Arrived instantly, no perceptible delay |
+**CONCLUSION:** All 3 manual checks pass cleanly DESPITE §1 (UID allowlist), §3 (dynamic flow threshold), and §4 (FCM port bypass) still NOT WIRED into native capture path (confirmed — comment-only in merged rules, no JNI call sites). Only §2 (Domain/SNI allowlist) is live.
+**DECISION (lead-confirmed):** Do NOT wire §1/§3/§4 preemptively. No user-visible problem surfaced to justify native wiring work now. Wiring status table above UNCHANGED (still NOT WIRED for §1/§3/§4) — only the "has the gate been run" question changed from "never" to "executed with recorded results."
+**Caveat:** Single run (N=1), ~1GB not full 2GB+, 6-minute window. Sufficient to inform "wire now vs defer" decision, not exhaustive. If real user-reported issue surfaces later pointing at UID/flow/FCM-port behavior, revisit.
+
+**Implementation Sketch note (see below):** The `shouldBypassByUid`/`shouldBypassByPort`/`shouldBypassBySni` + conntrack-callback architecture described in the Implementation Sketch section was **NEVER IMPLEMENTED**. The sketch is a historical design record only — do not treat it as current architecture.
 
 ---
 
@@ -18,14 +48,24 @@
 
 **Context:** MITM + content-filtering on high-throughput traffic (video streaming, large file downloads) or system-critical connections (GSF) causes OOM, lag, and battery drain. PCAPdroid already has a `dynamicBypassSet` pattern (see `LocalHttpsProxy.kt` in original codebase, and equivalent sockets in addon). We extend that with a 3-layer exception system.
 
+> ⚠️ **Status annotation:** Only §2 Domain/SNI is currently LIVE (wired into JNI `sni_allowlist`). §1, §3, §4 are SPEC COMPLETE in Java but NOT wired into the native capture path.
+
 ### 1. App-Level Exceptions (Package Name / UID)
+
+> 🔴 SPEC COMPLETE (Java), NOT WIRED to JNI — priority independent of Phase 4 (general resource protection, not MITM-specific)
+
 Traffic from these apps auto-bypass HTTPS filtering/MITM:
 - `com.android.vending` (Google Play Store - prevents APK download/update errors)
 - `com.google.android.gms` (Google Play Services / GSF - prevents delayed notifications & battery drain)
 - `com.google.android.syncadapters.contacts` / `calendar`
 - `com.google.android.ims` (Carrier Services - already in existing firewall whitelist)
 
+**Native path:** Not wired. Rules written to merged rules file as `! u:com.android.vending` **comment lines** only. No `shouldBypassByUid` JNI call site exists.
+
 ### 2. Domain & SNI-Level Exceptions (Video & CDNs)
+
+> 🟢 LIVE — wired via `sni_allowlist` in JNI `blacklist.c`, consulted first in `check_adblock_sni_rules` (`pcapdroid.c:571`) before the blocklist. Constraint #2 (Resource Protection hardcoded) preserved by construction — allowlist and blocklist are in the same function with allowlist-first ordering.
+
 Hardcoded system-wide whitelist (`@@||domain.com^` style, prepend to merged rule file ahead of user rules):
 - **Video CDNs:**
   - `googlevideo.com` (YouTube streams)
@@ -38,14 +78,24 @@ Hardcoded system-wide whitelist (`@@||domain.com^` style, prepend to merged rule
   - `play.googleapis.com`
   - `dl.google.com`
 
+**Native path:** `BypassManager.writeBypassRuleFragment()` (`BypassManager.java:264`) produces `@@||domain^` exception rules → `FilterListManager.mergeEnabledLists()` prepends to `adblock_rules.txt` → JNI `reloadAdblockList()` loads into `bl->sni_allowlist` (`blacklist.c:117`) → `blacklist_match_sni_allowlist` consulted first in `check_adblock_sni_rules` (`pcapdroid.c:571-573`).
+
 ### 3. Dynamic Flow & Payload-Level Exceptions
+
+> 🔴 SPEC COMPLETE (Java thresholds persist), NOT ENFORCED at runtime. **Phase 4 MITM prerequisite** — protects against OOM from MITM intercepting high-throughput video/audio/APK traffic. Not actionable until Phase 4 lands.
+
 Streaming videos often use Chunked Transfer Encoding (HLS/DASH) so `Content-Length` is unreliable. CDNs change constantly. Combine both signals:
 
 * **Early Header Bypass:** If response header has `Content-Type: video/*`, `audio/*`, `application/vnd.android.package-archive` (APK), OR `Content-Length` > 20MB → bypass immediately.
 * **Per-Flow Threshold Bypass (Dynamic):** Each TCP flow is monitored with a `bytes_received` counter. If a flow exceeds the dynamic threshold (e.g. **> 5 MB** total) *without triggering any adblock rule on the early payload*, the connection is auto-downgraded from `intercepted` to `raw TCP splice`.
   - Benefit: saves CPU, prevents OOM on unrecognized video CDNs, browser large downloads, in-app asset updates (e.g. game asset downloads).
 
+**Native path:** Not wired. `BypassManager.getDynamicThresholdBytes()` / `getLargeDownloadThresholdBytes()` are readable (persist to SharedPreferences), but no native call site passes flow byte counts through `isFlowBypassed(long)` / `isLargeDownloadBypassed(long)`. The `bytes_received` counter described above does not exist in the JNI capture path.
+
 ### 4. GMS, GSF & Push Notification Exceptions (3-Layer Bypass)
+
+> 🔴 SPEC COMPLETE (domains covered by §2), NOT WIRED for port/UID — **Phase 4 MITM prerequisite** (keeps FCM from being MITM-intercepted). Port layer: no raw-TCP splice on 5228/5229/5230 wired in JNI. SNI layer: `mtalk.google.com` / `android.clients.google.com` are already in the §2 domain allowlist and protected via the live `sni_allowlist` path (not a §4-specific mechanism).
+
 Aggressive bypass to keep notifications instant and avoid killing non-HTTP protocols:
 
 * **Layer 1: Port-Level Bypass (fastest)**
@@ -64,6 +114,13 @@ Aggressive bypass to keep notifications instant and avoid killing non-HTTP proto
   → abort MITM, splice.
 
 ### Implementation Sketch (PCAPdroid)
+
+> ⚠️ **CORRECTION (2026-07-26):** The design described below (J2 `BypassManager` singleton with `shouldBypassByUid`/`shouldBypassByPort`/`shouldBypassBySni` methods, wired into a native `conntrack` callback) was **NEVER IMPLEMENTED THIS WAY**. This section is a **historical design record only** — it represents what was planned, not what exists. Current implementation status for each component:
+> - `BypassManager.java` singleton: EXISTS (`filterlists/BypassManager.java`), but the three `shouldBypass*` methods are dead APIs — no JNI call sites.
+> - JNI `conntrack` callback: NOT wired to `BypassManager`. See the layer-by-layer table in the Status section above for what IS wired.
+> - Payload-level bytes tracking: NOT implemented in JNI (`bytes_received` counter per flow does not exist in `pcapdroid.c`).
+
+*Original design record (outdated — see correction note above):*
 
 1. **`BypassManager.java`** — singleton stored in `PCAPdroid.getInstance()`:
    - Static lists:

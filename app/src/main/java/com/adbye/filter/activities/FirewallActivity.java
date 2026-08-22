@@ -25,6 +25,7 @@ import android.os.Bundle;
 import android.view.KeyEvent;
 import android.view.View;
 
+
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
@@ -38,6 +39,7 @@ import com.adbye.filter.Utils;
 import com.adbye.filter.fragments.EditListFragment;
 import com.adbye.filter.fragments.FirewallStatus;
 import com.adbye.filter.fragments.ProtectionFragment;
+import com.adbye.filter.fragments.AppManagementFragment;
 import com.adbye.filter.model.ListInfo;
 import com.adbye.filter.model.Prefs;
 import com.google.android.material.tabs.TabLayout;
@@ -52,10 +54,11 @@ public class FirewallActivity extends BaseActivity {
 
     private static final int POS_STATUS = 0;
     private static final int POS_BLOCKLIST = 1;
-    private static final int POS_WHITELIST = 2;
-    private static final int POS_PROTECTION = 3;
+    private static final int POS_PROTECTION = 2;
+    private static final int POS_WHITELIST = 3;
+    private static final int POS_APPMGMT = 4;
     private static final int BASE_TOTAL_COUNT = 3;
-    private static final int TOTAL_COUNT = 4;
+    private static final int TOTAL_COUNT = 5;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +80,9 @@ public class FirewallActivity extends BaseActivity {
         public Fragment createFragment(int position) {
             Log.d(TAG, "createFragment");
 
+            if (position == getItemCount() - 1)
+                return new AppManagementFragment();
+
             switch (position) {
                 default: // Deliberate fall-through to status tab
                 case POS_STATUS:
@@ -86,9 +92,7 @@ public class FirewallActivity extends BaseActivity {
                 case POS_WHITELIST:
                     return EditListFragment.newInstance(ListInfo.Type.FIREWALL_WHITELIST);
                 case POS_PROTECTION:
-                    ProtectionFragment pf = new ProtectionFragment();
-                    pf.setCallback(FirewallActivity.this::onProtectionChanged);
-                    return pf;
+                    return new ProtectionFragment();
             }
         }
 
@@ -99,6 +103,10 @@ public class FirewallActivity extends BaseActivity {
         }
 
         public int getPageTitle(final int position) {
+            // APPMGMT tab is always the last tab position.
+            if (position == getItemCount() - 1)
+                return R.string.apps;
+
             switch (position) {
                 default: // Deliberate fall-through to status tab
                 case POS_STATUS:
@@ -111,15 +119,6 @@ public class FirewallActivity extends BaseActivity {
                     return R.string.adbye_protection_tab;
             }
         }
-    }
-
-    /**
-     * Toggled by {@link ProtectionFragment.Callback}; for now we just log.
-     * Engine hooks (FilterListManager.mergeEnabledLists / CaptureService reloads) are
-     * wired in the next phase â€” see plan.md Phase 1 â†’ Phase 4 handoff.
-     */
-    private void onProtectionChanged(String prefKey, boolean enabled) {
-        Log.d(TAG, "Protection changed: " + prefKey + "=" + enabled);
     }
 
     @SuppressLint("NotifyDataSetChanged")
@@ -171,6 +170,8 @@ public class FirewallActivity extends BaseActivity {
                     focusOverride = findViewById(R.id.listview);
                 else if (pos == POS_PROTECTION)
                     focusOverride = findViewById(R.id.protection_list);
+                else if (pos == mPagerAdapter.getItemCount() - 1)
+                    focusOverride = findViewById(R.id.app_management_list);
 
                 if (focusOverride != null) {
                     focusOverride.requestFocus();

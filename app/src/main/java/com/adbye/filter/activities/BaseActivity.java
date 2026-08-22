@@ -84,6 +84,21 @@ public class BaseActivity extends AppCompatActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
+    // Toolbar UP-arrow click routes through onSupportNavigateUp -> supportNavigateUpTo
+    // (it does NOT hit onOptionsItemSelected above). An activity that lacks BOTH a manifest
+    // android:parentActivityName AND an onSupportNavigateUp override gets a null up-Intent:
+    // supportNavigateUpTo(null) NPEs on this custom-ROM's Task.navigateUpTo(null). Fall back
+    // to back-press (same path the mBackAction flow uses) and report handled instead.
+    @Override
+    public boolean onSupportNavigateUp() {
+        if(getSupportParentActivityIntent() == null) {
+            getOnBackPressedDispatcher().onBackPressed();
+            return true;
+        }
+
+        return super.onSupportNavigateUp();
+    }
 }
 
 

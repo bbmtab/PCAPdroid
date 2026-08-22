@@ -108,9 +108,33 @@
             android:launchMode="singleTop"
             android:parentActivityName=".activities.MainActivity" />
         <activity
+            android:name=".activities.SectionsActivity"
+            android:launchMode="singleTop"
+            android:parentActivityName=".activities.MainActivity" />
+        <activity
             android:name=".activities.EditListActivity"
             android:launchMode="singleTop"
             android:parentActivityName=".activities.EditFilterActivity" />
+        <activity
+            android:name=".activities.FilterGroupActivity"
+            android:launchMode="singleTop"
+            android:parentActivityName=".activities.SectionsActivity" />
+        <activity
+            android:name=".activities.FilterDetailActivity"
+            android:launchMode="singleTop"
+            android:parentActivityName=".activities.FilterGroupActivity" />
+        <activity
+            android:name=".activities.DnsProtectionActivity"
+            android:launchMode="singleTop"
+            android:parentActivityName=".activities.SectionsActivity" />
+        <activity
+            android:name=".activities.DnsServerListActivity"
+            android:launchMode="singleTop"
+            android:parentActivityName=".activities.DnsProtectionActivity" />
+        <activity
+            android:name=".activities.DnsServerVariantActivity"
+            android:launchMode="singleTop"
+            android:parentActivityName=".activities.DnsServerListActivity" />
         <activity
             android:name=".activities.EditFilterActivity"
             android:launchMode="singleTop" />

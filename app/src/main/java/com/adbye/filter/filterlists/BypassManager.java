@@ -48,6 +48,7 @@ public final class BypassManager {
 
     private final SharedPreferences prefs;
     private final Set<String> uidAllowlist = new HashSet<>();
+    private final Set<String> filterHttpsExemptUids = new HashSet<>();
     private final Set<String> domainAllowlist = new HashSet<>();
     private final Set<Integer> portAllowlist = new HashSet<>();
     private long dynamicThresholdBytes = DEFAULT_DYNAMIC_THRESHOLD_BYTES;
@@ -89,6 +90,11 @@ public final class BypassManager {
     /** True if the UID (package name or integer UID string) is exempt from all filtering. */
     public boolean isUidBypassed(@NonNull String uidOrPkg) {
         return uidAllowlist.contains(uidOrPkg);
+    }
+
+    /** True if the app package is exempt from SNI-based HTTPS filtering. */
+    public boolean isFilterHttpsExempt(@NonNull String pkg) {
+        return filterHttpsExemptUids.contains(pkg);
     }
 
     /** True if the SNI / host is in the hardcoded domain allowlist. */
@@ -164,6 +170,25 @@ public final class BypassManager {
         return Collections.unmodifiableList(new ArrayList<>(uidAllowlist));
     }
 
+    /** Add a package to the filterHttps exemption set. Persists. */
+    @WorkerThread
+    public void addFilterHttpsExempt(@NonNull String pkg) {
+        filterHttpsExemptUids.add(pkg);
+        persistFilterHttpsExemptUids();
+    }
+
+    /** Remove a package from the filterHttps exemption set. Persists. */
+    @WorkerThread
+    public void removeFilterHttpsExempt(@NonNull String pkg) {
+        filterHttpsExemptUids.remove(pkg);
+        persistFilterHttpsExemptUids();
+    }
+
+    /** Get immutable snapshot of filterHttps-exempt UIDs. */
+    @NonNull public List<String> getFilterHttpsExemptUids() {
+        return Collections.unmodifiableList(new ArrayList<>(filterHttpsExemptUids));
+    }
+
     /** Get immutable snapshot of domain allowlist. */
     @NonNull public List<String> getDomainAllowlist() {
         return Collections.unmodifiableList(new ArrayList<>(domainAllowlist));
@@ -227,6 +252,17 @@ public final class BypassManager {
                 }
             } catch (Exception ignored) {}
         }
+
+        // Optional: load user-added filterHttps-exempt UIDs from prefs (same format)
+        String httpsJson = prefs.getString("adbye_filter_https_exempt_uids", null);
+        if (httpsJson != null && !httpsJson.isEmpty()) {
+            try {
+                for (String s : httpsJson.split(",")) {
+                    String t = s.trim();
+                    if (!t.isEmpty()) filterHttpsExemptUids.add(t);
+                }
+            } catch (Exception ignored) {}
+        }
     }
 
     private void persistUidAllowlist() {
@@ -238,6 +274,17 @@ public final class BypassManager {
             first = false;
         }
         prefs.edit().putString("adbye_bypass_uid_allowlist", sb.toString()).apply();
+    }
+
+    private void persistFilterHttpsExemptUids() {
+        StringBuilder sb = new StringBuilder();
+        boolean first = true;
+        for (String s : filterHttpsExemptUids) {
+            if (!first) sb.append(",");
+            sb.append(s);
+            first = false;
+        }
+        prefs.edit().putString("adbye_filter_https_exempt_uids", sb.toString()).apply();
     }
 
     // ------------------------------------------------------------------------

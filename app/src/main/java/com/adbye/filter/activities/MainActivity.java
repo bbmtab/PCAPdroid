@@ -157,7 +157,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.main_activity);
-        setTitle("PCAPdroid");
+        setTitle("ADBye");
         mPrefs = PreferenceManager.getDefaultSharedPreferences(this);
 
         int appver = Prefs.getAppVersion(mPrefs);
@@ -607,6 +607,9 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         } else if(id == R.id.firewall) {
             Intent intent = new Intent(MainActivity.this, FirewallActivity.class);
             startActivity(intent);
+        } else if(id == R.id.item_sections) {
+            Intent intent = new Intent(MainActivity.this, SectionsActivity.class);
+            startActivity(intent);
         } else if(id == R.id.open_log) {
             Intent intent = new Intent(MainActivity.this, LogviewActivity.class);
             startActivity(intent);
@@ -722,6 +725,17 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
         mPcapExecutor = null;
     }
 
+    // Retired 2026-07-26 (constraint #8 sign-off): CaptureService.hasSeenDumpExtensions()
+    // had no JNI implementation on this branch (orphaned native decl, todo.md "orphaned
+    // native decls" / fixed.md sibling-audit finding). The dump-extensions advisory notice
+    // it gated is retired rather than restored: the underlying reader flag
+    // (pd_reader_t::has_seen_dump_extensions, pcap_reader.c) is per-file and locally scoped
+    // with no global accessor, so restoring would need C-side global caching for a low-value
+    // tooltip. Returns true so the notice in checkLoadedPcap() is permanently skipped.
+    private boolean hasSeenDumpExtensionsSafe() {
+        return true;
+    }
+
     private void checkLoadedPcap() {
         dismissPcapLoadDialog();
 
@@ -730,7 +744,7 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             ConnectionsRegister reg = CaptureService.getConnsRegister();
 
             if((reg != null) && (reg.getConnCount() > 0)
-                    && !CaptureService.hasSeenDumpExtensions()
+                    && !hasSeenDumpExtensionsSafe()
                     && !mExtensionsNoticeShown
             ) {
                 new AlertDialog.Builder(this)
@@ -1186,8 +1200,24 @@ public class MainActivity extends BaseActivity implements NavigationView.OnNavig
             mPcapExecutor.execute(() -> {
                 File out = getKeylogPath();
                 out.deleteOnExit();
-                CaptureService.extractKeylogFromPcapng(pcap_path, out.getAbsolutePath());
-                boolean hasKeylog = out.exists() && (out.length() > 0);
+                try {
+                    CaptureService.extractKeylogFromPcapng(pcap_path, out.getAbsolutePath());
+                } catch (UnsatisfiedLinkError e) {
+                    // Resilience guard (post-restore 2026-07-26): extractKeylogFromPcapng()
+                    // now has a native impl (jni_impl.c bridge -> pcapng_to_keylog); this
+                    // catch fires only if native fails to link in some build config, before
+                    // writing anything to `out`. The hasKeylog check below (out.exists())
+                    // naturally evaluates false in that case, so no separate degrade-flag is
+                    // needed here -- this also sidesteps a real javac error: assigning a
+                    // boolean in both the try and catch blocks makes it not effectively-final
+                    // for the runOnUiThread lambda below (verified against javac 17: "local
+                    // variables referenced from a lambda expression must be final or
+                    // effectively final"). Also avoids crashing the executor thread (Android
+                    // kills the process on any uncaught Throwable, not just main-thread ones).
+                    String reason = (e.getMessage() != null) ? e.getMessage() : e.toString();
+                    Log.w(TAG, "extractKeylogFromPcapng() native call failed; skipping keylog extraction (" + reason + ")");
+                }
+                final boolean hasKeylog = out.exists() && (out.length() > 0);
 
                 runOnUiThread(() -> {
                     if (mPcapLoadDialog == null)

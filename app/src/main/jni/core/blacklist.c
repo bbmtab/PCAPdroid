@@ -46,6 +46,11 @@ struct blacklist {
     country_entry_t* countries;
     app_allowlist_t *app_allowlists;
     struct HashTable *sni_domains;
+    struct HashTable *sni_allowlist;    // @@ system bypass rules (Phase 1.b Path B Commit B).
+                                        // Consulted BEFORE sni_domains in check_adblock_sni_rules
+                                        // so a bypassed host (media CDN, Play Store) is never
+                                        // adblock-blocked even if a filter list also matches it
+                                        // (constraint #2 — Resource Protection).
     blacklists_stats_t stats;
 };
 
@@ -77,6 +82,15 @@ blacklist_t* blacklist_init() {
         return NULL;
     }
 
+    bl->sni_allowlist = AllocateHashTable(0 /* keys are null terminated */, 1 /* copy keys */);
+    if (!bl->sni_allowlist) {
+        FreeHashTable(bl->sni_domains);
+        FreeHashTable(bl->domains);
+        ndpi_ptree_destroy(bl->ptree);
+        bl_free(bl);
+        return NULL;
+    }
+
     return bl;
 }
 
@@ -94,6 +108,26 @@ int blacklist_add_sni(blacklist_t *bl, const char *domain) {
         return -ENOMEM;
 
     bl->stats.num_domains++;
+    return 0;
+}
+
+/* ******************************************************* */
+
+int blacklist_add_sni_allowlist(blacklist_t *bl, const char *domain) {
+    // Insert a @@ bypass host into sni_allowlist (Phase 1.b Path B Commit B).
+    // Mirrors blacklist_add_sni above but does NOT bump stats.num_domains —
+    // bypass entries are exemptions, not block rules; reloadAdblockList's
+    // "%d SNI domains loaded" log is intentionally counting only blocks.
+    if(strncmp(domain, "www.", 4) == 0)
+        domain += 4;
+
+    if(blacklist_match_sni_allowlist(bl, domain))
+        return -EADDRINUSE; // duplicate bypass domain
+
+    HTItem* entry = HashInsert(bl->sni_allowlist, PTR_KEY(bl->sni_allowlist, domain));
+    if (!entry)
+        return -ENOMEM;
+
     return 0;
 }
 
@@ -214,7 +248,15 @@ int blacklist_load_file(blacklist_t *bl, const char *path, blacklist_type btype,
         if(!item)
             break;
 
-        if(!item[0] || (item[0] == '#') || (item[0] == '\n'))
+        // Comment / blank skip. '#' is the native comment convention used by all
+        // blacklist sources. '!' is the AdBlock/uBlock comment convention used
+        // by the merged rules file: FilterListManager.HARDCODED_SYSTEM_WHITELIST
+        // prepends "! ADBye system whitelist (do not remove)" and BypassManager.
+        // writeBypassRuleFragment prepends "! ADBye Resource Protection ..." /
+        // "! u:<uid>" / "! p:5228" informational headers. Without skipping '!'
+        // these would be inserted as literal "domain" keys in the SNI block
+        // hash (the pre-fix bombshell).
+        if(!item[0] || (item[0] == '#') || (item[0] == '\n') || (item[0] == '!'))
             continue;
 
         item[strcspn(buffer, "\r\n")] = '\0';
@@ -281,7 +323,34 @@ int blacklist_load_file(blacklist_t *bl, const char *path, blacklist_type btype,
                 continue;
             }
 
-            int rv = blacklist_add_sni(bl, item);
+            // AdBlock-rule syntax strip (Phase 1.b Path B Commit B). The merged
+            // rules file carries bypass exceptions ("@@||domain^") and raw user
+            // filter-list content (including || / bare hosts and $option modifiers
+            // such as $third-party, $script, $domain=...). Strip everything that
+            // is not part of the bare hostname so the hash keys are plain hosts
+            // that real SNI / HTTP Host will match:
+            //   * drop option modifiers after '$' (e.g. "||evil.com^$third-party")
+            //   * '@@' prefix  -> exception rule (-> sni_allowlist)
+            //   * '||' prefix  -> domain anchor (strip)
+            //   * trailing '^' -> separator       (strip)
+            // Verified by test_bombshell_fixed.c scenarios F1, F2, F3.
+            char *dollar = strchr(item, '$');
+            if(dollar) *dollar = '\0';
+
+            const char *host = item;
+            bool is_exception = false;
+            if(strncmp(host, "@@", 2) == 0) { is_exception = true; host += 2; }
+            if(strncmp(host, "||", 2) == 0) host += 2;
+
+            size_t hlen = strlen(host);
+            if(hlen && host[hlen - 1] == '^')
+                ((char*)host)[hlen - 1] = '\0';
+
+            if(!host[0]) { num_fail++; continue; }   // empty after stripping (e.g. "||^", "@@||^")
+
+            int rv = is_exception
+                ? blacklist_add_sni_allowlist(bl, host)
+                : blacklist_add_sni(bl, host);
             if(rv == 0)
                 num_ok++;
             else if(rv == -EADDRINUSE)
@@ -315,6 +384,7 @@ int blacklist_load_file(blacklist_t *bl, const char *path, blacklist_type btype,
 void blacklist_destroy(blacklist_t *bl) {
     FreeHashTable(bl->domains);
     FreeHashTable(bl->sni_domains);
+    FreeHashTable(bl->sni_allowlist);   // Phase 1.b Path B Commit B — paired with sni_allowlist allocation in blacklist_init
 
     int_entry_t *entry_i, *tmp_i;
     HASH_ITER(hh, bl->uids, entry_i, tmp_i) {
@@ -397,6 +467,37 @@ static char* get_second_level_domain(const char *domain) {
 bool blacklist_match_sni(const blacklist_t *bl, const char *domain) {
     // Keep in sync with MatchList.matchesHost - supports suffix matching
     HashTable* ht = bl->sni_domains;
+    HTItem *entry = NULL;
+
+    if(strncmp(domain, "www.", 4) == 0)
+        domain += 4;
+
+    // exact domain match
+    entry = HashFind(ht, PTR_KEY(ht, domain));
+    if(entry != NULL)
+        return true;
+
+    // 2nd-level domain match
+    char *domain2 = get_second_level_domain(domain);
+    if(domain2 != domain) {
+        entry = HashFind(ht, PTR_KEY(ht, domain2));
+        if(entry != NULL)
+            return true;
+    }
+
+    return false;
+}
+
+/* ******************************************************* */
+
+bool blacklist_match_sni_allowlist(const blacklist_t *bl, const char *domain) {
+    // @@ system bypass lookup (Phase 1.b Path B Commit B). Mirrors
+    // blacklist_match_sni above against bl->sni_allowlist, including the
+    // www. prefix strip and the 2nd-level-domain suffix fall-back so that
+    // "googlevideo.com" as a bypass entry covers subdomains like
+    // "video.googlevideo.com". Consulted BEFORE blacklist_match_sni in
+    // check_adblock_sni_rules (constraint #2 Resource Protection).
+    HashTable* ht = bl->sni_allowlist;
     HTItem *entry = NULL;
 
     if(strncmp(domain, "www.", 4) == 0)

@@ -100,7 +100,7 @@
     <string name="proxy_host">பதிலாள் புரவலன்</string>
     <string name="proxy_port">பதிலாள் போர்ட்</string>
     <string name="root_capture">வேராகப் பிடிக்கவும்</string>
-    <string name="root_capture_summary">பிற VPN பயன்பாடுகளுடன் இயங்க PCAPDroid ஐ அனுமதிக்கிறது</string>
+    <string name="root_capture_summary">பிற VPN பயன்பாடுகளுடன் இயங்க ADBye ஐ அனுமதிக்கிறது</string>
     <string name="donate">நன்கொடை</string>
     <string name="app_log">பதிவு</string>
     <string name="no_data">தரவு இல்லை</string>
@@ -134,9 +134,9 @@
     <string name="ctrl_consent">ஒரு பயன்பாடு உங்கள் சாதன போக்குவரத்தை கைப்பற்ற விரும்புகிறது.\n உங்களுக்கு உறுதியாக தெரியவில்லை என்றால் அதை மறுக்கவும்</string>
     <string name="deny">மறுக்கவும்</string>
     <string name="allow">இசைவு</string>
-    <string name="ctrl_consent_title">Pcapdroid கட்டுப்பாட்டு கோரிக்கை</string>
-    <string name="ctrl_consent_denied">Pcapdroid: கட்டுப்பாட்டு கோரிக்கை மறுக்கப்பட்டது</string>
-    <string name="ctrl_consent_allowed">Pcapdroid: கட்டுப்பாட்டு கோரிக்கை அனுமதிக்கப்பட்டது</string>
+    <string name="ctrl_consent_title">ADBye கட்டுப்பாட்டு கோரிக்கை</string>
+    <string name="ctrl_consent_denied">ADBye: கட்டுப்பாட்டு கோரிக்கை மறுக்கப்பட்டது</string>
+    <string name="ctrl_consent_allowed">ADBye: கட்டுப்பாட்டு கோரிக்கை அனுமதிக்கப்பட்டது</string>
     <string name="capture_interface">இடைமுகத்தைப் பிடிக்கவும்</string>
     <string name="internet">இணையம்</string>
     <string name="all_interfaces">அனைத்து இடைமுகங்களும்</string>
@@ -244,18 +244,18 @@
     <string name="install_action">நிறுவவும்</string>
     <string name="export_action">ஏற்றுமதி</string>
     <string name="export_ellipsis">ஏற்றுமதி…</string>
-    <string name="install_the_mitm_addon">PCAPDroid <a href="%1$s"> MITM addon </a> ஐ நிறுவவும்</string>
-    <string name="export_ca_certificate">PCAPDroid CA சான்றிதழை ஏற்றுமதி செய்து, பின்னர் ஆண்ட்ராய்டு \"குறியாக்க மற்றும் நற்சான்றிதழ்கள்\" அமைப்புகளைத் திறந்து அதை \"CA சான்றிதழ்\" ஆக நிறுவவும் என்பதைத் தேர்வுசெய்க</string>
-    <string name="install_ca_certificate">\"VPN மற்றும் APPS\" ஐத் தேர்ந்தெடுத்து PCAPDroid CA சான்றிதழை நிறுவவும். ஆண்ட்ராய்டு உங்கள் பூட்டு திரை அல்லது கடவுச்சொல்லைக் கேட்கும்</string>
+    <string name="install_the_mitm_addon">ADBye <a href="%1$s"> MITM addon </a> ஐ நிறுவவும்</string>
+    <string name="export_ca_certificate">ADBye CA சான்றிதழை ஏற்றுமதி செய்து, பின்னர் ஆண்ட்ராய்டு \"குறியாக்க மற்றும் நற்சான்றிதழ்கள்\" அமைப்புகளைத் திறந்து அதை \"CA சான்றிதழ்\" ஆக நிறுவவும் என்பதைத் தேர்வுசெய்க</string>
+    <string name="install_ca_certificate">\"VPN மற்றும் APPS\" ஐத் தேர்ந்தெடுத்து ADBye CA சான்றிதழை நிறுவவும். ஆண்ட்ராய்டு உங்கள் பூட்டு திரை அல்லது கடவுச்சொல்லைக் கேட்கும்</string>
     <string name="checking_the_certificate">சான்றிதழை சரிபார்க்கிறது…</string>
-    <string name="ca_cert_export_failed">CA சான்றிதழை ஏற்றுமதி செய்யும் போது பிழை ஏற்பட்டது\n\n பின்னணி சேவைகள் செயல்படுத்தலைக் கட்டுப்படுத்த உங்கள் சாதனம் ஆட்டோச்டார்ட் அல்லது ஒத்த மென்பொருளை செயல்படுத்தினால், <a href="%1$s"> வைட்லிச்ட் pcapdroid </a> ஐ உறுதிப்படுத்திக் கொள்ளுங்கள்</string>
+    <string name="ca_cert_export_failed">CA சான்றிதழை ஏற்றுமதி செய்யும் போது பிழை ஏற்பட்டது\n\n பின்னணி சேவைகள் செயல்படுத்தலைக் கட்டுப்படுத்த உங்கள் சாதனம் ஆட்டோச்டார்ட் அல்லது ஒத்த மென்பொருளை செயல்படுத்தினால், <a href="%1$s"> வைட்லிச்ட் adbye </a> ஐ உறுதிப்படுத்திக் கொள்ளுங்கள்</string>
     <string name="cert_exported_now_installed">சான்றிதழ் ஏற்றுமதி செய்யப்பட்டது, இப்போது அதை ஆண்ட்ராய்டு அமைப்புகளிலிருந்து நிறுவவும்</string>
     <string name="cert_installed_correctly">CA சான்றிதழ் நிறுவப்பட்டுள்ளது</string>
     <string name="cert_reinstall_required">CA சான்றிதழ் நிறுவப்படவில்லை, MITM அமைவு வழிகாட்டியை இயக்கவும்</string>
-    <string name="mitm_addon_bad_version">மோசமான PCAPDROID MITM ADDON பதிப்பு. பதிப்பு %1$s ஐ நிறுவி மீண்டும் முயற்சிக்கவும்</string>
+    <string name="mitm_addon_bad_version">மோசமான ADBYE MITM ADDON பதிப்பு. பதிப்பு %1$s ஐ நிறுவி மீண்டும் முயற்சிக்கவும்</string>
     <string name="update_available">புதுப்பிப்பு கிடைக்கிறது</string>
     <string name="mitm_addon_update_available">புதிய MITM ADDON புதுப்பிப்பு கிடைக்கிறது. அண்மைக் கால பிழை திருத்தங்களைப் பெற புதுப்பிக்கவும்</string>
-    <string name="mitm_addon_new_version">PCAPDroid MITM ADDON புதுப்பிக்கப்பட வேண்டும்</string>
+    <string name="mitm_addon_new_version">ADBye MITM ADDON புதுப்பிக்கப்பட வேண்டும்</string>
     <string name="mitm_addon">MITM addon</string>
     <string name="update_action">புதுப்பிப்பு</string>
     <string name="export_failed">ஏற்றுமதி தோல்வியடைந்தது</string>
@@ -277,7 +277,7 @@
     <string name="decrypted">மறைகுறியாக்கப்பட்டது</string>
     <string name="decryption">மறைகுறியாக்கம்</string>
     <string name="decryption_filter">நிலை: %1$s</string>
-    <string name="connection_start_not_seen">இந்த இணைப்பின் தொடக்கத்தை pcapdroid பார்த்ததில்லை. சில தகவல்கள் காணவில்லை</string>
+    <string name="connection_start_not_seen">இந்த இணைப்பின் தொடக்கத்தை adbye பார்த்ததில்லை. சில தகவல்கள் காணவில்லை</string>
     <string name="network_traffic">போக்குவரத்து</string>
     <string name="warn_no_app_data">பயன்பாட்டு தரவு எதுவும் பரிமாறப்படவில்லை</string>
     <string name="waiting_application_data">காத்திருக்கும் தரவு</string>
@@ -300,7 +300,7 @@
     <string name="size_x">அளவு: %1$s</string>
     <string name="geo_db_delete">தரவுத்தளத்தை நீக்க மற்றும் இடத்தை சேமிக்க தட்டவும்</string>
     <string name="download">பதிவிறக்கம்</string>
-    <string name="connection_blocked">இந்த இணைப்பு pcapdroid ஆல் தடுக்கப்பட்டுள்ளது</string>
+    <string name="connection_blocked">இந்த இணைப்பு adbye ஆல் தடுக்கப்பட்டுள்ளது</string>
     <string name="import_action">இறக்குமதி</string>
     <string name="import_failed">இறக்குமதி தோல்வியடைந்தது</string>
     <string name="invalid_backup">தவறான காப்புப்பிரதி வடிவம்</string>
@@ -325,9 +325,9 @@
     <string name="block_quick">தொகுதி குவிக்</string>
     <string name="block_private_dns">தனியார் டி.என்.எச்</string>
     <string name="block_private_dns_summary">டி.என்.எச் போக்குவரத்தை ஆய்வு செய்ய தனியார் டி.என்.எச்சைக் கண்டறிந்து தடுக்கலாம். இதை முடக்குவது போக்குவரத்து பகுப்பாய்விற்கு இடையூறு விளைவிக்கும்</string>
-    <string name="mitm_setup_wizard_intro">இந்த வழிகாட்டி PCAPDroid MITM துணை நிரல் மற்றும் சான்றிதழ் ஆணையத்தை நிறுவுவதன் மூலம் உங்களுக்கு வழிகாட்டும், அவை <a href="%1$s"> TLS மறைகுறியாக்க </a> செய்ய வேண்டும்</string>
+    <string name="mitm_setup_wizard_intro">இந்த வழிகாட்டி ADBye MITM துணை நிரல் மற்றும் சான்றிதழ் ஆணையத்தை நிறுவுவதன் மூலம் உங்களுக்கு வழிகாட்டும், அவை <a href="%1$s"> TLS மறைகுறியாக்க </a> செய்ய வேண்டும்</string>
     <string name="mitm_setup_wizard_done">பி.சி.ஏ.பி டிராய்டு இப்போது டி.எல்.எச் போக்குவரத்தை மறைகுறியாக்க தயாராக உள்ளது\n\n மறைகுறியாக்கத்தைத் தடுக்கக்கூடிய பாதுகாப்பு நடவடிக்கைகள் மற்றும் அவற்றை எவ்வாறு புறக்கணிப்பது என்பதைப் பற்றி மேலும் அறிய <a href="%1$s"> பயனர் கையேடு </a> ஐப் பாருங்கள்</string>
-    <string name="welcome_to_pcapdroid">PCAPDROID க்கு வருக</string>
+    <string name="welcome_to_pcapdroid">ADBYE க்கு வருக</string>
     <string name="app_intro_next_button">அடுத்தது</string>
     <string name="app_intro_skip_button">தவிர்</string>
     <string name="app_intro_back_button">பின்</string>
@@ -341,7 +341,7 @@
     <string name="app_intro_traffic_inspection">HTTP கோரிக்கைகள், பதில்கள் மற்றும் மூல தரவுகளை ஆய்வு செய்வது எளிதானது, உள்ளமைக்கப்பட்ட டிகோடர்களுக்கு நன்றி\n\n மறைகுறியாக்கப்பட்ட இணைப்பு கிடைத்ததா? மறைகுறியாக்கப்பட்ட தரவைப் பெற நீங்கள் <a href="%1$s"> TLS மறைகுறியாக்கம் </a> ஐ இயக்கலாம்</string>
     <string name="app_intro_firewall_msg">ஒருங்கிணைந்த <a href="%1$s"> ஃபயர்வால் </a> மூலம் தனிப்பட்ட பயன்பாடுகள், களங்கள் மற்றும் நாடுகளுக்கான இணைய அணுகலை நீங்கள் எளிதாக தடுக்கலாம் \n\nஉங்கள் தனியுரிமையைப் பாதுகாக்க இறுதி கருவியைப் பெற உள்ளமைக்கப்பட்ட போக்குவரத்து தெரிவுநிலையுடன் இதை இணைக்கவும்</string>
     <string name="app_intro_malware_detection"><a href="%1$s"> கருப்பொருள் கண்டறிதல் </a> அம்சத்துடன் உங்கள் சாதனத்தின் பாதுகாப்பை மேம்படுத்தவும்\n\n புதுப்பித்த தடுப்புப்பட்டியல்களைப் பயன்படுத்துவதன் மூலம், இது நிகழ்நேரத்தில் தீங்கிழைக்கும் இணைப்புகளைக் கண்டறிந்து, தடுக்கலாம் மற்றும் எச்சரிக்கலாம்</string>
-    <string name="app_intro_traffic_dump">பி.சி.ஏ.பி டிராய்டு <a href="%1$s"> பல வழிகளை </a> வழங்குகிறது \n\n<a href="%2$s"> pcapdroid நீட்டிப்பு விருப்பம் </a> வழியாக, நீங்கள் பாக்கெட்டுகளில் பயன்பாட்டு பெயர்களைச் சேர்த்து அவற்றை வயர்சார்க்கில் காண்பிக்கலாம்</string>
+    <string name="app_intro_traffic_dump">பி.சி.ஏ.பி டிராய்டு <a href="%1$s"> பல வழிகளை </a> வழங்குகிறது \n\n<a href="%2$s"> adbye நீட்டிப்பு விருப்பம் </a> வழியாக, நீங்கள் பாக்கெட்டுகளில் பயன்பாட்டு பெயர்களைச் சேர்த்து அவற்றை வயர்சார்க்கில் காண்பிக்கலாம்</string>
     <string name="permission_granted">%1$s இசைவு வழங்கப்பட்டது</string>
     <string name="permission_grant_fail">%1$s இசைவு வழங்க முடியாது</string>
     <string name="connection_not_found">கொடுக்கப்பட்ட இணைப்பைக் கண்டுபிடிக்க முடியவில்லை</string>
@@ -351,7 +351,7 @@
     <string name="capture_stopped_low_memory">பிடிப்பு நிறுத்தப்பட்டுள்ளது</string>
     <string name="heap_usage">குவியல் பயன்பாடு</string>
     <string name="memory_usage">நினைவக பயன்பாடு</string>
-    <string name="vpn_lockdown_notice">PCAPDroid இயங்காதபோது பயன்பாடுகள் இணையத்தை அணுகுவதைத் தடுக்க (எ.கா. மறுதொடக்கத்திற்குப் பிறகு) நீங்கள் பூட்டப்பட்ட பயன்முறையில் எப்போதும் VPN ஆக PCAPDroid ஐ அமைக்கலாம்.\n\n நீங்கள் இப்போது VPN அமைப்புகளைத் திறக்க விரும்புகிறீர்களா?</string>
+    <string name="vpn_lockdown_notice">ADBye இயங்காதபோது பயன்பாடுகள் இணையத்தை அணுகுவதைத் தடுக்க (எ.கா. மறுதொடக்கத்திற்குப் பிறகு) நீங்கள் பூட்டப்பட்ட பயன்முறையில் எப்போதும் VPN ஆக ADBye ஐ அமைக்கலாம்.\n\n நீங்கள் இப்போது VPN அமைப்புகளைத் திறக்க விரும்புகிறீர்களா?</string>
     <string name="ip_mode">VPN IP முகவரிகள்</string>
     <string name="ipv4_only">IPv4 மட்டும்</string>
     <string name="ipv6_only">IPv6 மட்டும்</string>
@@ -370,16 +370,16 @@
     <string name="payload_scams_notice">இந்த பார்வையில் உங்கள் கடவுச்சொற்கள் மற்றும் அணுகல் டோக்கன்கள் போன்ற முக்கியமான தகவல்கள் இருக்கலாம்.\n\n இந்த தகவலை ஒருபோதும் யாருக்கும் கொடுக்க வேண்டாம், இது ஒரு மோசடி முயற்சியாக இருக்கலாம்</string>
     <string name="cancel_action">ரத்துசெய்</string>
     <string name="show_data_action">தரவைக் காட்டு</string>
-    <string name="remote_collector_notice">தொலைநிலை சேவையகத்திற்கு போக்குவரத்தை அனுப்ப PCAPDroid ஐ கட்டமைத்துள்ளீர்கள். சேவையகம் உங்கள் முக்கியமான தகவல்களை அணுக முடியும்.\n\n இதைச் செய்ய யாராவது உங்களிடம் கேட்டால், அது ஒரு மோசடி முயற்சி</string>
+    <string name="remote_collector_notice">தொலைநிலை சேவையகத்திற்கு போக்குவரத்தை அனுப்ப ADBye ஐ கட்டமைத்துள்ளீர்கள். சேவையகம் உங்கள் முக்கியமான தகவல்களை அணுக முடியும்.\n\n இதைச் செய்ய யாராவது உங்களிடம் கேட்டால், அது ஒரு மோசடி முயற்சி</string>
     <string name="remote_server_warning">பாதுகாப்பு காரணங்களுக்காக, தொலை சேவையகத்திற்கு போக்குவரத்தை அனுப்புவது \"%1$s\" அனுமதிக்கப்படவில்லை</string>
     <string name="warning">எச்சரிக்கை</string>
     <string name="paid_features_unlocked">கட்டண நற்பொருத்தங்கள் திறக்கப்பட்டன. ஓடியால் பிடிப்பை மறுதொடக்கம் செய்யுங்கள்</string>
     <string name="build_info">தகவலை உருவாக்குங்கள்</string>
-    <string name="tls_decryption_with_root_msg">ரூட் மூலம் டி.எல்.எச்மறைகுறியாக்கத்தை இயக்கும் திறன் ஒரு சோதனை அம்சமாகும். இது அறியப்பட்ட பிழைகளின் பட்டியல்:\n\n - pcapdroid இல், அசல் பயன்பாட்டிற்கு பதிலாக MITM- அடான் பயன்பாட்டிலிருந்து உருவாக்கப்பட்ட போக்குவரத்தை நீங்கள் காண்பீர்கள்\n - SSL கீலாக் டம்ப் ஆதரிக்கப்படவில்லை\n - பயன்பாட்டு வடிகட்டி அமைக்கப்படும்போது, இலக்கு பயன்பாட்டிற்கு மட்டுமே மறைகுறியாக்கம் ஏற்படும், ஆனால் பி.சி.ஏ.பி டிராய்டு இன்னும் மற்ற பயன்பாடுகளின் போக்குவரத்தைக் காண்பிக்கும்\n - பிடிப்பு தொடங்கத் தவறினால், நீங்கள் உண்மையில் iptables கட்டளையை ரூட்டாக இயக்க முடியும் என்பதை உறுதிப்படுத்தவும்\n - இது ஆண்ட்ராய்டு 12 மற்றும் அதற்குப் பிறகு வேலை செய்யாது\n - ஒரு VPN செயலி இயங்கினால், நீங்கள் ஒரு குறிப்பிட்ட செயலியை மறைகுறியாக்கத்திற்காக இலக்காகக் கொள்ள வேண்டும் அல்லது PCAPdroid mitm addon ஐ VPN இலிருந்து விலக்க வேண்டும், இல்லையெனில் போக்குவரத்து ஒரு சுழற்சியில் செல்லும்</string>
+    <string name="tls_decryption_with_root_msg">ரூட் மூலம் டி.எல்.எச்மறைகுறியாக்கத்தை இயக்கும் திறன் ஒரு சோதனை அம்சமாகும். இது அறியப்பட்ட பிழைகளின் பட்டியல்:\n\n - adbye இல், அசல் பயன்பாட்டிற்கு பதிலாக MITM- அடான் பயன்பாட்டிலிருந்து உருவாக்கப்பட்ட போக்குவரத்தை நீங்கள் காண்பீர்கள்\n - SSL கீலாக் டம்ப் ஆதரிக்கப்படவில்லை\n - பயன்பாட்டு வடிகட்டி அமைக்கப்படும்போது, இலக்கு பயன்பாட்டிற்கு மட்டுமே மறைகுறியாக்கம் ஏற்படும், ஆனால் பி.சி.ஏ.பி டிராய்டு இன்னும் மற்ற பயன்பாடுகளின் போக்குவரத்தைக் காண்பிக்கும்\n - பிடிப்பு தொடங்கத் தவறினால், நீங்கள் உண்மையில் iptables கட்டளையை ரூட்டாக இயக்க முடியும் என்பதை உறுதிப்படுத்தவும்\n - இது ஆண்ட்ராய்டு 12 மற்றும் அதற்குப் பிறகு வேலை செய்யாது\n - ஒரு VPN செயலி இயங்கினால், நீங்கள் ஒரு குறிப்பிட்ட செயலியை மறைகுறியாக்கத்திற்காக இலக்காகக் கொள்ள வேண்டும் அல்லது ADBye mitm addon ஐ VPN இலிருந்து விலக்க வேண்டும், இல்லையெனில் போக்குவரத்து ஒரு சுழற்சியில் செல்லும்</string>
     <string name="unlock_token_summary">பயன்பாட்டின் கூகிள் அல்லாத விளையாட்டு கட்டமைப்புகளில் கட்டண அம்சங்களைத் திறக்க பயன்படுத்தக்கூடிய ஒரு கிள்ளாக்கு (எ.கா. எஃப்-டிராய்டு/கிதுப்)</string>
     <string name="unlock_token_error">திறத்தல் கிள்ளாக்கை கோர முடியவில்லை [ %1$d]: %2$s</string>
     <string name="access_paid_features_msg">கட்டண அம்சங்களை எவ்வாறு அணுகுவது என்பதை அறிய <a href="%1$s">பயனர் கையேடு </a> ஐப் பாருங்கள்</string>
-    <string name="license_service_unavailable">PCAPDroid உரிம பணி தற்போது கிடைக்கவில்லை. தயவுசெய்து சில நிமிடங்களில் மீண்டும் முயற்சிக்கவும்</string>
+    <string name="license_service_unavailable">ADBye உரிம பணி தற்போது கிடைக்கவில்லை. தயவுசெய்து சில நிமிடங்களில் மீண்டும் முயற்சிக்கவும்</string>
     <string name="requesting_unlock_token">திறத்தல் டோக்கனைக் கோருகிறது, தயவுசெய்து காத்திருங்கள்</string>
     <string name="show_action">காட்டு</string>
     <string name="show_connection">இணைப்பைக் காட்டு</string>
@@ -424,12 +424,12 @@
     <string name="write_ext_storage_failed">வெளிப்புற சேமிப்பகத்திற்கு எழுதுதல் தோல்வியடைந்தது. விவரங்களுக்கு பயன்பாட்டு பதிவை சரிபார்க்கவும்</string>
     <string name="username">பயனர்பெயர்</string>
     <string name="password">கடவுச்சொல்</string>
-    <string name="mitm_addon_autostart_workaround">எம்ஐடிஎம் துணை நிரலுக்கான இணைப்பு தோல்வியடைந்தது. ஒரு பணித்தொகுப்பாக, நீங்கள் MITM ADDON பயன்பாட்டைத் திறக்க முயற்சி செய்யலாம், பின்னர் அதை மூடாமல் pcapdroid க்குச் செல்லலாம். இப்போது அதைத் திறக்க விரும்புகிறீர்களா?</string>
+    <string name="mitm_addon_autostart_workaround">எம்ஐடிஎம் துணை நிரலுக்கான இணைப்பு தோல்வியடைந்தது. ஒரு பணித்தொகுப்பாக, நீங்கள் MITM ADDON பயன்பாட்டைத் திறக்க முயற்சி செய்யலாம், பின்னர் அதை மூடாமல் adbye க்குச் செல்லலாம். இப்போது அதைத் திறக்க விரும்புகிறீர்களா?</string>
     <string name="qr_license_confirm">பின்வரும் திறத்தல் கிள்ளாக்கைப் பயன்படுத்தி \"%1$s\" சாதனத்திற்கான உரிமத்தை உருவாக்க விரும்புகிறீர்களா?</string>
     <string name="connection_error">இணைப்பு பிழை: %1$s</string>
     <string name="activate_via_qr_code">QR குறியீடு வழியாக செயல்படுத்தவும்</string>
     <string name="qr_code_expired">QR குறியீடு காலாவதியானது. புதிய QR குறியீட்டை உருவாக்கி மீண்டும் முயற்சிக்கவும்</string>
-    <string name="qr_info_text">Google Play இலிருந்து PCAPDroid ஐ நிறுவி இந்த QR குறியீட்டை ச்கேன் செய்யுங்கள்</string>
+    <string name="qr_info_text">Google Play இலிருந்து ADBye ஐ நிறுவி இந்த QR குறியீட்டை ச்கேன் செய்யுங்கள்</string>
     <string name="qr_purchase_required">QR குறியீடு செயல்படுத்தலுடன் தொடர திறத்தல் கிள்ளாக்கை வாங்கவும்</string>
     <string name="license_limit_reached">இந்த திறத்தல் டோக்கனுக்கான உரிம வரம்பை நீங்கள் அடைந்துவிட்டீர்கள். அதிக உரிமங்களை உருவாக்க புதிய கிள்ளாக்கை வாங்கவும்</string>
     <string name="license_error">உரிமம் உருவாக்கும் பிழை [ %1$d]: %2$s</string>
@@ -450,7 +450,7 @@
     <string name="unsupported_pcap_datalink">கோப்பில் ஆதரிக்கப்படாத டேட்டாலிங்க் உள்ளது</string>
     <string name="pcap_file_not_exists">குறிப்பிட்ட கோப்பு இல்லை</string>
     <string name="root_capture_start_failed">தொடக்க தோல்வி. சாதனம் மேகிசுடன் வேரூன்றியிருப்பதை உறுதிசெய்க</string>
-    <string name="root_capture_pcapd_start_failure">தொடக்க தோல்வி. PCAPDroid க்கு ரூட் அணுகலை வழங்குவதை உறுதிசெய்க</string>
+    <string name="root_capture_pcapd_start_failure">தொடக்க தோல்வி. ADBye க்கு ரூட் அணுகலை வழங்குவதை உறுதிசெய்க</string>
     <string name="pcap_read_error">பிடிப்பு கோப்பைப் படிப்பதில் பிழை. விவரங்களுக்கு பதிவைச் சரிபார்க்கவும்</string>
     <string name="pcap_file_load_aborted">கைப்பற்றப்பட்ட கோப்பு ஏற்றுதல் நிறுத்தப்பட்டது</string>
     <string name="host_resolution_failed">புரவலன் %1$s ஐ தீர்க்க முடியவில்லை</string>
@@ -460,7 +460,7 @@
     <string name="active_vpn_detected">செயலில் VPN கண்டறியப்பட்டது</string>
     <string name="redirected">திருப்பி விடப்பட்டது</string>
     <string name="connection_redirected_port_map">போர்ட் மேப்பிங் விதி காரணமாக இந்த இணைப்பு திருப்பி விடப்பட்டுள்ளது</string>
-    <string name="dnscrypt_how_to">PCAPDroid உடன் DOH / DNSCRYPT ஐ எவ்வாறு பயன்படுத்துவது</string>
+    <string name="dnscrypt_how_to">ADBye உடன் DOH / DNSCRYPT ஐ எவ்வாறு பயன்படுத்துவது</string>
     <string name="never">ஒருபோதும்</string>
     <string name="always">எப்போதும்</string>
     <string name="for_connections_to_decrypt">மறைகுறியாக்குவதற்கான இணைப்புகளுக்கு மட்டுமே</string>
@@ -482,7 +482,7 @@
     <string name="tcp_exporter_info">தொலைநிலை TCP ரிசீவருக்கு PCAP ஐ அனுப்பவும் (PCAP-OVER-IP)</string>
     <string name="geo_db_missing">புவிஇருப்பிட தரவுத்தளம் இல்லை</string>
     <string name="dump_extensions_how_to">வயர்சார்க்கில் பி.சி.ஏ.பி டிராய்டு டம்ப் நீட்டிப்புகளை எவ்வாறு காண்பிப்பது</string>
-    <string name="no_permissions_set_info">அனுமதிகள் எதுவும் அமைக்கப்படவில்லை. அனுமதிகள் வரியில் காட்ட StartactivityForresult வழியாக PCAPDROID ஐ அழைக்கவும்</string>
+    <string name="no_permissions_set_info">அனுமதிகள் எதுவும் அமைக்கப்படவில்லை. அனுமதிகள் வரியில் காட்ட StartactivityForresult வழியாக ADBYE ஐ அழைக்கவும்</string>
     <string name="generate_api_key">பநிஇ விசையை உருவாக்குங்கள்</string>
     <string name="show_api_key">பநிஇ விசையை காட்டு</string>
     <string name="api_key">பநிஇ விசை</string>
@@ -503,9 +503,9 @@
     <string name="errno_econnrefused_msg">சேவையகம் இணைப்பை நிராகரித்தது, இது மிகவும் பிசியான அல்லது செயலிழந்த சேவையகத்தைக் குறிக்கலாம்</string>
     <string name="errno_ehostunreach">புரவலனுக்கு பாதை இல்லை</string>
     <string name="errno_ehostunreach_msg">இலக்கு புரவலனுக்கு ஒரு வழியை கணினியால் கண்டுபிடிக்க முடியவில்லை</string>
-    <string name="tls_conn_info">TLS/HTTPS போக்குவரத்து குறியாக்கம் செய்யப்படுகிறது. இந்த போக்குவரத்தை ஆய்வு செய்ய, நீங்கள் அதை மறைகுறியாக்க வேண்டும். விவரங்களுக்கு pcapdroid <a href="%1$s"> பயனர் கையேடு </a> ஐப் பாருங்கள்</string>
+    <string name="tls_conn_info">TLS/HTTPS போக்குவரத்து குறியாக்கம் செய்யப்படுகிறது. இந்த போக்குவரத்தை ஆய்வு செய்ய, நீங்கள் அதை மறைகுறியாக்க வேண்டும். விவரங்களுக்கு adbye <a href="%1$s"> பயனர் கையேடு </a> ஐப் பாருங்கள்</string>
     <string name="filename_prefix">கோப்புப்பெயர் முன்னொட்டு</string>
-    <string name="filename_prefix_description">PCAPdroid ஏற்றுமதி செய்யும் கோப்புகளுக்கான முன்னொட்டை அமைக்கவும், எ.கா. PCAP கோப்புகள்</string>
+    <string name="filename_prefix_description">ADBye ஏற்றுமதி செய்யும் கோப்புகளுக்கான முன்னொட்டை அமைக்கவும், எ.கா. PCAP கோப்புகள்</string>
     <string name="no_requests">கோரிக்கைகள் இல்லை</string>
     <string name="item_not_found">குறிப்பிட்ட உருப்படியைக் கண்டறிய இயலவில்லை</string>
     <string name="connection_number">இணைப்பு #%1$d</string>
@@ -519,7 +519,7 @@
     <string name="save_as_text">உரையாக சேமி</string>
     <string name="save_as_har">HAR ஆக சேமி</string>
     <string name="cidr_val">CIDR: %1$s</string>
-    <string name="dump_extensions">Pcapdroid நீட்டிப்புகள்</string>
+    <string name="dump_extensions">ADBye நீட்டிப்புகள்</string>
     <string name="dump_extensions_summary">கொடுக்கப்பட்ட பாக்கெட்டை அனுப்பிய/பெற்ற பயன்பாடு போன்ற கூடுதல் மெட்டாடேட்டாவுடன் பாக்கெட் டம்ப் வடிவமைப்பை நீட்டிக்கவும்</string>
     <string name="malicious_connection_description">பயன்பாட்டின் \"%1$s\" இன் இணைப்பு தீம்பொருள் கண்டறிதல் விதியைத் தூண்டியது (%2$s)</string>
     <string name="malicious_connections_notice">தடுப்புப்பட்டியலில் தவறான நேர்மறைகள் இருக்கலாம். ஐபி முகவரி/டொமைன் நற்பெயரை ஆன்லைனில் இருமுறை சரிபார்க்கவும். தீம்பொருள் வைட்லிச்ட் வழியாக தவறான நேர்மறைகளை நீங்கள் விலக்கலாம்</string>

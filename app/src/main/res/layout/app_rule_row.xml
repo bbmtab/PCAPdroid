@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  App Management row (shell-only). Used by AppManagementFragment inside a RecyclerView.
+
+  Layout structure:
+    - Root LinearLayout (vertical) — selectableItemBackground, hosts BOTH the
+      always-visible header and the optional expanded section.
+    - Header LinearLayout (horizontal) — click toggles expansion. Hosts icon,
+      name+package+state row, expander arrow.
+    - app_rule_expanded — initially GONE. Revealed when mExpandedUid matches
+      this row's uid. Hosts the block/unblock MaterialSwitch, the read-only
+      allowlist mini-list (populated programmatically), launch + app-info
+      actions.
+
+  Selected ids (kept short to match the project naming style):
+    selected: app_rule_header, app_rule_expanded
+    selected: app_icon, app_name, app_package, app_state, app_badge, app_allowlist_count, app_expand
+    selected: app_block_switch, app_block_label,
+    selected: app_filter_https_switch, app_filter_https_label,
+    selected: app_allowlist_count_subhead, app_allowlist_container, app_allowlist_empty,
+    selected: app_edit_allowlist, app_launch_btn, app_appinfo_btn
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="?attr/selectableItemBackground"
+    android:paddingHorizontal="12dp"
+    android:paddingVertical="6dp">
+
+    <!-- Header (always visible, click toggles expansion) -->
+    <LinearLayout
+        android:id="@+id/app_rule_header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:clickable="true"
+        android:focusable="true">
+
+        <ImageView
+            android:id="@+id/app_icon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:contentDescription="@string/app_info" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:layout_marginStart="10dp">
+
+            <TextView
+                android:id="@+id/app_name"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textStyle="bold"
+                android:textSize="14sp"
+                android:textColor="?android:attr/textColorPrimary"
+                android:maxLines="1"
+                android:ellipsize="end"
+                tools:text="Example Browser" />
+
+            <TextView
+                android:id="@+id/app_package"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textColor="?android:attr/textColorSecondary"
+                android:maxLines="1"
+                android:ellipsize="end"
+                tools:text="org.example.browser" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="2dp"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/app_state"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    tools:text="Blocked" />
+
+                <TextView
+                    android:id="@+id/app_badge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/badge_blocked_bg"
+                    android:textColor="#FFFFFF"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    tools:text="12 blocked"
+                    android:visibility="gone" />
+
+                <TextView
+                    android:id="@+id/app_allowlist_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:textSize="11sp"
+                    android:textColor="?android:attr/textColorSecondary"
+                    tools:text="3 allowed"
+                    android:visibility="gone" />
+           </LinearLayout>
+       </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/app_expand"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:padding="6dp"
+            android:src="@drawable/ic_arrow_drop_down"
+            app:tint="?android:attr/textColorPrimary"
+            android:background="?attr/selectableItemBackground"
+            android:contentDescription="@string/app_mgmt_sort_by"
+            android:focusable="true"
+            android:clickable="true" />
+   </LinearLayout>
+
+    <!-- Expanded section (visibility GONE by default) -->
+    <LinearLayout
+        android:id="@+id/app_rule_expanded"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginStart="50dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="6dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/app_block_switch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:id="@+id/app_block_label"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:textSize="13sp"
+                android:textColor="?android:attr/textColorPrimary"
+                android:maxLines="2"
+                tools:text="Block this app" />
+       </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical">
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/app_filter_https_switch"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+
+            <TextView
+                android:id="@+id/app_filter_https_label"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:textSize="13sp"
+                android:textColor="?android:attr/textColorPrimary"
+                android:maxLines="2"
+                tools:text="@string/app_mgmt_filter_https_label" />
+       </LinearLayout>
+
+        <TextView
+            android:id="@+id/app_allowlist_header"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:text="@string/allowlist" />
+
+        <TextView
+            android:id="@+id/app_allowlist_count_subhead"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textSize="12sp"
+            android:textColor="?android:attr/textColorSecondary"
+            tools:text="2 host(s) allowed" />
+
+        <LinearLayout
+            android:id="@+id/app_allowlist_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="4dp" />
+
+        <TextView
+            android:id="@+id/app_allowlist_empty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textStyle="italic"
+            android:textSize="12sp"
+            android:textColor="?android:attr/textColorSecondary"
+            android:text="@string/app_mgmt_allowlist_empty" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="12dp">
+
+            <Button
+                android:id="@+id/app_edit_allowlist"
+                style="?android:attr/borderlessButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/app_mgmt_add_allowed_host"
+                android:textSize="12sp" />
+
+            <Button
+                android:id="@+id/app_launch_btn"
+                style="?android:attr/borderlessButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/app_mgmt_launch"
+                android:textSize="12sp" />
+
+            <Button
+                android:id="@+id/app_appinfo_btn"
+                style="?android:attr/borderlessButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/app_info"
+                android:textSize="12sp" />
+       </LinearLayout>
+   </LinearLayout>
+</LinearLayout>

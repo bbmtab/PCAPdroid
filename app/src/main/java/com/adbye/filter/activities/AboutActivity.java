@@ -105,7 +105,7 @@ public class AboutActivity extends BaseActivity implements MenuProvider {
 
         mHandler = new Handler(Looper.getMainLooper());
         TextView appVersion = findViewById(R.id.app_version);
-        appVersion.setText("PCAPdroid " + Utils.getAppVersion(this));
+        appVersion.setText("ADBye " + Utils.getAppVersion(this));
 
         ((TextView)findViewById(R.id.app_license)).setMovementMethod(LinkMovementMethod.getInstance());
         ((TextView)findViewById(R.id.opensource_licenses)).setMovementMethod(LinkMovementMethod.getInstance());

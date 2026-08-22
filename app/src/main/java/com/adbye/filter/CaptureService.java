@@ -103,16 +103,38 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class CaptureService extends VpnService implements Runnable {
     private static final String TAG = "CaptureService";
-    private static final String VpnSessionName = "PCAPdroid VPN";
+    private static final String VpnSessionName = "ADBye VPN";
     private static final String NOTIFY_CHAN_VPNSERVICE = "VPNService";
     private static final String NOTIFY_CHAN_MALWARE_DETECTION = "Malware detection";
     private static final String NOTIFY_CHAN_OTHER = "Other";
     private static final int VPN_MTU = 10000;
+
+    // Timeout for waiting on isCaptureEngineReady() before proceeding
+    // with adblock reload / enable-toggle calls. Mirrors the E2E harness
+    // VPN_READY_TIMEOUT_MS; 60 s is generous even for the CI emulator
+    // (~1-4.8 s gap observed, Path C data).
+    private static final long ENGINE_READY_TIMEOUT_MS = 60_000;
+    private static final long ENGINE_READY_POLL_MS = 50;
+
+    // Timeout for waiting on getAdblockListVersion() to advance after
+    // handing new rules to the engine. 5 s is generous: pd_housekeeping
+    // swaps on a ~250 ms cadence (SELECT_TIMEOUT_MS); a timeout here
+    // means the reload was REFUSED by the JNI guards, not flake.
+    private static final long RELOAD_DONE_TIMEOUT_MS = 5_000;
+    private static final long RELOAD_DONE_POLL_MS = 100;
     public static final int NOTIFY_ID_VPNSERVICE = 1;
     public static final int NOTIFY_ID_LOW_MEMORY = 2;
     public static final int NOTIFY_ID_APP_BLOCKED = 3;
     private static CaptureService INSTANCE;
     private static boolean HAS_ERROR = false;
+    /**
+     * Visible-for-test hook: flips true the moment {@link Builder#establish()}
+     * returns a non-null {@link ParcelFileDescriptor}, and false again when the
+     * service tears down. E2E tests in {@code AdbyeE2ETest} poll this rather
+     * than guessing with {@code Thread.sleep} whether the TUN dev is up.
+     * Not part of the public API — package-private reads only.
+     */
+    private static volatile boolean sTunnelEstablished = false;
     final ReentrantLock mLock = new ReentrantLock();
     final Condition mCaptureStopped = mLock.newCondition();
     private ParcelFileDescriptor mParcelFileDescriptor;
@@ -120,6 +142,26 @@ public class CaptureService extends VpnService implements Runnable {
     private boolean mRevoked;
     private SharedPreferences mPrefs;
     private CaptureSettings mSettings;
+    // Constraint #10 (Restart-on-tunnel-construction-change): keys whose
+    // changes require a CaptureService stop+start to take effect (baked into
+    // pcapdroid_t at start). Constraint-#7 Protection masters (pref_protect_*)
+    // and `firewall` are intentionally EXCLUDED -- they use the hot-reload path
+    // (FirewallActivity.onProtectionChanged -> setAdblockEnabled/reloadAdblockRules).
+    private static final Set<String> TUNNEL_CONFIG_PREF_KEYS = new java.util.HashSet<>(java.util.Arrays.asList(
+            Prefs.PREF_PCAP_DUMP_MODE, Prefs.PREF_COLLECTOR_HOST_KEY, Prefs.PREF_COLLECTOR_PORT_KEY,
+            Prefs.PREF_HTTP_SERVER_PORT, Prefs.PREF_SOCKS5_ENABLED_KEY, Prefs.PREF_SOCKS5_PROXY_HOST_KEY,
+            Prefs.PREF_SOCKS5_PROXY_PORT_KEY, Prefs.PREF_SOCKS5_AUTH_ENABLED_KEY, Prefs.PREF_SOCKS5_USERNAME_KEY,
+            Prefs.PREF_SOCKS5_PASSWORD_KEY, Prefs.PREF_IP_MODE, Prefs.PREF_APP_FILTER, Prefs.PREF_APP_FILTER_ENABLED,
+            Prefs.PREF_ROOT_CAPTURE, Prefs.PREF_DUMP_EXTENSIONS, Prefs.PREF_CAPTURE_INTERFACE,
+            Prefs.PREF_TLS_DECRYPTION_KEY, Prefs.PREF_FULL_PAYLOAD, Prefs.PREF_BLOCK_QUIC,
+            Prefs.PREF_AUTO_BLOCK_PRIVATE_DNS, Prefs.PREF_MITMPROXY_OPTS, Prefs.PREF_PCAPNG_ENABLED,
+            Prefs.PREF_DNS_SERVER_V4, Prefs.PREF_DNS_SERVER_V6, Prefs.PREF_USE_SYSTEM_DNS,
+            Prefs.PREF_SNAPLEN, Prefs.PREF_MAX_PKTS_PER_FLOW, Prefs.PREF_MAX_DUMP_SIZE
+    ));
+    private static final long TUNNEL_CONFIG_RESTART_DEBOUNCE_MS = 400;
+    private SharedPreferences.OnSharedPreferenceChangeListener mTunnelConfigListener;
+    private final Handler mTunnelConfigRestartHandler = new Handler(Looper.getMainLooper());
+    private boolean mTunnelConfigRestartPending = false;
     private Billing mBilling;
     private Handler mHandler;
     private Thread mCaptureThread;
@@ -153,6 +195,7 @@ public class CaptureService extends VpnService implements Runnable {
     private boolean mMalwareDetectionEnabled;
     private boolean mBlacklistsUpdateRequested;
     private boolean mFirewallEnabled;
+    private boolean mAdblockEnabled;
     private boolean mBlockPrivateDns;
     private boolean mDnsEncrypted;
     private boolean mStrictDnsNoticeShown;
@@ -216,6 +259,41 @@ public class CaptureService extends VpnService implements Runnable {
 
         INSTANCE = this;
         super.onCreate();
+
+        // Constraint #10: react to tunnel-construction pref changes while the
+        // VPN is running by stop+start so the new value bakes at restart.
+        // Registered once per instance (lifetime = VPN lifetime); unregistered
+        // in onDestroy. Fires only on persisted, validated changes (the per-
+        // Preference validators reject bad values before commit).
+        mTunnelConfigListener = (prefs, key) -> {
+            if (key != null && TUNNEL_CONFIG_PREF_KEYS.contains(key))
+                scheduleTunnelConfigRestart();
+        };
+        mPrefs.registerOnSharedPreferenceChangeListener(mTunnelConfigListener);
+    }
+
+    // Constraint #10: toast fires at the change-detection moment (BEFORE
+    // stopService); the stop+start runs at the trailing edge of the debounce
+    // window to coalesce multi-field bursts (e.g. several Socks5 fields).
+    private void scheduleTunnelConfigRestart() {
+        if (!mTunnelConfigRestartPending) {
+            Utils.showToastLong(this, R.string.protection_restart_toast);
+            mTunnelConfigRestartPending = true;
+        } else {
+            mTunnelConfigRestartHandler.removeCallbacksAndMessages(null);
+        }
+        mTunnelConfigRestartHandler.postDelayed(this::runTunnelConfigRestart,
+                TUNNEL_CONFIG_RESTART_DEBOUNCE_MS);
+    }
+
+    private void runTunnelConfigRestart() {
+        mTunnelConfigRestartPending = false;
+        if (!isServiceActive())
+            return; // VPN stopped since the change; next start bakes the pref.
+        stopService();
+        Intent intent = new Intent(this, CaptureService.class);
+        intent.putExtra("settings", new CaptureSettings(this, mPrefs));
+        ContextCompat.startForegroundService(this, intent);
     }
 
     private int abortStart() {
@@ -250,6 +328,8 @@ public class CaptureService extends VpnService implements Runnable {
 
         // startForeground must always be called since the Service is being started with
         // ContextCompat.startForegroundService.
+        // Initialize conn_reg before startForeground to avoid NPE in getStatusNotification
+        conn_reg = new ConnectionsRegister(this, Prefs.getConnectionsLogSize(mPrefs));
         // NOTE: since Android 12, startForeground cannot be called when the app is in background
         // (unless invoked via an Intent).
         setupNotifications();
@@ -369,7 +449,6 @@ public class CaptureService extends VpnService implements Runnable {
         mCaptureStartTimeMonotonic = SystemClock.elapsedRealtime();
         last_connections = 0;
         mLowMemory = false;
-        conn_reg = new ConnectionsRegister(this, Prefs.getConnectionsLogSize(mPrefs));
         mHttpLog = mSettings.full_payload ? new HttpLog() : null;
         mDumper = null;
         mDumpQueue = null;
@@ -462,6 +541,13 @@ public class CaptureService extends VpnService implements Runnable {
 
         mMalwareDetectionEnabled = !mSettings.readFromPcap() && Prefs.isMalwareDetectionEnabled(this, mPrefs);
         mFirewallEnabled = !mSettings.readFromPcap() && Prefs.isFirewallEnabled(this, mPrefs);
+        // ADBye adblock gate seeding (mirrors mFirewallEnabled above). Pref-driven from
+        // the ProtectionFragment "Ad blocking" master switch (pref_protect_adblock).
+        // Suppressed in pcap-read/root modes so it never fires outside a real VPN capture
+        // (matches the firewall precedent). The native struct initializer reads this back
+        // via adblockEnabled() below to arm pd->adblock.enabled at boot; live toggles keep
+        // it in sync via setAdblockEnabled() -> nativeSetAdblockEnabled (jni_impl.c).
+        mAdblockEnabled = !mSettings.readFromPcap() && Prefs.isProtectAdblock(mPrefs);
 
         if(!mSettings.root_capture && !mSettings.readFromPcap()) {
             Log.i(TAG, "Using DNS server " + dns_server);
@@ -536,7 +622,9 @@ public class CaptureService extends VpnService implements Runnable {
 
             try {
                 mParcelFileDescriptor = builder.setSession(CaptureService.VpnSessionName).establish();
+                sTunnelEstablished = mParcelFileDescriptor != null;
             } catch (IllegalArgumentException | IllegalStateException | SecurityException e) {
+                sTunnelEstablished = false;
                 e.printStackTrace();
                 Utils.showToast(this, R.string.vpn_setup_failed);
                 return abortStart();
@@ -637,6 +725,12 @@ public class CaptureService extends VpnService implements Runnable {
         // after the capture is stopped
         //INSTANCE = null;
 
+        if (mTunnelConfigListener != null) {
+            mPrefs.unregisterOnSharedPreferenceChangeListener(mTunnelConfigListener);
+            mTunnelConfigListener = null;
+        }
+        mTunnelConfigRestartHandler.removeCallbacksAndMessages(null);
+
         unregisterNetworkCallbacks();
 
         if(mBlacklists != null)
@@ -700,8 +794,8 @@ public class CaptureService extends VpnService implements Runnable {
     }
 
     private Notification getStatusNotification() {
-        String msg = String.format(getString(R.string.notification_msg),
-                Utils.formatBytes(last_bytes), Utils.formatNumber(this, last_connections));
+        int blocked = conn_reg.getNumBlockedConnections();
+        String msg = String.format("%s ads blocked", Utils.formatNumber(this, blocked));
 
         mStatusBuilder.setContentText(msg);
 
@@ -1112,6 +1206,148 @@ public class CaptureService extends VpnService implements Runnable {
         return(INSTANCE != null && (INSTANCE.mDecryptionList != null));
     }
 
+    /**
+     * Test-only readiness signal: {@code true} iff the VpnService.Builder
+     * {@code .establish()} call returned a live file descriptor. E2E tests
+     * poll this instead of guessing with {@code Thread.sleep}.
+     */
+    static boolean isTunnelEstablished() {
+        return sTunnelEstablished;
+    }
+
+    /**
+     * Test-only readiness signal: {@code true} iff the capture engine
+     * (the global {@code pcapdroid_t}) has finished initialization in the
+     * native data thread. Closes the ~150-250ms (real device; ~400-1000ms
+     * AOSP non-KVM CI emulator) race after {@link #isTunnelEstablished()}
+     * flips, during which the JNI {@code reloadAdblockList} guard
+     * {@code if(!pd) return false;} at {@code jni_impl.c:1457} silently
+     * rejects the reload and the rule never reaches the engine. E2E
+     * tests poll this in addition to {@link #isTunnelEstablished()}.
+     *
+     * @see {@link #isTunnelEstablished()}
+     * @see jni_impl.c::Java_..._nativeIsCaptureEngineReady (JNI getter, returns
+     *      {@code global_pd != NULL})
+     */
+    @androidx.annotation.VisibleForTesting
+    public static boolean isCaptureEngineReady() {
+        try {
+            return nativeIsCaptureEngineReady();
+        } catch (UnsatisfiedLinkError e) {
+            // Pre-JNI-load invocations from earlier unit tests — engine not loaded.
+            return false;
+        }
+    }
+
+    /**
+     * Monotonic counter bumped by {@code pd_housekeeping} after each
+     * {@code pd->adblock.new_list -> pd->adblock.list} swap (pcapdroid.c),
+     * or 0 if the engine is not alive yet.
+     *
+     * <p>Production callers (e.g. {@link #reloadAdblockRules(String)})
+     * capture a baseline, call the reload, then poll this until it advances —
+     * a deterministic "rules loaded" signal replacing blind sleep.
+     *
+     * @see jni_impl.c::Java_..._nativeGetAdblockListVersion
+     */
+    public static int getAdblockListVersion() {
+        try {
+            return nativeGetAdblockListVersion();
+        } catch (UnsatisfiedLinkError e) {
+            // Pre-JNI-load invocations (earlier unit tests) — engine not loaded.
+            return 0;
+        }
+    }
+
+    /**
+     * Poll {@link #isCaptureEngineReady()} until the native capture engine
+     * ({@code global_pd != NULL}) is alive — or give up after
+     * {@link #ENGINE_READY_TIMEOUT_MS}. Production counterpart to the
+     * E2E harness {@code waitForVpnTunnelEstablished}.
+     *
+     * <p>Closes the ~150-250ms (real device) / ~1-4.8s (CI emulator) gap
+     * between VPN tunnel establishment ({@code sTunnelEstablished=true})
+     * and {@code global_pd = &pd} in {@code runPacketLoop}. Without this
+     * gate, {@link #reloadAdblockRules(String)} and
+     * {@link #setAdblockEnabled(boolean)} land on the JNI's
+     * {@code if(!pd) return false;} guard and silently no-op (constraint #7).
+     *
+     * @return {@code true} if the engine became ready within the timeout;
+     *         {@code false} if the timeout expired or the wait was interrupted.
+     */
+    private static boolean waitForEngineReady() {
+        if (isCaptureEngineReady()) {
+            return true;
+        }
+        long deadline = SystemClock.elapsedRealtime() + ENGINE_READY_TIMEOUT_MS;
+        while (SystemClock.elapsedRealtime() < deadline) {
+            if (isCaptureEngineReady()) {
+                return true;
+            }
+            try {
+                Thread.sleep(ENGINE_READY_POLL_MS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                Log.w(TAG, "interrupted while waiting for capture engine ready: " + e);
+                return false;
+            }
+        }
+        Log.w(TAG, "capture engine not ready within " + ENGINE_READY_TIMEOUT_MS + "ms "
+                + "(polled every " + ENGINE_READY_POLL_MS + "ms)");
+        return false;
+    }
+
+    /**
+     * Poll {@link #getAdblockListVersion()} after handing new rules to the
+     * engine until the monotonic counter advances past the baseline captured
+     * before the call — confirming the engine has actually swapped the new
+     * rules into {@code pd->adblock.list}. Production counterpart to the
+     * E2E harness {@code waitForAdblockReloadDone}.
+     *
+     * <p>The swap runs on {@code pd_housekeeping}'s ~250ms cadence
+     * ({@code SELECT_TIMEOUT_MS}), so one swap lands well inside
+     * {@link #RELOAD_DONE_TIMEOUT_MS}; a timeout means the reload was
+     * refused by the JNI guards (c.f. constraint #7), not a polling race.
+     *
+     * @param path absolute path to the merged rules file
+     * @return {@code true} if the version advanced within the timeout;
+     *         {@code false} if the timeout expired or the wait was interrupted.
+     */
+    private static boolean waitForAdblockReloadDone(String path) {
+        int baselineVersion = getAdblockListVersion();
+        reloadAdblockList(path);
+
+        long deadline = SystemClock.elapsedRealtime() + RELOAD_DONE_TIMEOUT_MS;
+        while (SystemClock.elapsedRealtime() < deadline) {
+            int currentVersion = getAdblockListVersion();
+            if (currentVersion > baselineVersion) {
+                return true;
+            }
+            try {
+                Thread.sleep(RELOAD_DONE_POLL_MS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                Log.w(TAG, "interrupted while waiting for adblock reload: " + e);
+                return false;
+            }
+        }
+        int finalVersion = getAdblockListVersion();
+        Log.w(TAG, "adblock reload did not complete within " + RELOAD_DONE_TIMEOUT_MS + "ms "
+                + "(polled every " + RELOAD_DONE_POLL_MS + "ms). "
+                + "Baseline version=" + baselineVersion + ", final version=" + finalVersion);
+        return false;
+    }
+
+    /**
+     * Test-only hook: reset the readiness flag back to {@code false} between
+     * E2E test runs. Does NOT close the actual TUN — capture still owns that.
+     * Use only in {@code @After} of instrumented tests in the
+     * {@code com.adbye.filter} package.
+     */
+    static void clearTunnelEstablishedForTests() {
+        sTunnelEstablished = false;
+    }
+
     public static Prefs.PayloadMode getCurPayloadMode() {
         if(INSTANCE == null)
             return Prefs.PayloadMode.MINIMAL;
@@ -1298,6 +1534,7 @@ public class CaptureService extends VpnService implements Runnable {
                 e.printStackTrace();
             }
             mParcelFileDescriptor = null;
+            sTunnelEstablished = false;
         }
 
         // NOTE: join the threads here instead in onDestroy to avoid ANR
@@ -1503,6 +1740,12 @@ public class CaptureService extends VpnService implements Runnable {
     public int malwareDetectionEnabled() { return(mMalwareDetectionEnabled ? 1 : 0); }
 
     public int firewallEnabled() { return(mFirewallEnabled ? 1 : 0); }
+
+    // ADBye adblock gate accessor (mirrors firewallEnabled()). Called from the
+    // JNI struct initializer (getIntPref(..., "adblockEnabled")) to seed
+    // pd->adblock.enabled at boot. Returns 1/0 per the getIntPref() "()I"
+    // signature convention the native side expects.
+    public int adblockEnabled() { return(mAdblockEnabled ? 1 : 0); }
 
     public int dumpExtensionsEnabled() { return(mSettings.dump_extensions ? 1 : 0); }
 
@@ -1794,12 +2037,83 @@ public class CaptureService extends VpnService implements Runnable {
         reloadDecryptionList(INSTANCE.mDecryptionList.toListDescriptor());
     }
 
+    /**
+     * Phase 1.a — push a freshly-merged adblock rules file into the running
+     * native filter engine without restarting this service. Defensive: silently
+     * no-ops if the service isn't alive (the merged file will be picked up on
+     * the next VPN start) or if {@code path} is null. The native side
+     * additionally gates on VPN-capture mode (calls in root / pcap-read modes
+     * fail and are logged by {@code jni_impl.c::reloadAdblockList}).
+     */
+    public static void reloadAdblockRules(String path) {
+        if((INSTANCE == null) || (path == null))
+            return;
+
+        if (!waitForEngineReady()) {
+            Log.w(TAG, "skipping adblock reload: capture engine not ready within "
+                    + ENGINE_READY_TIMEOUT_MS + "ms");
+            return;
+        }
+
+        Log.i(TAG, "reloading adblock list from " + path);
+        if (!waitForAdblockReloadDone(path)) {
+            Log.w(TAG, "adblock reload may not have landed: list_version did not advance");
+        }
+    }
+
     public static void setFirewallEnabled(boolean enabled) {
         if(INSTANCE == null)
             return;
 
         INSTANCE.mFirewallEnabled = enabled;
         nativeSetFirewallEnabled(enabled);
+    }
+
+    // ADBye adblock gate runtime toggle (mirrors setFirewallEnabled above).
+    // Called by FirewallActivity.onProtectionChanged when the ProtectionFragment
+    // "Ad blocking" master switch flips. Defensive against a null INSTANCE (the
+    // change is already persisted to prefs and will be picked up at the next VPN
+    // start via adblockEnabled() in the struct initializer).
+    //
+    // Phase 1.b Path B: arming the gate is inert on its own — the parser fix
+    // (blacklist.c: strip ||/^, honor @@) and HTTP-Host routing (pcapdroid.c
+    // case NDPI_PROTOCOL_HTTP) both land in commit B. This setter only flips
+    // the boolean that commit B's matcher consults.
+    public static void setAdblockEnabled(boolean enabled) {
+        if(INSTANCE == null)
+            return;
+
+        if (!waitForEngineReady()) {
+            Log.w(TAG, "skipping adblock enable toggle: capture engine not ready within "
+                    + ENGINE_READY_TIMEOUT_MS + "ms");
+            return;
+        }
+
+        INSTANCE.mAdblockEnabled = enabled;
+        nativeSetAdblockEnabled(enabled);
+    }
+
+    // ADBye filterHttps per-UID exemption runtime setter (Option 2 per the
+    // 2026-08-04 scoping decision). Pushes a single add/remove into the native
+    // in-memory https_exempt_uids set via nativeSetFilterHttpsExempt — no adblock
+    // reload cycle, near-instant. Mirrors setAdblockEnabled's INSTANCE-null and
+    // waitForEngineReady guards: if the capture engine isn't ready the JNI's
+    // if(!pd) return; guard would silently drop the update, so we gate identically.
+    // The exemption is already persisted to prefs by BypassManager before this is
+    // called (AppRuleAdapter), so a dropped update here (engine not running) is
+    // recovered on the next VPN start by the boot-seed path (separate follow-up
+    // alongside the check_adblock_sni_rules consult wiring).
+    public static void setFilterHttpsExempt(int uid, boolean exempt) {
+        if(INSTANCE == null)
+            return;
+
+        if (!waitForEngineReady()) {
+            Log.w(TAG, "skipping filterHttps exempt toggle: capture engine not ready within "
+                    + ENGINE_READY_TIMEOUT_MS + "ms");
+            return;
+        }
+
+        nativeSetFilterHttpsExempt(uid, exempt);
     }
 
     public static @NonNull CaptureStats getStats() {
@@ -1857,16 +2171,19 @@ public class CaptureService extends VpnService implements Runnable {
     private static native boolean reloadMalwareWhitelist(MatchList.ListDescriptor whitelist);
     private static native boolean reloadDecryptionList(MatchList.ListDescriptor whitelist);
     private static native boolean reloadAdblockList(String path);
+    @androidx.annotation.VisibleForTesting private static native boolean nativeIsCaptureEngineReady();
+    @androidx.annotation.VisibleForTesting private static native int nativeGetAdblockListVersion();
     public static native void askStatsDump();
     public static native byte[] getPcapHeader();
     public static native void nativeSetFirewallEnabled(boolean enabled);
+    public static native void nativeSetAdblockEnabled(boolean enabled);
+    public static native void nativeSetFilterHttpsExempt(int uid, boolean exempt);
     public static native int getNumCheckedMalwareConnections();
     public static native int getNumCheckedFirewallConnections();
     public static native int rootCmd(String prog, String args);
     public static native void setPayloadMode(int mode);
     public static native List<String> getL7Protocols();
     public static native void dumpMasterSecret(byte[] secret);
-    public static native boolean hasSeenDumpExtensions();
     public static native boolean extractKeylogFromPcapng(String pcapng_path, String out_path);
 }
 

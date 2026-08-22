@@ -157,64 +157,10 @@ public class PCAPdroid extends Application {
         return mFilterLists;
     }
 
-    // ADBye predefined catalog. Mirrors the original filter_list_plan.md table.
+    // ADBye predefined catalog — now sourced from assets/filters.json.
+    // See FilterListManager#loadFromAssetJson.
     private void seedPredefinedFilterLists(FilterListManager mgr) {
-        mgr.addPredefined("EasyList", FilterListManager.Category.AD_BLOCKING, "easylist.txt",
-                "https://easylist.to/easylist/easylist.txt", true);
-        mgr.addPredefined("AdGuard Base Filter", FilterListManager.Category.AD_BLOCKING, "adguard_base.txt",
-                "https://filters.adtidy.org/android/filters/2_optimized.txt", true);
-        mgr.addPredefined("uBlock Origin Filters", FilterListManager.Category.AD_BLOCKING, "ublock_origin.txt",
-                "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt", false);
-        mgr.addPredefined("AdGuard Mobile Ads", FilterListManager.Category.AD_BLOCKING, "adguard_mobile.txt",
-                "https://filters.adtidy.org/android/filters/11_optimized.txt", false);
-
-        mgr.addPredefined("EasyPrivacy", FilterListManager.Category.PRIVACY, "easyprivacy.txt",
-                "https://easylist.to/easylist/easyprivacy.txt", true);
-        mgr.addPredefined("AdGuard Tracking Protection", FilterListManager.Category.PRIVACY, "adguard_tracking.txt",
-                "https://filters.adtidy.org/android/filters/3_optimized.txt", false);
-        // AdGuard DNS filter â€” host-only mode (parsed via AdGuardHostParser).
-        mgr.addPredefined("AdGuard DNS Filter (host-only)", FilterListManager.Category.PRIVACY, "adguard_dns.txt",
-                "https://adguardteam.github.io/AdGuardSDNSFilter/Filters/filter.txt", true);
-        // StevenBlack combined hosts (triaged at layer 1 only â€” domain entries).
-        mgr.addPredefined("StevenBlack Hosts", FilterListManager.Category.PRIVACY, "stevenblack_hosts.txt",
-                "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts", true);
-
-        mgr.addPredefined("Fanboy Social", FilterListManager.Category.SOCIAL, "fanboy_social.txt",
-                "https://easylist.to/easylist/fanboy-social.txt", false);
-        mgr.addPredefined("AdGuard Social Media", FilterListManager.Category.SOCIAL, "adguard_social.txt",
-                "https://filters.adtidy.org/android/filters/4_optimized.txt", false);
-
-        mgr.addPredefined("AdGuard Annoyances", FilterListManager.Category.ANNOYANCE, "adguard_annoyances.txt",
-                "https://filters.adtidy.org/android/filters/14_optimized.txt", false);
-        mgr.addPredefined("Fanboy Annoyance", FilterListManager.Category.ANNOYANCE, "fanboy_annoyance.txt",
-                "https://easylist.to/easylist/fanboy-annoyance.txt", false);
-        mgr.addPredefined("I don't care about cookies", FilterListManager.Category.ANNOYANCE, "idcac.txt",
-                "https://www.i-dont-care-about-cookies.eu/abp/", false);
-
-        mgr.addPredefined("AdGuard Phishing Protection", FilterListManager.Category.SECURITY, "adguard_phishing.txt",
-                "https://filters.adtidy.org/android/filters/9_optimized.txt", true);
-        mgr.addPredefined("URLhaus Malicious URLs", FilterListManager.Category.SECURITY, "urlhaus.txt",
-                "https://malware-filter.gitlab.io/malware-filter/urlhaus-filter-online.txt", false);
-        mgr.addPredefined("Phishing Army", FilterListManager.Category.SECURITY, "phishing_army.txt",
-                "https://phishing.army/download/phishing_army_blocklist.txt", false);
-
-        // Country-specific â€” easy reach defaults to off
-        mgr.addPredefined("AdGuard Russian", FilterListManager.Category.LANGUAGE, "adguard_ru.txt",
-                "https://filters.adtidy.org/android/filters/1_optimized.txt", false);
-        mgr.addPredefined("AdGuard German", FilterListManager.Category.LANGUAGE, "adguard_de.txt",
-                "https://filters.adtidy.org/android/filters/6_optimized.txt", false);
-        mgr.addPredefined("AdGuard French", FilterListManager.Category.LANGUAGE, "adguard_fr.txt",
-                "https://filters.adtidy.org/android/filters/16_optimized.txt", false);
-        mgr.addPredefined("AdGuard Japanese", FilterListManager.Category.LANGUAGE, "adguard_jp.txt",
-                "https://filters.adtidy.org/android/filters/7_optimized.txt", false);
-        mgr.addPredefined("AdGuard Chinese", FilterListManager.Category.LANGUAGE, "adguard_cn.txt",
-                "https://filters.adtidy.org/android/filters/224_optimized.txt", false);
-        mgr.addPredefined("AdGuard Indonesian", FilterListManager.Category.LANGUAGE, "adguard_id.txt",
-                "https://filters.adtidy.org/android/filters/33_optimized.txt", false);
-        mgr.addPredefined("ABPindo (Indonesian)", FilterListManager.Category.LANGUAGE, "abpindo.txt",
-                "https://raw.githubusercontent.com/ABPindo/indonesianadblockrules/master/subscriptions/abpindo.txt", false);
-        mgr.addPredefined("EasyList Polish", FilterListManager.Category.LANGUAGE, "easylist_pl.txt",
-                "https://raw.githubusercontent.com/easylist-polish/easylistpolish/master/easylistpolish.txt", false);
+        mgr.loadFromAssetJson(mLocalizedContext);
     }
 
     public MatchList getMalwareWhitelist() {

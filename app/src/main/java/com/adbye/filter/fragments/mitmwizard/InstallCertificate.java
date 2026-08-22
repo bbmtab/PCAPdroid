@@ -142,7 +142,7 @@ public class InstallCertificate extends StepFragment implements MitmListener {
     }
 
     private void exportCaCertificate() {
-        String fname = "PCAPdroid_CA.crt";
+        String fname = "ADBye_CA.crt";
         Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         intent.setType("application/x-x509-ca-cert");
@@ -154,7 +154,7 @@ public class InstallCertificate extends StepFragment implements MitmListener {
 
     private void installCaCertificate() {
         Intent intent = KeyChain.createInstallIntent();
-        intent.putExtra(KeyChain.EXTRA_NAME, "PCAPdroid CA");
+        intent.putExtra(KeyChain.EXTRA_NAME, "ADBye CA");
         intent.putExtra(KeyChain.EXTRA_CERTIFICATE, mCaPem.getBytes(StandardCharsets.UTF_8));
 
         try {

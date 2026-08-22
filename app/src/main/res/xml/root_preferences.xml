@@ -234,7 +234,7 @@
             app:key="filename_prefix"
             app:title="@string/filename_prefix"
             app:summary="@string/filename_prefix_description"
-            app:defaultValue="PCAPdroid_"
+            app:defaultValue="ADBye_"
             app:iconSpaceReserved="false" />
 
         <Preference

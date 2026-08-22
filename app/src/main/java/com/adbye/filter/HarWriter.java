@@ -83,7 +83,7 @@ public class HarWriter {
 
     private void writeCreator(JsonWriter writer) throws IOException {
         writer.beginObject();
-        writer.name("name").value("PCAPdroid");
+        writer.name("name").value("ADBye");
         writer.name("version").value(Utils.getAppVersion(mContext));
         writer.endObject();
     }

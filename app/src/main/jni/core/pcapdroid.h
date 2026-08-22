@@ -21,6 +21,7 @@
 #define __PCAPDROID_H__
 
 #include <stdbool.h>
+#include <stdint.h>
 #include "zdtun.h"
 #include "ip_lru.h"
 #include "blacklist.h"
@@ -151,6 +152,18 @@ typedef struct {
     char appname[64];
     UT_hash_handle hh;
 } uid_to_app_t;
+
+// ADBye filterHttps per-UID exemption: presence-only uthash set of app UIDs whose
+// TLS/HTTPS traffic is exempt from SNI-based adblock filtering. Populated by
+// nativeSetFilterHttpsExempt (jni_impl.c) from BypassManager.filterHttpsExemptUids
+// (AppRuleAdapter "Filter HTTPS" toggle). Mirrors uid_to_app_t's flat int-keyed
+// shape — distinct from the domain-shaped app_allowlists in blacklist.c. The
+// consult wiring in check_adblock_sni_rules (pcapdroid.c) is a separate follow-up;
+// until then this table is write-only.
+typedef struct {
+    int uid;
+    UT_hash_handle hh;
+} https_exempt_uid_t;
 
 typedef struct {
     unsigned char *data;
@@ -311,6 +324,23 @@ typedef struct pcapdroid {
         bool enabled;
         blacklist_t *list;   // SNI blocklist (ADBye filter lists)
         blacklist_t *new_list;
+        // Monotonic generation bumped by pd_housekeeping (pcapdroid.c) after each
+        // new_list -> list swap. Polled via JNI (nativeGetAdblockListVersion) by
+        // the E2E harness to wait deterministically for a reload to land —
+        // replaces the Thread.sleep(500) "housekeeping swap cadence" placeholder
+        // (plan.md "Phase 1.b Status" -> "SNI reload signal pending"). Same
+        // constraint-#8 visible-for-test packaging as nativeIsCaptureEngineReady;
+        // no production reader.
+        uint32_t list_version;
+        // filterHttps per-UID exemption set (Option 2 direct-setter storage).
+        // Flat UID presence set — distinct from the domain-shaped app_allowlists
+        // (blacklist.c). Updated synchronously by nativeSetFilterHttpsExempt: a
+        // single uthash add/del, no file I/O, no reload cycle. Zero-initialized
+        // (NULL head) by the pd designated initializer in jni_impl.c. Freed in
+        // the pd_run teardown alongside uid2app. The consult wiring in
+        // check_adblock_sni_rules (pcapdroid.c) is a separate follow-up; until
+        // then this field is written but never read.
+        https_exempt_uid_t *https_exempt_uids;
     } adblock;
 
     struct {

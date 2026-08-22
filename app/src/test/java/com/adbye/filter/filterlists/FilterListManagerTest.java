@@ -4,10 +4,12 @@
 package com.adbye.filter.filterlists;
 
 import android.content.Context;
+import android.content.SharedPreferences;
 
 import androidx.test.core.app.ApplicationProvider;
 
 import com.adbye.filter.filterlists.FilterListManager.OnChangeListener;
+import com.adbye.filter.model.Prefs;
 
 import org.junit.After;
 import org.junit.Before;
@@ -20,6 +22,7 @@ import java.io.FileWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -229,7 +232,7 @@ public class FilterListManagerTest {
                 "||doubleclick.net^\n" +
                 "||ads.example.org^\n");
 
-        int lines = mgr.mergeEnabledLists();
+        int lines = mgr.mergeEnabledLists(EnumSet.allOf(FilterListManager.Category.class));
         assertEquals(2, lines);
 
         String merged = new String(Files.readAllBytes(mgr.getMergedRulesFile().toPath()),
@@ -253,7 +256,7 @@ public class FilterListManagerTest {
         writeListFile(mgr.findByFname("on.txt"),  "||on.example.com^\n");
         writeListFile(mgr.findByFname("off.txt"), "||off.example.com^\n");
 
-        mgr.mergeEnabledLists();
+        mgr.mergeEnabledLists(EnumSet.allOf(FilterListManager.Category.class));
         String merged = new String(Files.readAllBytes(mgr.getMergedRulesFile().toPath()),
                 StandardCharsets.UTF_8);
         assertTrue(merged.contains("||on.example.com^"));
@@ -270,7 +273,7 @@ public class FilterListManagerTest {
         // enabled entry, but file does not exist on disk -> must not throw.
         mgr.addPredefined("nofile", FilterListManager.Category.AD_BLOCKING, "missing.txt", "u", true);
 
-        int lines = mgr.mergeEnabledLists();
+        int lines = mgr.mergeEnabledLists(EnumSet.allOf(FilterListManager.Category.class));
         // No user rules written; calls must succeed.
         assertEquals(0, lines);
 
@@ -289,7 +292,202 @@ public class FilterListManagerTest {
         writeListFile(mgr.findByFname("a.txt"), "||a1.com^\n||a2.com^\n");
         writeListFile(mgr.findByFname("b.txt"), "||b1.com^\n");
 
-        assertEquals(3, mgr.mergeEnabledLists());
+        assertEquals(3, mgr.mergeEnabledLists(EnumSet.allOf(FilterListManager.Category.class)));
+    }
+
+    // --- merge: category-aware gating (Phase 1 Integration Test prerequisite) ---
+
+    /**
+     * Plan.md Phase 1 Integration Test requires that toggling "Ad blocking"
+     * OFF causes {@code adblock_rules.txt} to regenerate <em>excluding</em>
+     * {@code AD_BLOCKING}-categorized lists — i.e. {@link FilterListManager#mergeEnabledLists}
+     * must consult the master switch bound to the list's category, not just
+     * the per-list {@code isEnabled()} flag. This test closes that gap with a
+     * no-VPN assertion.
+     */
+    @Test
+    public void testMergeRespectsMasterCategoryGating() throws Exception {
+        mgr.addPredefined("ad",   FilterListManager.Category.AD_BLOCKING, "ad.txt",   "u", true);
+        mgr.addPredefined("priv", FilterListManager.Category.PRIVACY,     "priv.txt", "u", true);
+        writeListFile(mgr.findByFname("ad.txt"),   "||ad-marker.example^\n");
+        writeListFile(mgr.findByFname("priv.txt"), "||priv-marker.example^\n");
+
+        // Master switches: AD_BLOCKING off, TRACKING (=PRIVACY) on. Plus the
+        // always-on trio (no master gate but listed for completeness).
+        EnumSet<FilterListManager.Category> enabled = EnumSet.of(
+                FilterListManager.Category.PRIVACY,
+                FilterListManager.Category.LANGUAGE,
+                FilterListManager.Category.OTHER,
+                FilterListManager.Category.CUSTOM);
+        assertFalse("Sanity: AD_BLOCKING master is off in this fixture",
+                enabled.contains(FilterListManager.Category.AD_BLOCKING));
+
+        int lines = mgr.mergeEnabledLists(enabled);
+
+        String merged = new String(
+                Files.readAllBytes(mgr.getMergedRulesFile().toPath()),
+                StandardCharsets.UTF_8);
+        assertFalse("AD_BLOCKING-categorized list leaked despite master switch off",
+                merged.contains("ad-marker.example"));
+        assertTrue("PRIVACY-categorized list missing despite master switch on",
+                merged.contains("priv-marker.example"));
+        // Only "priv-marker.example^" should contribute (bypass fragment doesn't
+        // count — see merge's return contract).
+        assertEquals(1, lines);
+    }
+
+    /**
+     * With every category enabled the merge must keep the pre-Phase-1
+     * shape: both per-list enabled entries contribute. Anchors the
+     * signature change so a future regression can't silently drop a
+     * category from the all-on case.
+     */
+    @Test
+    public void testMergeAllCategoriesEnabledMatchesLegacyShape() throws Exception {
+        mgr.addPredefined("ad",   FilterListManager.Category.AD_BLOCKING, "ad.txt",   "u", true);
+        mgr.addPredefined("priv", FilterListManager.Category.PRIVACY,     "priv.txt", "u", true);
+        writeListFile(mgr.findByFname("ad.txt"),   "||a1.example^\n||a2.example^\n");
+        writeListFile(mgr.findByFname("priv.txt"), "||p1.example^\n");
+
+        int lines = mgr.mergeEnabledLists(
+                EnumSet.allOf(FilterListManager.Category.class));
+        assertEquals(3, lines);
+    }
+
+    /**
+     * Confirms the helper that {@code FirewallActivity} uses to translate
+     * top-level {@code Prefs.isProtect*} booleans into the {@link FilterListManager.Category}
+     * set. Categories without a master gate ({@link FilterListManager.Category#LANGUAGE},
+     * {@link FilterListManager.Category#OTHER}, {@link FilterListManager.Category#CUSTOM})
+     * are always present; the four that DO have a gate are present iff their
+     * flag is true.
+     */
+    @Test
+    public void testEnabledCategoriesHelperReflectsMasterToggles() {
+        // All master toggles off — only the no-master-gate categories remain.
+        EnumSet<FilterListManager.Category> allOff = FilterListManager.enabledCategories(
+                false, false, false, false);
+        assertEquals(EnumSet.of(
+                FilterListManager.Category.LANGUAGE,
+                FilterListManager.Category.OTHER,
+                FilterListManager.Category.CUSTOM), allOff);
+
+        // Only AD_BLOCKING on.
+        EnumSet<FilterListManager.Category> adOnly = FilterListManager.enabledCategories(
+                true, false, false, false);
+        assertTrue(adOnly.contains(FilterListManager.Category.AD_BLOCKING));
+        assertFalse(adOnly.contains(FilterListManager.Category.PRIVACY));
+        assertFalse(adOnly.contains(FilterListManager.Category.ANNOYANCE));
+        assertFalse(adOnly.contains(FilterListManager.Category.SECURITY));
+        assertTrue(adOnly.contains(FilterListManager.Category.LANGUAGE));
+        assertTrue(adOnly.contains(FilterListManager.Category.OTHER));
+        assertTrue(adOnly.contains(FilterListManager.Category.CUSTOM));
+
+        // Mixed: TRACKING (=PRIVACY) + SECURITY on, AD + ANNOYANCE off.
+        EnumSet<FilterListManager.Category> mixed = FilterListManager.enabledCategories(
+                false, true, false, true);
+        assertEquals(EnumSet.of(
+                FilterListManager.Category.PRIVACY,
+                FilterListManager.Category.SECURITY,
+                FilterListManager.Category.LANGUAGE,
+                FilterListManager.Category.OTHER,
+                FilterListManager.Category.CUSTOM), mixed);
+    }
+
+    // --- enabledCategories: per-Prefs-flag mapping ----------------------------
+
+    /**
+     * Verifies that {@link FilterListManager#enabledCategories} reflects each
+     * of the {@code Prefs.PREF_PROTECT_*} master toggles that gate filter
+     * merge. The 4 helper-consulted flags map 1:1 to a Category:
+     * <pre>
+     *   pref_protect_adblock    → AD_BLOCKING
+     *   pref_protect_tracking   → PRIVACY
+     *   pref_protect_annoyance  → ANNOYANCE
+     *   pref_protect_security   → SECURITY
+     *</pre>
+     *
+     * <p>For each gated flag we (a) reset all 6 {@code PREF_PROTECT_*} keys to
+     * true in an isolated prefs fixture, (b) flip just the one under test to
+     * false, (c) feed the 4 helper-consulted booleans via the {@link Prefs}
+     * API (so the round-trip from prefs → helper is exercised), and (d) assert
+     * the returned {@code EnumSet} excludes exactly the mapped Category and
+     * contains every other Category per the helper's documented contract:
+     * the always-on trio (LANGUAGE / OTHER / CUSTOM) is present, {@code SOCIAL}
+     * is never gated by a master toggle.
+     */
+    @Test
+    public void testEnabledCategoriesExcludesMappedCategoryPerProtectFlag() throws Exception {
+        // Isolated prefs file so this test does not disturb the global
+        // default-preps fixture that other tests in this class rely on.
+        SharedPreferences prefs = ctx.getSharedPreferences(
+                "test_enabled_categories_isolated",
+                Context.MODE_PRIVATE);
+        prefs.edit().clear().commit();
+
+        String[][] gatedCases = {
+                {Prefs.PREF_PROTECT_ADBLOCK,   "AD_BLOCKING"},
+                {Prefs.PREF_PROTECT_TRACKING,  "PRIVACY"},
+                {Prefs.PREF_PROTECT_ANNOYANCE, "ANNOYANCE"},
+                {Prefs.PREF_PROTECT_SECURITY,  "SECURITY"},
+        };
+
+        for (String[] c : gatedCases) {
+            String offFlagKey = c[0];
+            FilterListManager.Category mapped = FilterListManager.Category.valueOf(c[1]);
+
+            prefs.edit()
+                    .putBoolean(Prefs.PREF_PROTECT_ADBLOCK, true)
+                    .putBoolean(Prefs.PREF_PROTECT_TRACKING, true)
+                    .putBoolean(Prefs.PREF_PROTECT_ANNOYANCE, true)
+                    .putBoolean(Prefs.PREF_PROTECT_DNS, true)
+                    .putBoolean(Prefs.PREF_PROTECT_FIREWALL, true)
+                    .putBoolean(Prefs.PREF_PROTECT_SECURITY, true)
+                    .commit();
+            prefs.edit().putBoolean(offFlagKey, false).commit();
+
+            EnumSet<FilterListManager.Category> result = FilterListManager.enabledCategories(
+                    Prefs.isProtectAdblock(prefs),
+                    Prefs.isProtectTracking(prefs),
+                    Prefs.isProtectAnnoyance(prefs),
+                    Prefs.isProtectSecurity(prefs));
+
+            assertFalse("case " + offFlagKey + " off → mapped Category "
+                            + mapped + " must be absent",
+                    result.contains(mapped));
+
+            for (FilterListManager.Category cat : FilterListManager.Category.values()) {
+                boolean expected;
+                switch (cat) {
+                    case AD_BLOCKING: case PRIVACY: case ANNOYANCE: case SECURITY:
+                        expected = (cat != mapped);
+                        break;
+                    case LANGUAGE: case OTHER: case CUSTOM:
+                        expected = true;
+                        break;
+                    case SOCIAL:
+                        expected = false;
+                        break;
+                    default:
+                        throw new IllegalStateException("unhandled: " + cat);
+                }
+                assertEquals("case " + offFlagKey + " off → Category " + cat,
+                        expected, result.contains(cat));
+            }
+        }
+
+        // ----- DNS / Firewall out-of-scope (degenerate-coverage boundary) -----
+        //
+        // pref_protect_dns and pref_protect_firewall have no parameter in
+        // enabledCategories(...). They gate VPN routing, not filter-merge.
+        // A meaningful test would require varying helper inputs in a way
+        // the current 4-bool signature does not permit. The intent —
+        // "DNS/Firewall do not gate filter-merge" — is enforced statically
+        // by the helper's signature itself: there is no DNS or Firewall
+        // parameter to flip. Per this test's scope contract, no degenerate
+        // test is added here; coverage is the helper's documented contract
+        // and FirewallActivity.onProtectionChanged's reader (which only
+        // pulls the 4 gated booleans).
     }
 }
 

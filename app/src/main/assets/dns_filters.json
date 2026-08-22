@@ -1,0 +1,25 @@
+{
+    "filters": [
+        {
+            "filterId": 15,
+            "name": "AdGuard DNS filter",
+            "description": "Filter composed of several other filters (AdGuard Base filter, Social Media filter, Tracking Protection filter, Mobile Ads filter, EasyList and EasyPrivacy) and simplified specifically to be better compatible with DNS-level ad blocking.",
+            "timeAdded": "2014-06-30T07:56:55+0000",
+            "homepage": "https://adguard.com/kb/general/ad-filtering/adguard-filters/",
+            "deprecated": true,
+            "expires": 432000,
+            "displayNumber": 3,
+            "groupId": 6,
+            "subscriptionUrl": "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_15_DnsFilter/filter.txt",
+            "platformsExcluded": [
+                "ext_chromium_mv3"
+            ],
+            "trustLevel": "full",
+            "version": "2.0.80.25",
+            "timeUpdated": "2025-05-15T12:10:59+0000",
+            "downloadUrl": "https://raw.githubusercontent.com/AdguardTeam/FiltersRegistry/master/filters/filter_15_DnsFilter/filter.txt",
+            "openSource": true,
+            "sourceNote": "Filter URL is open-source: hosted on GitHub (AdguardTeam/FiltersRegistry) as filter_15_DnsFilter"
+        }
+    ]
+}
