@@ -141,7 +141,11 @@ public class FilterGroupActivity extends BaseActivity {
                 ProtectionHotReload.reloadRulesOnly(
                         getApplicationContext(), r.fname);
             });
-            h.itemView.setOnClickListener(v -> h.sw.toggle());
+            h.itemView.setOnClickListener(v -> {
+                Intent intent = new Intent(FilterGroupActivity.this, FilterDetailActivity.class);
+                intent.putExtra(FilterDetailActivity.EXTRA_FNAME, r.fname);
+                startActivity(intent);
+            });
         }
 
         @Override public int getItemCount() { return mRows.size(); }

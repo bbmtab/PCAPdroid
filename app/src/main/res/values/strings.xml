@@ -668,4 +668,10 @@
     <string name="adbye_dns_current_server">Current DNS server</string>
     <string name="adbye_dns_custom_server">Custom</string>
     <string name="adbye_dns_filters_header">DNS Filters</string>
+    <string name="adbye_filter_detail_homepage">Homepage</string>
+    <string name="adbye_filter_detail_source_url">Source URL</string>
+    <string name="adbye_filter_detail_last_updated">Last updated</string>
+    <string name="adbye_filter_detail_rules">Rules</string>
+    <string name="adbye_filter_detail_tags">Tags</string>
+    <string name="adbye_filter_detail_unknown">Unknown</string>
 </resources>
